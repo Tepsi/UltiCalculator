@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Ulti Pontozó</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="app-header">
+  <h1>Ulti Pontozó</h1>
+  <div class="header-actions">
+    <button id="btn-export" class="btn btn-secondary" hidden>Exportálás</button>
+    <button id="btn-reset" class="btn btn-danger" hidden>Új parti-est</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- SETUP SCREEN -->
+  <section id="setup-screen" class="screen">
+    <div id="resume-banner" class="banner" hidden>
+      <p>Van egy folyamatban lévő parti-est mentve.</p>
+      <button id="btn-resume" class="btn btn-primary">Folytatás</button>
+      <button id="btn-discard" class="btn btn-secondary">Elvetés, új indítása</button>
+    </div>
+
+    <div id="setup-form-wrapper">
+      <h2>Új parti-est indítása</h2>
+      <label class="field">
+        Hány játékos ül az asztalnál?
+        <select id="player-count">
+          <option value="3">3 fő (mindenki játszik minden leosztásban)</option>
+          <option value="4" selected>4 fő (az osztó kiáll az adott leosztásban)</option>
+        </select>
+      </label>
+
+      <div id="player-names"></div>
+
+      <label class="field">
+        Ki osztja az elsőt?
+        <select id="starting-dealer"></select>
+      </label>
+
+      <label class="checkbox-inline">
+        <input type="checkbox" id="negyasz-toggle">
+        Négyász bemondás engedélyezése (alapértelmezetten kikapcsolva)
+      </label>
+
+      <button id="btn-start" class="btn btn-primary btn-large">Parti-est indítása</button>
+    </div>
+  </section>
+
+  <!-- GAME SCREEN -->
+  <section id="game-screen" class="screen" hidden>
+
+    <section class="card">
+      <h2>Pontállás körről-körre</h2>
+      <div class="scoreboard-wrapper">
+        <table id="score-ledger" class="scoreboard"></table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 id="round-title">Leosztás</h2>
+      <p id="round-meta" class="muted"></p>
+      <label class="checkbox-inline">
+        <input type="checkbox" id="piros-asz-toggle">
+        Piros ász oszt, nem oszt (az osztás körbe megy, nem a felvevő oszt tovább)
+      </label>
+
+      <form id="hand-form">
+        <label class="field">
+          Felvevő
+          <select id="declarer-select"></select>
+        </label>
+        <p id="defenders-info" class="muted"></p>
+
+        <div id="jatek-block" class="card-inset">
+          <p class="field-label">Játék (kötelező)</p>
+          <div class="line-row">
+            <select id="jatek-select"></select>
+          </div>
+          <div class="line-row">
+            <label class="radio-inline"><input type="radio" name="jatek-result" value="siker" checked> Sikerült</label>
+            <label class="radio-inline"><input type="radio" name="jatek-result" value="bukas"> Bukott</label>
+          </div>
+          <div class="line-row">
+            <label class="field-inline">
+              Kontra szintje (mindkét ellenjátékos ellen)
+              <select id="jatek-kontra-select"></select>
+            </label>
+          </div>
+          <p id="jatek-result-text" class="line-result muted"></p>
+        </div>
+
+        <div id="bemondas-lines"></div>
+        <button type="button" id="btn-add-line" class="btn btn-secondary">+ Bemondás hozzáadása</button>
+
+        <div id="hand-preview" class="preview" hidden></div>
+
+        <button type="submit" class="btn btn-primary btn-large">Leosztás mentése</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="card-header-row">
+        <h2>Előzmények</h2>
+        <button id="btn-undo" class="btn btn-secondary" hidden>Utolsó leosztás visszavonása</button>
+      </div>
+      <div id="history-list"></div>
+    </section>
+
+  </section>
+
+</main>
+
+<template id="tpl-bemondas-line">
+  <div class="bemondas-line card-inset">
+    <div class="line-row">
+      <select class="line-bemondas"></select>
+      <button type="button" class="btn btn-icon btn-remove-line" title="Bemondás törlése">✕</button>
+    </div>
+    <div class="line-row">
+      <label class="radio-inline"><input type="radio" name="result" value="siker" checked> Sikerült</label>
+      <label class="radio-inline"><input type="radio" name="result" value="bukas"> Bukott</label>
+    </div>
+    <div class="line-row kontra-joint">
+      <label class="field-inline">
+        Kontra szintje (mindkét ellenjátékos ellen)
+        <select class="kontra-joint-select"></select>
+      </label>
+    </div>
+    <div class="line-row kontra-split" hidden>
+      <label class="field-inline">
+        <span class="defender-a-label">1. ellenjátékos</span> kontrája
+        <select class="kontra-a-select"></select>
+      </label>
+      <label class="field-inline">
+        <span class="defender-b-label">2. ellenjátékos</span> kontrája
+        <select class="kontra-b-select"></select>
+      </label>
+    </div>
+    <p class="line-result muted"></p>
+  </div>
+</template>
+
+<script src="app.js"></script>
+</body>
+</html>
