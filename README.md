@@ -15,11 +15,14 @@ Részletek (mobilos webszerver-trükk, ha a böngésző nem engedi a helyi fájl
 ## Fő funkciók
 
 - 3 vagy 4 fős mód (4 fősnél az osztó kiáll az adott leosztásban).
-- Minden leosztásban egy kötelező **játék-szint** (parti / 40-100 / 20-100 és
-  piros változataik), amely önállóan sikerül/bukik, saját kontrával.
-- Tetszés szerint hozzáadható extra bemondások: ulti, (kapcsolóval) négyász,
-  betli, durchmars/redurchmars — utóbbi kettő színes (adus, kombinálható) és
-  színtelen (adu nélküli, helyettesíti a játék-szintet) formában is.
+- Egyetlen közös bemondás-katalógus (parti / 40-100 / 20-100, ulti,
+  (kapcsolóval) négyász, betli, durchmars/redurchmars), soronként hozzáadva —
+  ha egy alapjátékot igénylő extrát (pl. ulti) választasz alapjáték nélkül, az
+  app automatikusan pótolja a "Parti" sort.
+- Egy közös "Piros adu" kapcsoló duplázza a leosztás színes sorait; a betli
+  saját, önálló piros jelölőnégyzettel rendelkezik.
+- Durchmars/redurchmars színes (adus, kombinálható) és színtelen (adu nélküli,
+  helyettesíti az alapjátékot) formában is választható.
 - Színes bemondásoknál közös, színtelen bemondásoknál ellenjátékosonkénti
   kontra.
 - Osztás menete: alapesetben a felvevő lesz a következő osztó; "Piros ász

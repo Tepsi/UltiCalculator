@@ -79,62 +79,76 @@ ki, a "Leosztás" kártya fejléce ("Osztó és kiálló: ...") mutatja.
    Ez a kapcsoló bármikor átállítható, és azonnal el is mentődik.
 1. **Felvevő kiválasztása**: legördülő menü, csak az aktív (nem kiálló) játékosokat
    listázza. A választás után az app automatikusan kiírja, kik az ellenjátékosok.
-2. **Játék (kötelező)**: minden leosztásban — kivéve, ha a 3. pontban egy
-   **"színtelen"** (nincs adu) bemondás kerül hozzáadásra (betli, rebetli/
-   terített betli, vagy a "színtelen" durchmars/redurchmars) — ki kell
-   választani a leosztás alap-játékát: **Parti / Piros parti / 40-100 / Piros
-   40-100 / 20-100 / Piros 20-100**, majd be kell állítani, hogy ez sikerült-e
-   vagy bukott, és milyen szintű kontra vonatkozik rá (mindkét ellenjátékos
-   ellen egyszerre, mivel ez mindig színes/adus). Ez a blokk **önállóan**
-   számolódik el a lentebbi extra bemondásoktól — ezért lehet, hogy pl. az
-   ulti megvan, de a játékot (a parti/40-100/20-100 részt) kontrázva bukja a
-   felvevő, vagy fordítva.
-   Ha a 3. pontban egy "színtelen" bemondás kerül hozzáadásra, ez a blokk
-   automatikusan **eltűnik** (és nem kötelező), mert azok a játékok maguk
-   helyettesítik a normál, aduval játszott menetet — nincs melléjük külön
-   "játék"-szint.
-3. **További bemondás(ok) hozzáadása**: a "+ Bemondás hozzáadása" gombra
-   kattintva új sor jelenik meg — ide kerülnek a bemondások:
-   - **Ulti, piros ulti** (és — ha bekapcsoltátok — **négy ász, piros négy
-     ász**): ezek a 2. pontban beállított játék *mellé* társulnak, nem
-     helyettesítik azt.
-   - **Betli, piros betli, rebetli / terített betli**: ezek mindig
-     "színtelen" (nincs adu) játékok, tehát a 2. pontban leírtak szerint
-     helyettesítik a kötelező játék-blokkot, és nem is kombinálhatók semmi
-     mással.
+2. **"Piros adu"**: jelölőnégyzet a Felvevő mező alatt — bejelölve duplázza a
+   leosztás összes "színes" sorának (alapjáték, ulti, négy ász, színes
+   durchmars/redurchmars) értékét egységesen (ld. 4. pont), mert egy
+   leosztásban egyetlen valódi adu-szín van, tehát ezek pirossága nem
+   választható el egymástól.
+3. **Bemondás sorok**: nincs külön "kötelező játék" mező — egyetlen közös
+   katalógusból választasz, soronként, a "+ Bemondás hozzáadása" gombbal
+   felvehető további sorokban. A leosztás indításakor automatikusan megjelenik
+   egy első sor, alapból **Parti**-ra állítva, de bármelyik sorban átválthatsz
+   bármelyik bemondásra:
+   - **Alapjáték: Parti / 40-100 / 20-100** — ezekből egy leosztásban legfeljebb
+     egy lehet jelen.
+   - **Ulti**, és — ha bekapcsoltátok — **négy ász**: ezek egy alapjáték
+     *mellé* társulnak, nem helyettesítik azt. Ha ilyet választasz anélkül,
+     hogy már lenne alapjáték (vagy azt helyettesítő "színtelen" sor) a
+     leosztásban, az app **automatikusan hozzáadja a "Parti" alapjátékot** egy
+     külön sorként (ezt utána át is állíthatod 40-100-ra/20-100-ra, ha az
+     történt valójában). Ugyanez fordítva is igaz: ha eltávolítod az egyetlen
+     alapjáték-sort, miközben még van mellette ulti/négy ász/színes
+     durchmars-redurchmars sor, az app újra pótolja az alapjátékot, hogy sose
+     maradjon "árva" extra bemondás alapjáték nélkül.
+   - **Betli, rebetli / terített betli**: mindig "színtelen" (nincs adu)
+     játékok, tehát helyettesítik az alapjátékot, és nem is kombinálhatók
+     semmi mással. A betli sorban — egyedüliként a katalógusban — saját,
+     önálló **"Piros"** jelölőnégyzet jelenik meg, mert a "piros betli" itt
+     nem aduszínt jelent, csak egy erősebb (dupla értékű) fokozatot; ezért ez
+     a leosztás tényleges adu-színétől függetlenül be- és kikapcsolható.
    - **Durchmars / redurchmars (más néven terített durchmars)**: mindkettőnek
-     van egy **"színtelen"** (nincs adu — helyettesíti a játékot, mint a
-     betli, nem kombinálható mással) és egy **"színes"** (van adu — a 2.
-     pontbeli játék *mellé* társul, kombinálható pl. ulti-val vagy a 40-100/
-     20-100 szinttel is) változata, ezért ezek külön tételként jelennek meg a
-     legördülőben. A piros adu miatti erősebb változatok ("Piros durchmars",
-     "Piros redurchmars / piros terített durchmars") mindig "színesek".
-   Egy leosztáshoz több sor is adható (pl. ha a felvevő egyszerre jelentett
-   ulti-t és színes durchmars-ot) — ezeket a valóságnak megfelelően az app
-   **külön-külön** számolja el, majd összeadja a hatásukat.
-4. Minden bemondás sorban (és a 2. pont játék-blokkjában) beállítható:
+     van egy **"színtelen"** (nincs adu — helyettesíti az alapjátékot, mint a
+     betli, nem kombinálható mással) és egy **"színes"** (van adu — egy
+     alapjáték *mellé* társul, kombinálható pl. ulti-val, és a 2. pontbeli
+     "Piros adu" kapcsoló szerint duplázódik) változata, ezért ezek külön
+     tételként jelennek meg a legördülőben. A **színes** durchmars/redurchmars
+     mellé **csak 40-100 vagy 20-100 alapjáték** tehető — sima **Parti** mellé
+     nem választható (ha ilyet választasz alapjáték nélkül, az app "40-100"-at
+     ad hozzá automatikusan, nem "Parti"-t; és amíg a durchmars/redurchmars sor
+     megvan, a "Parti" opció el is tűnik az alapjáték legördülőjéből). A
+     **színtelen** durchmars/redurchmars-ra ez a korlátozás nem vonatkozik,
+     mivel az nem társul semmilyen alapjátékhoz.
+   A legördülő mindig csak azokat az opciókat kínálja fel, amelyek a
+   leosztásban már megadott többi sor mellett még valóban választhatók (pl. ha
+   már van egy Ulti sor, onnantól az Ulti eltűnik a további sorok listájából;
+   ha van egy "színtelen" sor, semmi más nem adható hozzá) — a "+ Bemondás
+   hozzáadása" gomb is letiltásra kerül, ha már nincs mit hozzáadni. Egy
+   leosztáshoz több sor is adható (pl. Parti + Ulti + színes durchmars) —
+   ezeket a valóságnak megfelelően az app **külön-külön** számolja el, majd
+   összeadja a hatásukat.
+4. Minden bemondás sorban beállítható:
    - **Sikerült / Bukott** rádiógomb.
    - **Kontra szintje**:
-     - *Színes bemondásoknál* (a kötelező játék-szint, ulti, négy ász, és a
-       "színes" durchmars/redurchmars variánsok) egyetlen kontraszint-választó
-       jelenik meg, mert a kontrázás közös, mindkét ellenjátékos nevében
-       egyszerre érvényes.
-     - *Színtelen bemondásoknál* (betli, rebetli/terített betli, és a
-       "színtelen" durchmars/redurchmars variánsok) **két külön**
-       kontraszint-választó jelenik meg, a két ellenjátékos nevével felirat­ozva
-       — mert ezekben a játékokban mindegyik ellenjátékos önállóan dönt a
-       kontrázásról, tehát az egyik kontrázhat, míg a másik nem.
+     - *Színes soroknál* (alapjáték, ulti, négy ász, és a "színes"
+       durchmars/redurchmars variánsok) egyetlen kontraszint-választó jelenik
+       meg, mert a kontrázás közös, mindkét ellenjátékos nevében egyszerre
+       érvényes.
+     - *Színtelen soroknál* (betli, rebetli/terített betli, és a "színtelen"
+       durchmars/redurchmars variánsok) **két külön** kontraszint-választó
+       jelenik meg, a két ellenjátékos nevével felirat­ozva — mert ezekben a
+       játékokban mindegyik ellenjátékos önállóan dönt a kontrázásról, tehát
+       az egyik kontrázhat, míg a másik nem.
    - A sor alján azonnal látható egy mondat, hogy a felvevő mennyit kap/fizet az
      adott sor miatt az egyik és a másik ellenjátékos ellen.
-   - A bemondás-sorok "✕" gombbal törölhetők (a kötelező játék-blokk nem
-     törölhető, csak automatikusan tűnik el betli/durchmars választásakor).
-5. **Élő előnézet**: a bemondás-sorok alatt egy táblázat mindig megmutatja, hogy a
-   jelenleg beállított sorok (a játék-blokkal együtt) alapján ki hány pontot
-   nyerne/veszítene, ha most mentenéd a leosztást.
+   - A sorok "✕" gombbal törölhetők — ha egy törlés miatt egy extra bemondás
+     alapjáték nélkül maradna, az app azonnal pótolja a "Parti" sort (ld. 3. pont).
+5. **Élő előnézet**: a sorok alatt egy táblázat mindig megmutatja, hogy a
+   jelenleg beállított sorok alapján ki hány pontot nyerne/veszítene, ha most
+   mentenéd a leosztást.
 6. **"Leosztás mentése"**: elmenti a leosztást, hozzáadja a pontokat az összesített
    állláshoz és a "Pontállás körről-körre" táblázathoz, a 0. pont szerint
-   beállítja a következő osztót, a kör száma nő, és az űrlap kiürül a következő
-   leosztáshoz.
+   beállítja a következő osztót, a kör száma nő, és az űrlap újra egy alapból
+   Parti-ra állított sorral kezdődik a következő leosztáshoz.
 
 ### 3.4 Előzmények
 
@@ -157,60 +171,61 @@ körről-körre" táblázat utolsó sora, és az osztó/kör-számláló is viss
 - **"Új parti-est"** (fejléc): megerősítés után törli a mentett állást, és
   visszaugrik az indítási képernyőre.
 
-## 4. Játék-szintek, bemondás-katalógus és pontértékek
+## 4. Bemondás-katalógus és pontértékek
 
 Az alapértékek forrása az [ultiblog.hu Licit táblázat](https://ultiblog.hu/ulti-licit-tablazat/)
 és [Ulti bemondások, licitek](https://ultiblog.hu/ulti-bemondasok-licitek/) oldala.
 
-### 4.1 Kötelező játék-szint
+### 4.1 Alapjáték
 
-Minden színjátékos leosztásban pontosan egy játék-szint van jelen (ld. 3.3/2.
+Minden színjátékos leosztásban pontosan egy alapjáték van jelen (ld. 3.3/3.
 pont) — ez a valóságban is mindig ott van a parti mögött, akár bemondanak rá
-extra bemondást (ulti, négy ász), akár nem:
+extra bemondást (ulti, négy ász), akár nem. A "Piros adu" jelölőnégyzet (ld.
+3.3/2. pont) mindig **duplázza** az alapértéket — ezért a dropdown csak az
+alap (nem piros) neveket tartalmazza:
 
-| Játék | Alapérték |
-|---|---|
-| Parti | 1 |
-| Piros parti | 2 |
-| 40-100 | 4 |
-| Piros 40-100 | 8 |
-| 20-100 | 8 |
-| Piros 20-100 | 16 |
+| Alapjáték | Alapérték | Piros adu esetén |
+|---|---|---|
+| Parti | 1 | 2 |
+| 40-100 | 4 | 8 |
+| 20-100 | 8 | 16 |
 
 ### 4.2 Extra bemondások
 
-Ezek a játék-szint fölé (színes bemondásoknál), vagy helyette (színtelen
-bemondásoknál) adhatók hozzá — az alapértékük **nem** tartalmazza a
-játék-szint értékét, azt a 4.1 blokk külön, önállóan adja hozzá:
+Ezek egy alapjáték fölé (színes bemondásoknál), vagy helyette (színtelen
+bemondásoknál) adhatók hozzá — az alapértékük **nem** tartalmazza az
+alapjáték értékét, azt a 4.1 blokk külön, önállóan adja hozzá. A dropdown itt
+is csak az alap neveket listázza; a piros duplázást a "Színes" soroknál a
+2. pontbeli "Piros adu" kapcsoló, a betlinél saját, önálló "Piros"
+jelölőnégyzet adja hozzá (ld. 3.3/3. pont):
 
-| Bemondás | Alapérték | Kategória |
-|---|---|---|
-| Négy ász *(kapcsolóval engedélyezhető, ld. 3.1 pont)* | 4 | Színes |
-| Piros négy ász *(kapcsolóval engedélyezhető)* | 8 | Színes |
-| Ulti | 4 | Színes (speciális bukás-szabály, ld. 5. pont) |
-| Piros ulti | 8 | Színes (speciális bukás-szabály) |
-| Durchmars (színtelen) | 6 | Színtelen |
-| Durchmars (színes) | 6 | Színes |
-| Piros durchmars | 12 | Színes |
-| Redurchmars / Terített durchmars (színtelen) | 24 | Színtelen |
-| Redurchmars / Terített durchmars (színes) | 24 | Színes |
-| Piros redurchmars / Piros terített durchmars | 48 | Színes |
-| Betli | 5 | Színtelen |
-| Piros betli | 10 | Színtelen |
-| Rebetli / Terített betli | 20 | Színtelen |
+| Bemondás | Alapérték | Piros esetén | Kategória |
+|---|---|---|---|
+| Négy ász *(kapcsolóval engedélyezhető, ld. 3.1 pont)* | 4 | 8 | Színes |
+| Ulti | 4 | 8 | Színes (speciális bukás-szabály, ld. 5. pont) |
+| Durchmars (színtelen) | 6 | — | Színtelen |
+| Durchmars (színes)*(csak 40-100/20-100 alapjáték mellett)* | 6 | 12 | Színes |
+| Redurchmars / Terített durchmars (színtelen) | 24 | — | Színtelen |
+| Redurchmars / Terített durchmars (színes)*(csak 40-100/20-100 alapjáték mellett)* | 24 | 48 | Színes |
+| Betli | 5 | 10 | Színtelen |
+| Rebetli / Terített betli | 20 | — | Színtelen |
 
 A kategória ("Színes" vagy "Színtelen") határozza meg, hogy a kontra közös
 (mindkét ellenjátékos nevében egyben) vagy egyénenkénti — ld. 5. pont. Ha a
-leosztásban bármelyik "Színtelen" sor szerepel, a 4.1-es kötelező játék-szint
-blokk automatikusan eltűnik (ld. 3.3/2. pont), mivel az adott sor önmagában
-helyettesíti a normál, aduval játszott menetet.
+leosztásban bármelyik "Színtelen" sor szerepel, semmi más nem adható hozzá
+(ld. 3.3/3. pont), mivel az adott sor önmagában helyettesíti a normál, aduval
+játszott menetet — a 4.1-es alapjáték-táblázat elemei ilyenkor nem is
+jelennek meg a legördülőben.
 
 A betli és a rebetli/terített betli **mindig** színtelenek (nem kombinálhatók
-semmi mással) — a "piros betli" elnevezés itt csak egy erősebb (dupla értékű)
-fokozatot jelent, nem aduszínt. A durchmars és a redurchmars/terített durchmars
-ezzel szemben **mindkét** formában (színes és színtelen) elérhető a
-katalógusban — a "piros" előtag mindig a színes (piros adu) változatot
-erősíti tovább.
+semmi mással) — a betli piros jelölőnégyzete csak egy erősebb (dupla értékű)
+fokozatot jelent, nem aduszínt, ezért az a leosztás tényleges adu-színétől
+függetlenül kapcsolható (a rebetlinek nincs piros fokozata). A durchmars és a
+redurchmars/terített durchmars ezzel szemben **mindkét** formában (színes és
+színtelen) elérhető a katalógusban — a színes formák a 2. pontbeli "Piros adu"
+kapcsoló szerint duplázódnak, hiszen egy leosztásban csak egyetlen valódi
+adu-szín létezik, tehát a játék és a hozzá adott színes extrák pirossága nem
+választható el egymástól.
 
 ## 5. Kontra rendszer
 
@@ -304,9 +319,16 @@ UltiCalculator/
 └── DOKUMENTACIO.md -- ez a dokumentum
 ```
 
-A kötelező játék-szint lista az `app.js` tetején, a `JATEK_SZINTEK` konstansban
-van; az extra bemondások (négy ász, ulti, betli, durchmars és variánsaik) a
-`BEMONDASOK` konstansban, a kontraszintek a `KONTRA_SZINTEK` konstansban — ide
-kell nyúlni, ha egy alapérték módosul, vagy új bemondást szeretnétek felvenni.
-A `BEMONDASOK` alapértékei már **nem** tartalmazzák a játék-szint értékét, azt
-a `JATEK_SZINTEK` blokk adja hozzá önállóan.
+Az összes alapjáték és bemondás (parti/40-100/20-100, négy ász, ulti, betli,
+durchmars és variánsaik) egyetlen közös `BEMONDASOK` konstansban van az
+`app.js` tetején — az alapjáték-elemeket a `jatekAlap: true` mező jelöli meg
+(ezekből egyszerre csak egy lehet a leosztásban); a kontraszintek a
+`KONTRA_SZINTEK` konstansban vannak — ide kell nyúlni, ha egy alapérték
+módosul, vagy új bemondást szeretnétek felvenni. Az extra bemondások (négy
+ász, ulti, színes durchmars/redurchmars) alapértékei **nem** tartalmazzák az
+alapjáték értékét, azt egy külön, automatikusan hozzáadott "Parti" sor adja
+hozzá (ld. `ensureBaseGameLine` az `app.js`-ben). A piros duplázás nem önálló
+katalógus-elem: a "színes" (`kategoria: 'szin'`) bemondásoknál a leosztás
+egészére vonatkozó "Piros adu" kapcsolóból jön, a `pirosVariant: true` jelölésű
+bemondásnál (jelenleg csak a betlinél) pedig saját, soronkénti
+jelölőnégyzetből.

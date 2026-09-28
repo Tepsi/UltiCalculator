@@ -2,44 +2,41 @@
 
 const STORAGE_KEY = 'ultiCalculator_session_v1';
 
-// A "játék" (parti / 40-100 / 20-100) minden színjátékos leosztásban kötelezően
-// jelen van, és önállóan (a többi bemondástól függetlenül) sikerülhet vagy
-// bukhat, kontrázható. Adu nélküli (betli/durchmars család) leosztásban nincs
-// játék-szint, mert azok maguk helyettesítik a normál (aduval játszott) menetet.
-const JATEK_SZINTEK = [
-  { id: 'parti', nev: 'Parti', ertek: 1 },
-  { id: 'piros_parti', nev: 'Piros parti', ertek: 2 },
-  { id: '40_100', nev: '40-100', ertek: 4 },
-  { id: 'piros_40_100', nev: 'Piros 40-100', ertek: 8 },
-  { id: '20_100', nev: '20-100', ertek: 8 },
-  { id: 'piros_20_100', nev: 'Piros 20-100', ertek: 16 },
-];
-
-// Ezek a játék-szinthez képest önállóan hozzáadható extra bemondások — az
-// alapértékük már NEM tartalmazza a parti/40-100/20-100 értékét, azt a
-// kötelező játék-szint blokk adja hozzá külön.
+// Minden leosztásban pontosan egy "alapjáték" van jelen (parti / 40-100 /
+// 20-100 — jatekAlap: true — vagy egy "színtelen" bemondás, amely helyettesíti
+// azt), és ehhez tetszés szerint társulhatnak további extra bemondások. A
+// felhasználó egyetlen közös legördülőből választ (a mezőn belül nincs
+// megkülönböztetve "kötelező játék" és "extra bemondás") — ha egy olyan
+// extrát választ, ami megkövetel egy alapjátékot (ulti, négy ász, színes
+// durchmars/redurchmars), és még nincs alapjáték vagy színtelen sor a
+// leosztásban, az app automatikusan hozzáadja a "Parti" alapjátékot egy külön
+// sorként (ld. ensureBaseGameLine).
 //
 // A durchmars/redurchmars (más néven terített durchmars) lehet "színes" (van
-// adu, ezért kombinálható a játék-szinttel és pl. ultival, közös/joint
-// kontrával) vagy "színtelen" (nincs adu, helyettesíti a játék-szintet, mint
-// a betli — egyénenkénti/split kontrával). A "piros" előtag itt a piros adu
-// miatti duplázást jelenti, ezért az mindig "színes".
-// A betli/rebetli (más néven terített betli) ezzel szemben mindig "színtelen"
-// (nem kombinálható semmi mással) — a "piros betli" is, az csak egy erősebb
-// (dupla értékű) betli, nem jelent aduszínt.
+// adu, ezért kombinálható az alapjátékkal és pl. ultival, közös/joint
+// kontrával) vagy "színtelen" (nincs adu, helyettesíti az alapjátékot, mint
+// a betli — egyénenkénti/split kontrával).
+//
+// A "piros" itt NEM önálló katalógus-elem: egy leosztásban egyetlen valódi
+// adu-szín van, tehát ha az alapjáték piros, a hozzá adott "színes" extrák
+// (négy ász, ulti, színes durchmars/redurchmars) automatikusan és kizárólag
+// pirosak is — ezt a "Piros adu" jelölőnégyzet (piros-adu-toggle) dupláz
+// egységesen mindannyiukra, nincs rá külön választás soronként.
+// A betli ezzel szemben mindig "színtelen" (nem kombinálható semmi mással), a
+// "piros betli" pedig nem aduszínt jelent, csak egy önálló, erősebb (dupla
+// értékű) fokozatot — ezért ez az egyetlen bemondás, amelynek saját,
+// soronkénti piros jelölőnégyzete van (pirosVariant: true).
 const BEMONDASOK = [
+  { id: 'parti', nev: 'Parti', ertek: 1, kategoria: 'szin', jatekAlap: true },
+  { id: '40_100', nev: '40-100', ertek: 4, kategoria: 'szin', jatekAlap: true },
+  { id: '20_100', nev: '20-100', ertek: 8, kategoria: 'szin', jatekAlap: true },
   { id: 'negy_asz', nev: 'Négy ász', ertek: 4, kategoria: 'szin', optional: 'negyasz' },
-  { id: 'piros_negy_asz', nev: 'Piros négy ász', ertek: 8, kategoria: 'szin', optional: 'negyasz' },
   { id: 'ulti', nev: 'Ulti', ertek: 4, kategoria: 'szin', ultiSpecial: true },
-  { id: 'piros_ulti', nev: 'Piros ulti', ertek: 8, kategoria: 'szin', ultiSpecial: true },
   { id: 'durchmars_szintelen', nev: 'Durchmars (színtelen)', ertek: 6, kategoria: 'adu_nelkuli' },
   { id: 'durchmars_szines', nev: 'Durchmars (színes)', ertek: 6, kategoria: 'szin' },
-  { id: 'piros_durchmars', nev: 'Piros durchmars', ertek: 12, kategoria: 'szin' },
   { id: 'redurchmars_szintelen', nev: 'Redurchmars / Terített durchmars (színtelen)', ertek: 24, kategoria: 'adu_nelkuli' },
   { id: 'redurchmars_szines', nev: 'Redurchmars / Terített durchmars (színes)', ertek: 24, kategoria: 'szin' },
-  { id: 'piros_redurchmars', nev: 'Piros redurchmars / Piros terített durchmars', ertek: 48, kategoria: 'szin' },
-  { id: 'betli', nev: 'Betli', ertek: 5, kategoria: 'adu_nelkuli' },
-  { id: 'piros_betli', nev: 'Piros betli', ertek: 10, kategoria: 'adu_nelkuli' },
+  { id: 'betli', nev: 'Betli', ertek: 5, kategoria: 'adu_nelkuli', pirosVariant: true },
   { id: 'rebetli', nev: 'Rebetli / Terített betli', ertek: 20, kategoria: 'adu_nelkuli' },
 ];
 
@@ -47,10 +44,6 @@ const KONTRA_SZINTEK = ['Nincs kontra', 'Kontra', 'Rekontra', 'Szubkontra', 'Mor
 
 function bemondasById(id) {
   return BEMONDASOK.find(b => b.id === id);
-}
-
-function jatekSzintById(id) {
-  return JATEK_SZINTEK.find(j => j.id === id);
 }
 
 // Ulti bukása esetén a sima duplázás helyett 2^szint + 1 az érvényes szorzó
@@ -177,19 +170,14 @@ const roundMetaEl = document.getElementById('round-meta');
 const pirosAszToggle = document.getElementById('piros-asz-toggle');
 const declarerSelect = document.getElementById('declarer-select');
 const defendersInfoEl = document.getElementById('defenders-info');
-const jatekBlockEl = document.getElementById('jatek-block');
-const jatekSelect = document.getElementById('jatek-select');
-const jatekKontraSelect = document.getElementById('jatek-kontra-select');
-const jatekResultTextEl = document.getElementById('jatek-result-text');
+const pirosAduToggle = document.getElementById('piros-adu-toggle');
 const bemondasLinesDiv = document.getElementById('bemondas-lines');
 const handForm = document.getElementById('hand-form');
 const handPreviewEl = document.getElementById('hand-preview');
 const historyListEl = document.getElementById('history-list');
 const btnUndo = document.getElementById('btn-undo');
+const btnAddLine = document.getElementById('btn-add-line');
 const lineTemplate = document.getElementById('tpl-bemondas-line');
-
-jatekSelect.innerHTML = JATEK_SZINTEK.map(j => `<option value="${j.id}">${j.nev} (${j.ertek})</option>`).join('');
-jatekKontraSelect.innerHTML = KONTRA_SZINTEK.map((label, i) => `<option value="${i}">${label}</option>`).join('');
 
 pirosAszToggle.addEventListener('change', () => {
   state.pirosAszOsztNemOszt = pirosAszToggle.checked;
@@ -210,7 +198,7 @@ function showGameScreen() {
   gameScreen.hidden = false;
   btnExport.hidden = false;
   btnReset.hidden = false;
-  updateJatekBlockVisibility();
+  if (bemondasLinesDiv.children.length === 0) resetHandForm();
   renderAll();
 }
 
@@ -297,59 +285,103 @@ function kontraOptionsHtml() {
   return KONTRA_SZINTEK.map((label, i) => `<option value="${i}">${label}</option>`).join('');
 }
 
-function bemondasOptionsHtml() {
-  const visible = BEMONDASOK.filter(b => b.optional !== 'negyasz' || state.negyaszEnabled);
-  const szin = visible.filter(b => b.kategoria === 'szin');
-  const aduNelkuli = visible.filter(b => b.kategoria === 'adu_nelkuli');
-  const group = (label, items) =>
-    `<optgroup label="${label}">${items.map(b => `<option value="${b.id}">${b.nev} (${b.ertek})</option>`).join('')}</optgroup>`;
+// Az adu nélküli (betli/durchmars-család) bemondások helyettesítik a teljes
+// menetet, ezért csak akkor választhatók, ha a leosztásban egyáltalán nincs
+// más bemondás; a színes extrák (négy ász, ulti, egy-egy durchmars/
+// redurchmars variáns) pedig csak egyszer szólhatnak le. `excludeLineEl`
+// annak a sornak a select-jét zárja ki a "már használt" számításból, amelyhez
+// épp az elérhető opciókat állítjuk össze (hogy a sor saját, jelenlegi
+// választása sose tűnjön el a felsorolásból).
+function usedBemondasok(excludeLineEl) {
+  const used = [];
+  bemondasLinesDiv.querySelectorAll('.bemondas-line').forEach(lineEl => {
+    if (lineEl === excludeLineEl) return;
+    used.push(bemondasById(lineEl.querySelector('.line-bemondas').value));
+  });
+  return used;
+}
+
+function availableBemondasok(excludeLineEl) {
+  const used = usedBemondasok(excludeLineEl);
+  if (used.some(b => b.kategoria === 'adu_nelkuli')) return [];
+  const usedIds = new Set(used.map(b => b.id));
+  const usedJatekAlap = used.some(b => b.jatekAlap);
+  const usedColoredDurchmarsFamily = used.some(b => b.id === 'durchmars_szines' || b.id === 'redurchmars_szines');
+  return BEMONDASOK.filter(b => {
+    if (b.optional === 'negyasz' && !state.negyaszEnabled) return false;
+    if (usedIds.has(b.id)) return false;
+    if (b.kategoria === 'adu_nelkuli' && used.length > 0) return false;
+    if (b.jatekAlap && usedJatekAlap) return false;
+    if ((b.id === 'durchmars_szines' || b.id === 'redurchmars_szines') && usedColoredDurchmarsFamily) return false;
+    // Színes durchmars/redurchmars mellé csak 40-100 vagy 20-100 alapjáték
+    // választható, sima Parti mellett nem lehet durchmars-t/redurchmars-t
+    // bemondani.
+    if (b.id === 'parti' && usedColoredDurchmarsFamily) return false;
+    if ((b.id === 'durchmars_szines' || b.id === 'redurchmars_szines') && usedIds.has('parti')) return false;
+    return true;
+  });
+}
+
+// Ha egy olyan extra bemondás marad "árván" a leosztásban (pl. Ulti), amihez
+// kötelezően kellene egy alapjáték (parti/40-100/20-100) vagy egy azt
+// helyettesítő színtelen bemondás, de az még nincs jelen, automatikusan
+// hozzáadjuk az alapjátékot egy külön sorként — színes durchmars/redurchmars
+// mellé "40-100"-at (mert sima Parti mellett az nem választható), egyébként
+// "Parti"-t.
+function ensureBaseGameLine() {
+  const boms = [...bemondasLinesDiv.querySelectorAll('.bemondas-line')]
+    .map(lineEl => bemondasById(lineEl.querySelector('.line-bemondas').value));
+  const hasColorless = boms.some(b => b.kategoria === 'adu_nelkuli');
+  const hasJatekAlap = boms.some(b => b.jatekAlap);
+  const hasOrphanSzinExtra = boms.some(b => b.kategoria === 'szin' && !b.jatekAlap);
+  if (hasOrphanSzinExtra && !hasColorless && !hasJatekAlap) {
+    const needsHigherAlap = boms.some(b => b.id === 'durchmars_szines' || b.id === 'redurchmars_szines');
+    addBemondasLine(needsHigherAlap ? '40_100' : 'parti');
+  }
+}
+
+function bemondasOptionsHtml(excludeLineEl, currentId) {
+  let list = availableBemondasok(excludeLineEl);
+  if (currentId && !list.some(b => b.id === currentId)) list = list.concat([bemondasById(currentId)]);
+  const szin = list.filter(b => b.kategoria === 'szin');
+  const aduNelkuli = list.filter(b => b.kategoria === 'adu_nelkuli');
+  const group = (label, items) => items.length
+    ? `<optgroup label="${label}">${items.map(b => `<option value="${b.id}">${b.nev} (${b.ertek})</option>`).join('')}</optgroup>`
+    : '';
   return group('Színjátékok (adu van)', szin) + group('Adu nélküli játékok', aduNelkuli);
 }
 
-// A kötelező játék-szint (parti/40-100/20-100) csak akkor tűnik el, ha a
-// leosztásban van adu nélküli (betli/durchmars család) bemondás — azok
-// helyettesítik a normál, aduval játszott menetet, tehát nincs önálló
-// játék-szintjük.
-function hasAduNelkuliLine() {
-  let found = false;
+// Minden sor legördülőjét frissíti a testvér-sorok jelenlegi választása alapján
+// (pl. ha egy sorban Ulti van, a többi sorból eltűnik az Ulti opció), és
+// letiltja a "+ Bemondás hozzáadása" gombot, ha már nincs mit hozzáadni.
+function refreshAllLineOptions() {
   bemondasLinesDiv.querySelectorAll('.bemondas-line').forEach(lineEl => {
-    const bem = bemondasById(lineEl.querySelector('.line-bemondas').value);
-    if (bem.kategoria === 'adu_nelkuli') found = true;
+    const sel = lineEl.querySelector('.line-bemondas');
+    const current = sel.value;
+    sel.innerHTML = bemondasOptionsHtml(lineEl, current);
+    sel.value = current;
   });
-  return found;
+  updateAddLineButtonState();
 }
 
-function updateJatekBlockVisibility() {
-  jatekBlockEl.hidden = hasAduNelkuliLine();
+function updateAddLineButtonState() {
+  const canAdd = availableBemondasok(null).length > 0;
+  btnAddLine.disabled = !canAdd;
+  btnAddLine.title = canAdd ? '' : 'Nincs több hozzáadható bemondás ehhez a leosztáshoz.';
 }
 
-function readJatekLine() {
-  const jatek = jatekSzintById(jatekSelect.value);
-  const result = document.querySelector('input[name="jatek-result"]:checked').value;
-  const level = parseInt(jatekKontraSelect.value, 10);
-  return { jatek, result, level };
+// A piros adu a teljes leosztásra (minden színes sorára egyaránt, beleértve
+// az alapjátékot is) egységesen érvényes, ezért a kapcsoló váltásakor minden
+// sor előnézetét újra kell számolni.
+function updateAllLineResultTexts() {
+  bemondasLinesDiv.querySelectorAll('.bemondas-line').forEach(updateLineResultText);
 }
 
-function updateJatekResultText() {
-  const defenders = currentDefenderIndices();
-  const { jatek, result, level } = readJatekLine();
-  const mult = multiplier(level, false, result);
-  const amount = jatek.ertek * mult;
-  const nameA = state.players[defenders[0]] || '1. ellenjátékos';
-  const nameB = state.players[defenders[1]] || '2. ellenjátékos';
-  const verb = result === 'siker' ? 'kap' : 'fizet';
-  jatekResultTextEl.textContent = `Felvevő ${verb} ${amount} pontot mindkét ellenjátékos (${nameA}, ${nameB}) ellen.`;
-}
-
-jatekSelect.addEventListener('change', () => { updateJatekResultText(); renderPreview(); });
-jatekKontraSelect.addEventListener('change', () => { updateJatekResultText(); renderPreview(); });
-document.querySelectorAll('input[name="jatek-result"]').forEach(r =>
-  r.addEventListener('change', () => { updateJatekResultText(); renderPreview(); })
-);
+pirosAduToggle.addEventListener('change', () => { updateAllLineResultTexts(); renderPreview(); });
 
 let bemondasLineCounter = 0;
 
-function addBemondasLine() {
+function addBemondasLine(presetId) {
   const clone = lineTemplate.content.cloneNode(true);
   const lineEl = clone.querySelector('.bemondas-line');
 
@@ -359,11 +391,14 @@ function addBemondasLine() {
   lineEl.querySelectorAll('input[type="radio"]').forEach(r => r.name = groupName);
 
   const bemondasSelect = lineEl.querySelector('.line-bemondas');
-  bemondasSelect.innerHTML = bemondasOptionsHtml();
+  bemondasSelect.innerHTML = bemondasOptionsHtml(null, presetId || null);
+  if (presetId) bemondasSelect.value = presetId;
 
   const jointSelect = lineEl.querySelector('.kontra-joint-select');
   const aSelect = lineEl.querySelector('.kontra-a-select');
   const bSelect = lineEl.querySelector('.kontra-b-select');
+  const pirosToggleLabel = lineEl.querySelector('.line-piros-toggle');
+  const pirosCheckbox = lineEl.querySelector('.line-piros-checkbox');
   jointSelect.innerHTML = kontraOptionsHtml();
   aSelect.innerHTML = kontraOptionsHtml();
   bSelect.innerHTML = kontraOptionsHtml();
@@ -373,30 +408,46 @@ function addBemondasLine() {
     const isSzin = bem.kategoria === 'szin';
     lineEl.querySelector('.kontra-joint').hidden = !isSzin;
     lineEl.querySelector('.kontra-split').hidden = isSzin;
+    const showPiros = !!bem.pirosVariant;
+    pirosToggleLabel.hidden = !showPiros;
+    if (!showPiros) pirosCheckbox.checked = false;
     updateLineResultText(lineEl);
   }
 
-  bemondasSelect.addEventListener('change', () => { refreshKategoria(); updateJatekBlockVisibility(); renderPreview(); });
+  bemondasSelect.addEventListener('change', () => {
+    refreshKategoria();
+    refreshAllLineOptions();
+    ensureBaseGameLine();
+    renderPreview();
+  });
   lineEl.querySelectorAll('input[type="radio"]').forEach(r =>
     r.addEventListener('change', () => { updateLineResultText(lineEl); renderPreview(); })
   );
-  [jointSelect, aSelect, bSelect].forEach(sel =>
+  [jointSelect, aSelect, bSelect, pirosCheckbox].forEach(sel =>
     sel.addEventListener('change', () => { updateLineResultText(lineEl); renderPreview(); })
   );
   lineEl.querySelector('.btn-remove-line').addEventListener('click', () => {
     lineEl.remove();
-    updateJatekBlockVisibility();
+    refreshAllLineOptions();
+    ensureBaseGameLine();
     renderPreview();
   });
 
   bemondasLinesDiv.appendChild(lineEl);
   refreshKategoria();
   updateAllKontraSplitLabels();
-  updateJatekBlockVisibility();
+  refreshAllLineOptions();
+  ensureBaseGameLine();
   renderPreview();
 }
 
-document.getElementById('btn-add-line').addEventListener('click', addBemondasLine);
+btnAddLine.addEventListener('click', () => addBemondasLine());
+
+function resetHandForm() {
+  bemondasLinesDiv.innerHTML = '';
+  pirosAduToggle.checked = false;
+  addBemondasLine('parti');
+}
 
 function readLine(lineEl) {
   const bem = bemondasById(lineEl.querySelector('.line-bemondas').value);
@@ -409,21 +460,33 @@ function readLine(lineEl) {
     levelA = parseInt(lineEl.querySelector('.kontra-a-select').value, 10);
     levelB = parseInt(lineEl.querySelector('.kontra-b-select').value, 10);
   }
-  return { bem, result, levelA, levelB };
+  // Színes bemondásnál (beleértve az alapjátékot is) a piros adu a leosztás
+  // egészére vonatkozó, közös kapcsolóból jön (nem választható el egymástól);
+  // a betlinél (az egyetlen pirosVariant bemondásnál) ez egy önálló,
+  // soronkénti kapcsoló.
+  let piros = false;
+  if (isSzin) {
+    piros = pirosAduToggle.checked;
+  } else if (bem.pirosVariant) {
+    piros = lineEl.querySelector('.line-piros-checkbox').checked;
+  }
+  return { bem, result, levelA, levelB, piros };
 }
 
 function updateLineResultText(lineEl) {
   const defenders = currentDefenderIndices();
-  const { bem, result, levelA, levelB } = readLine(lineEl);
+  const { bem, result, levelA, levelB, piros } = readLine(lineEl);
+  const ertek = bem.ertek * (piros ? 2 : 1);
   const multA = multiplier(levelA, bem.ultiSpecial, result);
   const multB = multiplier(levelB, bem.ultiSpecial, result);
-  const amountA = bem.ertek * multA;
-  const amountB = bem.ertek * multB;
+  const amountA = ertek * multA;
+  const amountB = ertek * multB;
   const nameA = state.players[defenders[0]] || '1. ellenjátékos';
   const nameB = state.players[defenders[1]] || '2. ellenjátékos';
   const verb = result === 'siker' ? 'kap' : 'fizet';
+  const pirosNote = piros ? ' (piros)' : '';
   lineEl.querySelector('.line-result').textContent =
-    `Felvevő ${verb} ${amountA} pontot (${nameA}) és ${amountB} pontot (${nameB}) ellen.`;
+    `Felvevő ${verb} ${amountA} pontot (${nameA}) és ${amountB} pontot (${nameB}) ellen${pirosNote}.`;
 }
 
 function computeHandDeltas() {
@@ -432,43 +495,30 @@ function computeHandDeltas() {
   const perPlayerDelta = new Array(state.playerCount).fill(0);
   const lineSummaries = [];
 
-  if (!jatekBlockEl.hidden) {
-    const { jatek, result, level } = readJatekLine();
-    const mult = multiplier(level, false, result);
-    const amount = jatek.ertek * mult;
-    const sign = result === 'siker' ? 1 : -1;
-
-    perPlayerDelta[declarer] += sign * (amount + amount);
-    perPlayerDelta[defenders[0]] -= sign * amount;
-    perPlayerDelta[defenders[1]] -= sign * amount;
-
-    lineSummaries.push({ nev: jatek.nev, result, amountA: amount, amountB: amount });
-  }
-
   bemondasLinesDiv.querySelectorAll('.bemondas-line').forEach(lineEl => {
-    const { bem, result, levelA, levelB } = readLine(lineEl);
+    const { bem, result, levelA, levelB, piros } = readLine(lineEl);
+    const ertek = bem.ertek * (piros ? 2 : 1);
     const multA = multiplier(levelA, bem.ultiSpecial, result);
     const multB = multiplier(levelB, bem.ultiSpecial, result);
-    const amountA = bem.ertek * multA;
-    const amountB = bem.ertek * multB;
+    const amountA = ertek * multA;
+    const amountB = ertek * multB;
     const sign = result === 'siker' ? 1 : -1;
 
     perPlayerDelta[declarer] += sign * (amountA + amountB);
     perPlayerDelta[defenders[0]] -= sign * amountA;
     perPlayerDelta[defenders[1]] -= sign * amountB;
 
-    lineSummaries.push({ nev: bem.nev, result, amountA, amountB });
+    lineSummaries.push({ nev: bem.nev + (piros ? ' (piros)' : ''), result, amountA, amountB });
   });
 
   return { declarer, defenders, perPlayerDelta, lineSummaries };
 }
 
 function renderPreview() {
-  if (jatekBlockEl.hidden && bemondasLinesDiv.children.length === 0) {
+  if (bemondasLinesDiv.children.length === 0) {
     handPreviewEl.hidden = true;
     return;
   }
-  if (!jatekBlockEl.hidden) updateJatekResultText();
   bemondasLinesDiv.querySelectorAll('.bemondas-line').forEach(updateLineResultText);
 
   const { declarer, perPlayerDelta } = computeHandDeltas();
@@ -484,7 +534,7 @@ function renderPreview() {
 
 handForm.addEventListener('submit', (e) => {
   e.preventDefault();
-  if (jatekBlockEl.hidden && bemondasLinesDiv.children.length === 0) {
+  if (bemondasLinesDiv.children.length === 0) {
     alert('Adj hozzá legalább egy bemondást a leosztáshoz.');
     return;
   }
@@ -508,9 +558,8 @@ handForm.addEventListener('submit', (e) => {
   state.round += 1;
 
   saveState();
-  bemondasLinesDiv.innerHTML = '';
+  resetHandForm();
   handPreviewEl.hidden = true;
-  updateJatekBlockVisibility();
   renderAll();
 });
 

@@ -77,23 +77,10 @@
         </label>
         <p id="defenders-info" class="muted"></p>
 
-        <div id="jatek-block" class="card-inset">
-          <p class="field-label">Játék (kötelező)</p>
-          <div class="line-row">
-            <select id="jatek-select"></select>
-          </div>
-          <div class="line-row">
-            <label class="radio-inline"><input type="radio" name="jatek-result" value="siker" checked> Sikerült</label>
-            <label class="radio-inline"><input type="radio" name="jatek-result" value="bukas"> Bukott</label>
-          </div>
-          <div class="line-row">
-            <label class="field-inline">
-              Kontra szintje (mindkét ellenjátékos ellen)
-              <select id="jatek-kontra-select"></select>
-            </label>
-          </div>
-          <p id="jatek-result-text" class="line-result muted"></p>
-        </div>
+        <label class="checkbox-inline">
+          <input type="checkbox" id="piros-adu-toggle">
+          Piros adu (duplázza a leosztás színes bemondásait — a játékot, ultit, négy ászt, színes durchmars/redurchmars-t)
+        </label>
 
         <div id="bemondas-lines"></div>
         <button type="button" id="btn-add-line" class="btn btn-secondary">+ Bemondás hozzáadása</button>
@@ -122,6 +109,10 @@
       <select class="line-bemondas"></select>
       <button type="button" class="btn btn-icon btn-remove-line" title="Bemondás törlése">✕</button>
     </div>
+    <label class="checkbox-inline line-piros-toggle" hidden>
+      <input type="checkbox" class="line-piros-checkbox">
+      Piros (duplázza az értéket)
+    </label>
     <div class="line-row">
       <label class="radio-inline"><input type="radio" name="result" value="siker" checked> Sikerült</label>
       <label class="radio-inline"><input type="radio" name="result" value="bukas"> Bukott</label>
