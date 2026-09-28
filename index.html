@@ -295,6 +295,10 @@ h2 { margin-top: 0; }
 
     <section class="card">
       <h2 id="round-title">Leosztás</h2>
+      <label class="field">
+        Osztó <span class="muted">(a szabály szerint automatikusan kitöltve, de a biztonság kedvéért módosítható)</span>
+        <select id="dealer-select"></select>
+      </label>
       <p id="round-meta" class="muted"></p>
       <label class="checkbox-inline">
         <input type="checkbox" id="piros-asz-toggle">
@@ -541,6 +545,7 @@ btnReset.addEventListener('click', () => {
 const scoreLedgerEl = document.getElementById('score-ledger');
 const roundTitleEl = document.getElementById('round-title');
 const roundMetaEl = document.getElementById('round-meta');
+const dealerSelect = document.getElementById('dealer-select');
 const pirosAszToggle = document.getElementById('piros-asz-toggle');
 const declarerSelect = document.getElementById('declarer-select');
 const defendersInfoEl = document.getElementById('defenders-info');
@@ -578,6 +583,7 @@ function showGameScreen() {
 
 function renderAll() {
   renderScoreLedger();
+  renderDealerOptions();
   renderRoundHeader();
   renderDeclarerOptions();
   renderDefendersInfo();
@@ -585,6 +591,28 @@ function renderAll() {
   renderPreview();
   pirosAszToggle.checked = !!state.pirosAszOsztNemOszt;
 }
+
+// Az osztót a szabály szerint az app automatikusan kitölti (ld. dealerIndex
+// karbantartását a leosztás mentésénél), de a biztonság kedvéért kézzel is
+// átállítható, ha a felállásban emberi hiba csúszna be.
+function renderDealerOptions() {
+  dealerSelect.innerHTML = '';
+  for (let i = 0; i < state.playerCount; i++) {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = state.players[i];
+    dealerSelect.appendChild(opt);
+  }
+  dealerSelect.value = state.dealerIndex;
+}
+
+dealerSelect.addEventListener('change', () => {
+  state.dealerIndex = parseInt(dealerSelect.value, 10);
+  saveState();
+  renderRoundHeader();
+  renderDeclarerOptions();
+  renderPreview();
+});
 
 function renderScoreLedger() {
   let html = '<tr><th>Kör</th>';
@@ -605,13 +633,10 @@ function renderScoreLedger() {
 
 function renderRoundHeader() {
   roundTitleEl.textContent = `${state.round}. leosztás`;
-  const dealerName = state.players[state.dealerIndex];
-  const alapTetNote = ` (alaptét: ${state.alapTet || 1}/pont)`;
-  if (state.playerCount === 4) {
-    roundMetaEl.textContent = `Osztó és kiálló: ${dealerName}${alapTetNote}`;
-  } else {
-    roundMetaEl.textContent = `Osztó: ${dealerName}${alapTetNote}`;
-  }
+  const alapTetNote = `Alaptét: ${state.alapTet || 1}/pont`;
+  roundMetaEl.textContent = state.playerCount === 4
+    ? `Az osztó ebben a körben kiáll. ${alapTetNote}`
+    : alapTetNote;
 }
 
 function renderDeclarerOptions() {
