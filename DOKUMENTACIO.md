@@ -1,8 +1,9 @@
 # Ulti Pontozó — dokumentáció
 
 Egyszerű, kizárólag a böngészőben futó (nincs szerver, nincs telepítés) alkalmazás egy
-Ulti parti-est pontjainak vezetésére. Három fájlból áll: `index.html`, `style.css`,
-`app.js`. Nincs külső függősége (nincs internetkapcsolat-igény, nincs build-lépés).
+Ulti parti-est pontjainak vezetésére. Egyetlen önálló `index.html` fájlból áll (a CSS és
+a JS is bele van ágyazva, nincs külön `style.css`/`app.js`). Nincs külső függősége
+(nincs internetkapcsolat-igény, nincs build-lépés).
 
 ## 1. Letöltés és futtatás
 
@@ -18,22 +19,29 @@ GitHub-os projekt oldaláról 3 kattintással letölthető:
    mappába:
    - **Windows:** jobb klikk a ZIP-re → **"Kibontás mind…"** (Extract All).
    - **Mac:** dupla kattintás a ZIP-re, automatikusan kicsomagolja.
-4. Nyisd meg a kicsomagolt mappát — ebben lesz az `index.html`, `style.css`
-   és `app.js` fájl, amikre az 1.2 pontban van szükség.
+4. Nyisd meg a kicsomagolt mappát — ebben lesz az `index.html` fájl, amire az
+   1.2 pontban van szükség.
 
-(Ha valaki inkább git-tel dolgozik: `git clone https://github.com/Tepsi/UltiCalculator.git`.)
+(Ha valaki inkább git-tel dolgozik: `git clone https://github.com/Tepsi/UltiCalculator.git`.
+Ha csak az `index.html`-t akarod egyben letölteni ZIP nélkül: nyisd meg a fájlt a GitHub
+oldalán, kattints a **"Raw"** gombra, majd `Ctrl+S`/`Cmd+S`-sel mentsd el.)
 
 ### 1.2 Futtatás
 
 - **PC-n:** dupla kattintás a kicsomagolt mappában lévő `index.html`-re,
   megnyílik az alapértelmezett böngészőben.
 - **Androidon / iPhone-on:**
-  - Legegyszerűbb: töltsd fel a három fájlt (azonos mappába) a telefonra (pl. felhő-tárhelyre,
-    e-mailben, vagy egy pendrive-ról), és a fájlkezelőből nyisd meg az `index.html`-t —
-    ez böngészőben megnyílik.
-  - Ha a telefon böngészője nem engedi megnyitni a helyi fájlt közvetlenül (ez főleg iOS
-    Safari-n előfordulhat), indíts egy pillanatnyi helyi webszervert a gépeden ugyanazon a
-    Wi-Fi-n, és a telefonról a gép IP-címén érd el, pl.:
+  - Töltsd fel az `index.html` fájlt a telefonra (pl. felhő-tárhelyre, e-mailben,
+    vagy egy pendrive-ról), és a fájlkezelőből nyisd meg — ez böngészőben megnyílik.
+    Mivel az app egyetlen önálló fájl (nincs benne külső `style.css`/`app.js`
+    hivatkozás), nem kell mellé más fájlt is feltölteni, és elkerülhető az a
+    gyakori Android-hiba, hogy a fájlkezelőből "Megnyitás ezzel" úton indított
+    HTML mellől a böngésző (pl. Edge, néha Chrome is) nem engedi betölteni a
+    mellette lévő különálló fájlokat — ez korábban üres beviteli mezőkként vagy
+    egyenesen "file not found" hibaüzenetként jelentkezett.
+  - Ha a telefon böngészője így sem engedi megnyitni a helyi fájlt közvetlenül (ez
+    főleg iOS Safari-n előfordulhat), indíts egy pillanatnyi helyi webszervert a
+    gépeden ugyanazon a Wi-Fi-n, és a telefonról a gép IP-címén érd el, pl.:
     ```
     cd <a kicsomagolt mappa útvonala>
     python -m http.server 8080
@@ -314,13 +322,13 @@ opciót.
 - Csak az "alap kör" bemondásai szerepelnek a katalógusban (a leggyakrabban
   használt bemondások); a nagyon ritka variánsok (pl. két/négy ász ellen,
   teljesen kifordított különleges variánsok) nincsenek benne. A katalógus a
-  `app.js` fájl elején lévő `BEMONDASOK` tömbben bővíthető/pontosítható, ha a
+  `index.html` beágyazott `<script>` blokkjának elején lévő `BEMONDASOK` tömbben bővíthető/pontosítható, ha a
   játékostársaság más pontértékekkel vagy bemondásokkal játszik.
 - A durchmars/redurchmars és betli/rebetli pontértékei és színes/színtelen
   besorolása a ti asztalotoknál szokásos, konkrét szabályokat követi (nem az
   ultiblog.hu általános táblázatát) — ha egy másik asztalnál ettől eltérő
   értékekkel vagy besorolással játszanak, a `BEMONDASOK` tömb `ertek` és
-  `kategoria` mezői az `app.js` elején szabadon átállíthatók.
+  `kategoria` mezői az `index.html` beágyazott `<script>` blokkjának elején szabadon átállíthatók.
 - Az alkalmazás nem validálja, hogy egy leosztásban legális-e a választott felvevő/
   ellenjátékos-felosztás a tényleges licitmenet szempontjából (ki miért nyerte a
   licitet) — ez emberi döntés, az app csak a végeredményt (ki a felvevő, mi lett a
@@ -333,21 +341,31 @@ opciót.
 
 ```
 UltiCalculator/
-├── index.html      -- a felület HTML szerkezete
-├── style.css       -- reszponzív, mobilbarát megjelenés
-├── app.js          -- játék-szint és bemondás-katalógus, pontszámítási logika, állapotkezelés
+├── index.html      -- a teljes app: HTML szerkezet, beágyazott <style> és <script> egyetlen fájlban
 └── DOKUMENTACIO.md -- ez a dokumentum
 ```
 
+Az `index.html` szándékosan egyetlen, önálló fájl — nincs benne külső
+`style.css`/`app.js` hivatkozás. Ennek oka egy Androidon (Edge-en, néha
+Chrome-on is) tapasztalt hiba: ha valaki a fájlkezelőből "Megnyitás ezzel" /
+"Megosztás" úton nyit meg egy HTML fájlt, a böngésző csak az adott fájlra kap
+hozzáférést (`content://` URI), a mellette lévő különálló fájlokat (CSS, JS)
+nem tudja relatív útvonalon betölteni — ez a felületen üres beviteli
+mezőkként (pl. a játékosnevek mezői sosem jelentek meg) vagy egyenesen
+"file not found" hibaüzenetként jelentkezett. Egyetlen fájlban ez nem
+fordulhat elő. A beágyazott `<style>` blokk tartalma megfelel a korábbi
+`style.css`-nek, a beágyazott `<script>` blokk tartalma pedig a korábbi
+`app.js`-nek — a kódot közvetlenül az `index.html`-ben kell szerkeszteni.
+
 Az összes alapjáték és bemondás (parti/40-100/20-100, négy ász, ulti, betli,
 durchmars és variánsaik) egyetlen közös `BEMONDASOK` konstansban van az
-`app.js` tetején — az alapjáték-elemeket a `jatekAlap: true` mező jelöli meg
+`index.html` beágyazott `<script>` blokkjának elején — az alapjáték-elemeket a `jatekAlap: true` mező jelöli meg
 (ezekből egyszerre csak egy lehet a leosztásban); a kontraszintek a
 `KONTRA_SZINTEK` konstansban vannak — ide kell nyúlni, ha egy alapérték
 módosul, vagy új bemondást szeretnétek felvenni. Az extra bemondások (négy
 ász, ulti, színes durchmars/redurchmars) alapértékei **nem** tartalmazzák az
 alapjáték értékét, azt egy külön, automatikusan hozzáadott "Parti" sor adja
-hozzá (ld. `ensureBaseGameLine` az `app.js`-ben). A piros duplázás nem önálló
+hozzá (ld. `ensureBaseGameLine` az `index.html` beágyazott scriptjében). A piros duplázás nem önálló
 katalógus-elem: a "színes" (`kategoria: 'szin'`) bemondásoknál a leosztás
 egészére vonatkozó "Piros adu" kapcsolóból jön, a `pirosVariant: true` jelölésű
 bemondásnál (jelenleg csak a betlinél) pedig saját, soronkénti

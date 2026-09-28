@@ -6,14 +6,15 @@ nem kell hozzá semmilyen programozói ismeret.
 
 ## Letöltés és futtatás
 
-1. Kattints a fenti zöld **"Code"** gombra, majd **"Download ZIP"** — ez
-   letölti a teljes projektet egy `.zip` fájlban.
-2. Csomagold ki a ZIP-et egy tetszőleges mappába (Windows-on jobb klikk →
-   "Kibontás mind…", Mac-en dupla kattintás rá).
-3. **PC-n:** nyisd meg a kicsomagolt mappát, és dupla kattintással indítsd el
-   az `index.html` fájlt — megnyílik az alapértelmezett böngészőben.
-   **Telefonon:** töltsd fel a három fájlt (`index.html`, `style.css`,
-   `app.js`) egy közös mappába, és a fájlkezelőből nyisd meg az `index.html`-t.
+Az app egyetlen önálló `index.html` fájl (a CSS és a JS is bele van ágyazva) —
+nincs szükség ZIP-re vagy több fájl együtt tartására.
+
+1. Nyisd meg az `index.html` fájlt a GitHub oldalán, kattints a **"Raw"**
+   gombra, majd mentsd el ("Kép/oldal mentése", `Ctrl+S`/`Cmd+S`).
+2. **PC-n:** dupla kattintással indítsd el a mentett `index.html` fájlt —
+   megnyílik az alapértelmezett böngészőben.
+   **Telefonon:** töltsd fel az `index.html` fájlt (pl. felhő-tárhelyre,
+   e-mailben), és a fájlkezelőből nyisd meg — nem kell mellé más fájl.
 
 Ennyi — nincs szükség se szerverre, se internetkapcsolatra, az app onnantól
 a böngésződben fut.
@@ -46,8 +47,14 @@ kontraszintek) lásd: [DOKUMENTACIO.md](DOKUMENTACIO.md).
 
 ```
 UltiCalculator/
-├── index.html      -- a felület HTML szerkezete
-├── style.css       -- reszponzív, mobilbarát megjelenés
-├── app.js          -- játék-szint és bemondás-katalógus, pontszámítási logika, állapotkezelés
+├── index.html      -- a teljes app: HTML szerkezet, beágyazott CSS és JS egyetlen fájlban
 └── DOKUMENTACIO.md -- részletes dokumentáció
 ```
+
+Az `index.html` szándékosan egyetlen, önálló fájl (nincs benne külső
+`style.css`/`app.js` hivatkozás) — ez azért fontos, mert egyes mobil
+böngészők (pl. Android Edge, néha Chrome is) a fájlkezelőből "Megosztás" /
+"Megnyitás ezzel" úton megnyitott HTML fájl mellől nem engedik betölteni a
+mellette lévő különálló fájlokat, ilyenkor a lapon üres mezők vagy
+"file not found" hibaüzenet jelenik meg. Egyetlen fájlban ez a probléma nem
+jöhet elő.
