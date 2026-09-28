@@ -269,6 +269,11 @@ h2 { margin-top: 0; }
         <select id="starting-dealer"></select>
       </label>
 
+      <label class="field">
+        Alaptét (mennyit ér egy parti pont)
+        <input type="number" id="alap-tet" value="1" min="0.01" step="any">
+      </label>
+
       <label class="checkbox-inline">
         <input type="checkbox" id="negyasz-toggle">
         Négyász bemondás engedélyezése (alapértelmezetten kikapcsolva)
@@ -453,6 +458,7 @@ const playerCountSelect = document.getElementById('player-count');
 const playerNamesDiv = document.getElementById('player-names');
 const startingDealerSelect = document.getElementById('starting-dealer');
 const negyaszToggle = document.getElementById('negyasz-toggle');
+const alapTetInput = document.getElementById('alap-tet');
 const btnExport = document.getElementById('btn-export');
 const btnReset = document.getElementById('btn-reset');
 
@@ -494,6 +500,7 @@ document.getElementById('btn-start').addEventListener('click', () => {
     players.push(val || `Játékos ${i + 1}`);
   }
   const dealerIndex = parseInt(startingDealerSelect.value, 10);
+  const alapTet = parseFloat(alapTetInput.value) || 1;
 
   state = {
     playerCount: count,
@@ -504,6 +511,7 @@ document.getElementById('btn-start').addEventListener('click', () => {
     history: [],
     pirosAszOsztNemOszt: false,
     negyaszEnabled: negyaszToggle.checked,
+    alapTet: alapTet,
   };
   saveState();
   showGameScreen();
@@ -598,10 +606,11 @@ function renderScoreLedger() {
 function renderRoundHeader() {
   roundTitleEl.textContent = `${state.round}. leosztás`;
   const dealerName = state.players[state.dealerIndex];
+  const alapTetNote = ` (alaptét: ${state.alapTet || 1}/pont)`;
   if (state.playerCount === 4) {
-    roundMetaEl.textContent = `Osztó és kiálló: ${dealerName}`;
+    roundMetaEl.textContent = `Osztó és kiálló: ${dealerName}${alapTetNote}`;
   } else {
-    roundMetaEl.textContent = `Osztó: ${dealerName}`;
+    roundMetaEl.textContent = `Osztó: ${dealerName}${alapTetNote}`;
   }
 }
 
@@ -712,7 +721,7 @@ function bemondasOptionsHtml(excludeLineEl, currentId) {
   const szin = list.filter(b => b.kategoria === 'szin');
   const aduNelkuli = list.filter(b => b.kategoria === 'adu_nelkuli');
   const group = (label, items) => items.length
-    ? `<optgroup label="${label}">${items.map(b => `<option value="${b.id}">${b.nev} (${b.ertek})</option>`).join('')}</optgroup>`
+    ? `<optgroup label="${label}">${items.map(b => `<option value="${b.id}">${b.nev} (${bemondasErtek(b, false)})</option>`).join('')}</optgroup>`
     : '';
   return group('Színjátékok (adu van)', szin) + group('Adu nélküli játékok', aduNelkuli);
 }
@@ -839,10 +848,16 @@ function readLine(lineEl) {
   return { bem, result, levelA, levelB, piros };
 }
 
+// Az alaptét (Ft/pont) egységesen szorozza mindegyik bemondás alapértékét,
+// mielőtt a kontraszorzó rájuk kerülne.
+function bemondasErtek(bem, piros) {
+  return bem.ertek * (piros ? 2 : 1) * (state.alapTet || 1);
+}
+
 function updateLineResultText(lineEl) {
   const defenders = currentDefenderIndices();
   const { bem, result, levelA, levelB, piros } = readLine(lineEl);
-  const ertek = bem.ertek * (piros ? 2 : 1);
+  const ertek = bemondasErtek(bem, piros);
   const multA = multiplier(levelA, bem.ultiSpecial, result);
   const multB = multiplier(levelB, bem.ultiSpecial, result);
   const amountA = ertek * multA;
@@ -863,7 +878,7 @@ function computeHandDeltas() {
 
   bemondasLinesDiv.querySelectorAll('.bemondas-line').forEach(lineEl => {
     const { bem, result, levelA, levelB, piros } = readLine(lineEl);
-    const ertek = bem.ertek * (piros ? 2 : 1);
+    const ertek = bemondasErtek(bem, piros);
     const multA = multiplier(levelA, bem.ultiSpecial, result);
     const multB = multiplier(levelB, bem.ultiSpecial, result);
     const amountA = ertek * multA;

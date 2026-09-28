@@ -24,6 +24,8 @@ Részletek (git klónozás, mobilos webszerver-trükk, ha a böngésző nem enge
 ## Fő funkciók
 
 - 3 vagy 4 fős mód (4 fősnél az osztó kiáll az adott leosztásban).
+- Parti-est indításánál beállítható az alaptét (mennyit ér egy parti-pont) —
+  minden bemondás ehhez arányosan skálázva fizet, nem csak egyforintos alapon.
 - Egyetlen közös bemondás-katalógus (parti / 40-100 / 20-100, ulti,
   (kapcsolóval) négyász, betli, durchmars/redurchmars), soronként hozzáadva —
   ha egy alapjátékot igénylő extrát (pl. ulti) választasz alapjáték nélkül, az

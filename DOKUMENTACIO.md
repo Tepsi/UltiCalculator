@@ -68,6 +68,12 @@ oldalán, kattints a **"Raw"** gombra, majd `Ctrl+S`/`Cmd+S`-sel mentsd el.)
 - **Osztás menete**: alapesetben a következő osztó mindig az, aki az előző
   leosztásban felvevő volt. A parti-est végén szokásos **"Piros ász oszt, nem
   oszt"** kapcsolóval ez átállítható egyszerű körbe járó osztásra — ld. 3.3 pont.
+- **Alaptét**: a parti-est indításánál megadható szám, ami azt mondja meg, mennyit
+  ér egy "pont" (pl. a `BEMONDASOK` katalógusban a Parti alapértéke 1 pont — 2-es
+  alaptétnél ez 2, az Ulti 4 pontos alapértéke pedig 8). A leosztásokban minden
+  bemondás (alapjáték, ulti, négy ász, betli, durchmars stb.) ehhez arányosan
+  skálázva fizet, tehát nem kell egyforintos alapon játszani. A leosztás
+  mentése után az alaptét már nem módosítható az adott parti-esten belül.
 
 ## 3. Képernyők és funkciók
 
@@ -79,11 +85,14 @@ oldalán, kattints a **"Raw"** gombra, majd `Ctrl+S`/`Cmd+S`-sel mentsd el.)
   1. Válaszd ki a létszámot (3 vagy 4 fő).
   2. Add meg a játékosok nevét (üresen hagyva "Játékos 1", "Játékos 2"... néven fut).
   3. Válaszd ki, ki osztja az elsőt (ő lesz 4 fős módban az első kiálló is).
-  4. **Négyász bemondás engedélyezése**: alapértelmezetten kikapcsolva (a
+  4. **Alaptét**: add meg, mennyit ér egy pont (alapértéke 1). Ha nem
+     egyforintos alapon játszotok, itt állítsd be a tényleges tétet — minden
+     bemondás automatikusan ehhez arányosan skálázva fizet.
+  5. **Négyász bemondás engedélyezése**: alapértelmezetten kikapcsolva (a
      katalógusban nem is jelenik meg a "Négy ász" / "Piros négy ász" opció),
      mert sok asztalnál nem játszanak négyásszal. Bekapcsolható, ha az adott
      parti-esten szeretnétek négyászt is bemondani.
-  5. "Parti-est indítása" — ettől kezdve minden változás automatikusan mentődik.
+  6. "Parti-est indítása" — ettől kezdve minden változás automatikusan mentődik.
 
 ### 3.2 Főképernyő — pontállás táblázat
 
