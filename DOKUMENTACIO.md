@@ -4,9 +4,29 @@ Egyszerű, kizárólag a böngészőben futó (nincs szerver, nincs telepítés)
 Ulti parti-est pontjainak vezetésére. Három fájlból áll: `index.html`, `style.css`,
 `app.js`. Nincs külső függősége (nincs internetkapcsolat-igény, nincs build-lépés).
 
-## 1. Futtatás
+## 1. Letöltés és futtatás
 
-- **PC-n:** dupla kattintás az `index.html`-re, megnyílik az alapértelmezett böngészőben.
+### 1.1 Letöltés GitHub-ról
+
+Nincs szükség programozói ismeretre, telepítőre vagy fejlesztői eszközre — a
+GitHub-os projekt oldaláról 3 kattintással letölthető:
+
+1. Nyisd meg a projekt GitHub oldalát: https://github.com/Tepsi/UltiCalculator
+2. Kattints a zöld **"Code"** gombra a fájllista fölött, majd a megnyíló
+   menüben **"Download ZIP"**.
+3. Csomagold ki a letöltött `UltiCalculator-master.zip` fájlt egy tetszőleges
+   mappába:
+   - **Windows:** jobb klikk a ZIP-re → **"Kibontás mind…"** (Extract All).
+   - **Mac:** dupla kattintás a ZIP-re, automatikusan kicsomagolja.
+4. Nyisd meg a kicsomagolt mappát — ebben lesz az `index.html`, `style.css`
+   és `app.js` fájl, amikre az 1.2 pontban van szükség.
+
+(Ha valaki inkább git-tel dolgozik: `git clone https://github.com/Tepsi/UltiCalculator.git`.)
+
+### 1.2 Futtatás
+
+- **PC-n:** dupla kattintás a kicsomagolt mappában lévő `index.html`-re,
+  megnyílik az alapértelmezett böngészőben.
 - **Androidon / iPhone-on:**
   - Legegyszerűbb: töltsd fel a három fájlt (azonos mappába) a telefonra (pl. felhő-tárhelyre,
     e-mailben, vagy egy pendrive-ról), és a fájlkezelőből nyisd meg az `index.html`-t —
@@ -15,7 +35,7 @@ Ulti parti-est pontjainak vezetésére. Három fájlból áll: `index.html`, `st
     Safari-n előfordulhat), indíts egy pillanatnyi helyi webszervert a gépeden ugyanazon a
     Wi-Fi-n, és a telefonról a gép IP-címén érd el, pl.:
     ```
-    cd C:\tools\UltiCalculator
+    cd <a kicsomagolt mappa útvonala>
     python -m http.server 8080
     ```
     majd a telefonon nyisd meg: `http://<a-géped-IP-címe>:8080/`.

@@ -1,16 +1,24 @@
 # Ulti Pontozó
 
 Egyszerű, kizárólag a böngészőben futó alkalmazás egy Ulti parti-est
-pontjainak vezetésére. Nincs szerver, nincs telepítés, nincs build-lépés —
-csak nyisd meg az `index.html`-t.
+pontjainak vezetésére. Nincs szerver, nincs telepítés, nincs build-lépés,
+nem kell hozzá semmilyen programozói ismeret.
 
-## Futtatás
+## Letöltés és futtatás
 
-- **PC-n:** dupla kattintás az `index.html`-re.
-- **Telefonon:** töltsd fel a három fájlt (`index.html`, `style.css`,
-  `app.js`) egy közös mappába, és a fájlkezelőből nyisd meg az `index.html`-t.
+1. Kattints a fenti zöld **"Code"** gombra, majd **"Download ZIP"** — ez
+   letölti a teljes projektet egy `.zip` fájlban.
+2. Csomagold ki a ZIP-et egy tetszőleges mappába (Windows-on jobb klikk →
+   "Kibontás mind…", Mac-en dupla kattintás rá).
+3. **PC-n:** nyisd meg a kicsomagolt mappát, és dupla kattintással indítsd el
+   az `index.html` fájlt — megnyílik az alapértelmezett böngészőben.
+   **Telefonon:** töltsd fel a három fájlt (`index.html`, `style.css`,
+   `app.js`) egy közös mappába, és a fájlkezelőből nyisd meg az `index.html`-t.
 
-Részletek (mobilos webszerver-trükk, ha a böngésző nem engedi a helyi fájlt): [DOKUMENTACIO.md](DOKUMENTACIO.md).
+Ennyi — nincs szükség se szerverre, se internetkapcsolatra, az app onnantól
+a böngésződben fut.
+
+Részletek (git klónozás, mobilos webszerver-trükk, ha a böngésző nem engedi a helyi fájlt): [DOKUMENTACIO.md](DOKUMENTACIO.md).
 
 ## Fő funkciók
 
