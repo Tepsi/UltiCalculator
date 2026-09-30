@@ -118,13 +118,6 @@ h2 { margin-top: 0; }
 
 .line-row select { flex: 1; min-width: 150px; }
 
-.radio-inline {
-  font-weight: 400;
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-}
-
 .checkbox-inline {
   font-weight: 400;
   font-size: 0.9rem;
@@ -133,6 +126,32 @@ h2 { margin-top: 0; }
   gap: 0.4rem;
   margin-bottom: 0.9rem;
   color: var(--color-muted);
+}
+
+.control-lg {
+  font-size: 1.15rem !important;
+  padding: 0.8rem !important;
+  font-weight: 600 !important;
+}
+
+.result-toggle {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-secondary);
+}
+
+.result-toggle input[type="checkbox"] {
+  width: 1.3rem;
+  height: 1.3rem;
+  accent-color: var(--color-danger);
+}
+
+.bemondas-line.is-bukott {
+  border-color: var(--color-danger);
+}
+
+.bemondas-line.is-bukott .result-toggle-label {
+  color: var(--color-danger);
 }
 
 .field-label {
@@ -296,25 +315,25 @@ h2 { margin-top: 0; }
     <section class="card">
       <h2 id="round-title">Leosztás</h2>
       <label class="field">
-        Osztó <span class="muted">(a szabály szerint automatikusan kitöltve, de a biztonság kedvéért módosítható)</span>
-        <select id="dealer-select"></select>
+        Osztó
+        <select id="dealer-select" class="control-lg" title="A szabály szerint automatikusan kitöltve, de kézzel is módosítható, ha hiba csúszna a felállásba."></select>
       </label>
       <p id="round-meta" class="muted"></p>
-      <label class="checkbox-inline">
+      <label class="checkbox-inline" title="Bekapcsolva a hagyományos, körbe járó osztás lép életbe; kikapcsolva a felvevő oszt tovább.">
         <input type="checkbox" id="piros-asz-toggle">
-        Piros ász oszt, nem oszt (az osztás körbe megy, nem a felvevő oszt tovább)
+        Piros ász oszt, nem oszt
       </label>
 
       <form id="hand-form">
         <label class="field">
           Felvevő
-          <select id="declarer-select"></select>
+          <select id="declarer-select" class="control-lg"></select>
         </label>
         <p id="defenders-info" class="muted"></p>
 
-        <label class="checkbox-inline">
+        <label class="checkbox-inline" title="Duplázza a leosztás színes bemondásait: a játékot, ultit, négy ászt, színes durchmars/redurchmars-t.">
           <input type="checkbox" id="piros-adu-toggle">
-          Piros adu (duplázza a leosztás színes bemondásait — a játékot, ultit, négy ászt, színes durchmars/redurchmars-t)
+          Piros adu
         </label>
 
         <div id="bemondas-lines"></div>
@@ -341,31 +360,31 @@ h2 { margin-top: 0; }
 <template id="tpl-bemondas-line">
   <div class="bemondas-line card-inset">
     <div class="line-row">
-      <select class="line-bemondas"></select>
+      <select class="line-bemondas control-lg"></select>
       <button type="button" class="btn btn-icon btn-remove-line" title="Bemondás törlése">✕</button>
     </div>
     <label class="checkbox-inline line-piros-toggle" hidden>
       <input type="checkbox" class="line-piros-checkbox">
       Piros (duplázza az értéket)
     </label>
-    <div class="line-row">
-      <label class="radio-inline"><input type="radio" name="result" value="siker" checked> Sikerült</label>
-      <label class="radio-inline"><input type="radio" name="result" value="bukas"> Bukott</label>
-    </div>
+    <label class="checkbox-inline result-toggle">
+      <input type="checkbox" class="line-bukott-checkbox">
+      <span class="result-toggle-label">Sikerült</span>
+    </label>
     <div class="line-row kontra-joint">
       <label class="field-inline">
         Kontra szintje (mindkét ellenjátékos ellen)
-        <select class="kontra-joint-select"></select>
+        <select class="kontra-joint-select control-lg"></select>
       </label>
     </div>
     <div class="line-row kontra-split" hidden>
       <label class="field-inline">
         <span class="defender-a-label">1. ellenjátékos</span> kontrája
-        <select class="kontra-a-select"></select>
+        <select class="kontra-a-select control-lg"></select>
       </label>
       <label class="field-inline">
         <span class="defender-b-label">2. ellenjátékos</span> kontrája
-        <select class="kontra-b-select"></select>
+        <select class="kontra-b-select control-lg"></select>
       </label>
     </div>
     <p class="line-result muted"></p>
@@ -606,12 +625,15 @@ function renderDealerOptions() {
   dealerSelect.value = state.dealerIndex;
 }
 
+// Az osztó módosítása megváltoztatja, ki számít ellenjátékosnak (4 fős
+// módban a kiálló is más lesz), ezért a folyamatban lévő leosztás
+// felvevő-/bemondás-beállításai a régi felálláshoz tartoznának — a
+// félreszámolás elkerülése végett az egészet visszaállítjuk alapállapotba.
 dealerSelect.addEventListener('change', () => {
   state.dealerIndex = parseInt(dealerSelect.value, 10);
   saveState();
-  renderRoundHeader();
-  renderDeclarerOptions();
-  renderPreview();
+  renderDeclarerOptions(false);
+  resetHandForm();
 });
 
 function renderScoreLedger() {
@@ -639,7 +661,7 @@ function renderRoundHeader() {
     : alapTetNote;
 }
 
-function renderDeclarerOptions() {
+function renderDeclarerOptions(preserveSelection = true) {
   const active = activePlayerIndices();
   const prev = declarerSelect.value;
   declarerSelect.innerHTML = '';
@@ -649,7 +671,7 @@ function renderDeclarerOptions() {
     opt.textContent = state.players[i];
     declarerSelect.appendChild(opt);
   });
-  if (active.includes(parseInt(prev, 10))) declarerSelect.value = prev;
+  if (preserveSelection && active.includes(parseInt(prev, 10))) declarerSelect.value = prev;
   renderDefendersInfo();
 }
 
@@ -779,16 +801,16 @@ function updateAllLineResultTexts() {
 
 pirosAduToggle.addEventListener('change', () => { updateAllLineResultTexts(); renderPreview(); });
 
-let bemondasLineCounter = 0;
-
 function addBemondasLine(presetId) {
   const clone = lineTemplate.content.cloneNode(true);
   const lineEl = clone.querySelector('.bemondas-line');
 
-  // Egyedi radio-csoport név soronként, különben a böngésző az összes bemondás-sor
-  // Sikerült/Bukott rádiógombját egyetlen (form-szintű) csoportnak kezelné.
-  const groupName = `result-${bemondasLineCounter++}`;
-  lineEl.querySelectorAll('input[type="radio"]').forEach(r => r.name = groupName);
+  const bukottCheckbox = lineEl.querySelector('.line-bukott-checkbox');
+  const bukottLabel = lineEl.querySelector('.result-toggle-label');
+  function refreshResultLabel() {
+    bukottLabel.textContent = bukottCheckbox.checked ? 'Bukott' : 'Sikerült';
+    lineEl.classList.toggle('is-bukott', bukottCheckbox.checked);
+  }
 
   const bemondasSelect = lineEl.querySelector('.line-bemondas');
   bemondasSelect.innerHTML = bemondasOptionsHtml(null, presetId || null);
@@ -820,9 +842,11 @@ function addBemondasLine(presetId) {
     ensureBaseGameLine();
     renderPreview();
   });
-  lineEl.querySelectorAll('input[type="radio"]').forEach(r =>
-    r.addEventListener('change', () => { updateLineResultText(lineEl); renderPreview(); })
-  );
+  bukottCheckbox.addEventListener('change', () => {
+    refreshResultLabel();
+    updateLineResultText(lineEl);
+    renderPreview();
+  });
   [jointSelect, aSelect, bSelect, pirosCheckbox].forEach(sel =>
     sel.addEventListener('change', () => { updateLineResultText(lineEl); renderPreview(); })
   );
@@ -835,6 +859,7 @@ function addBemondasLine(presetId) {
 
   bemondasLinesDiv.appendChild(lineEl);
   refreshKategoria();
+  refreshResultLabel();
   updateAllKontraSplitLabels();
   refreshAllLineOptions();
   ensureBaseGameLine();
@@ -851,7 +876,7 @@ function resetHandForm() {
 
 function readLine(lineEl) {
   const bem = bemondasById(lineEl.querySelector('.line-bemondas').value);
-  const result = lineEl.querySelector('input[type="radio"]:checked').value;
+  const result = lineEl.querySelector('.line-bukott-checkbox').checked ? 'bukas' : 'siker';
   const isSzin = bem.kategoria === 'szin';
   let levelA, levelB;
   if (isSzin) {

@@ -1,0 +1,16 @@
+{
+  "name": "ulticalculator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Regressziós tesztek az Ulti Pontozó (index.html) funkcióihoz. Az app magát nem kell build-elni, ez csak a fejlesztői tesztfutáshoz kell.",
+  "scripts": {
+    "test": "node tests/regression.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Tepsi/UltiCalculator.git"
+  },
+  "devDependencies": {
+    "jsdom": "^30.1.1"
+  }
+}
