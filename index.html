@@ -154,6 +154,29 @@ h2 { margin-top: 0; }
   color: var(--color-danger);
 }
 
+.bemondas-line.is-auto-bukott .result-toggle {
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+.line-lock-note {
+  color: var(--color-danger);
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin: -0.4rem 0 0.6rem 0;
+}
+
+@keyframes shake-x {
+  10%, 90% { transform: translateX(-2px); }
+  20%, 80% { transform: translateX(3px); }
+  30%, 50%, 70% { transform: translateX(-5px); }
+  40%, 60% { transform: translateX(5px); }
+}
+
+.line-lock-note.shake {
+  animation: shake-x 0.4s;
+}
+
 .field-label {
   font-weight: 600;
   margin: 0 0 0.35rem 0;
@@ -223,6 +246,14 @@ h2 { margin-top: 0; }
 
 .scoreboard tr.is-dealer td.player-name::after { content: " (osztó)"; font-weight: 400; color: var(--color-muted); }
 .scoreboard tr.is-sitting-out { opacity: 0.55; }
+
+.scoreboard tr.row-teritett { background: #fff7e0; }
+
+.player-icon {
+  font-size: 0.85em;
+  color: var(--color-primary-dark);
+}
+.scoreboard th .player-icon { color: #fff; }
 
 .preview {
   background: #eef1ea;
@@ -371,6 +402,7 @@ h2 { margin-top: 0; }
       <input type="checkbox" class="line-bukott-checkbox">
       <span class="result-toggle-label">Sikerült</span>
     </label>
+    <p class="line-lock-note" hidden></p>
     <div class="line-row kontra-joint">
       <label class="field-inline">
         Kontra szintje (mindkét ellenjátékos ellen)
@@ -447,7 +479,28 @@ function multiplier(level, ultiSpecial, result) {
   return Math.pow(2, level);
 }
 
+// Minden játékos egy véletlenszerűen kiosztott, egyedi ikont kap a parti-est
+// indításakor — ez a parti-est végéig hozzá kötve marad, és a terített
+// bemondások (ld. teritett mező) felvevőjét jelöli a pontállás táblázatban.
+const PLAYER_ICONS = ['●', '▲', '■', '◆', '★', '▼'];
+
+function pickRandomIcons(count) {
+  const pool = [...PLAYER_ICONS];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, count);
+}
+
 let state = loadState();
+
+// Korábbi (a funkció bevezetése előtt mentett) parti-esteknél még nincs
+// ikonkiosztás — ilyenkor pótlólag, egyszer kiosztjuk.
+if (state && !state.playerIcons) {
+  state.playerIcons = pickRandomIcons(state.playerCount);
+  saveState();
+}
 
 function defaultState() {
   return null;
@@ -528,6 +581,7 @@ document.getElementById('btn-start').addEventListener('click', () => {
   state = {
     playerCount: count,
     players: players,
+    playerIcons: pickRandomIcons(count),
     dealerIndex: dealerIndex,
     round: 1,
     totals: new Array(count).fill(0),
@@ -636,17 +690,32 @@ dealerSelect.addEventListener('change', () => {
   resetHandForm();
 });
 
+// Egy játékos ikonja csak azután jelenik meg a fejlécben, hogy legalább
+// egyszer terített bemondást (Rebetli/Redurchmars) tett a parti-est során —
+// addig az elsőre kisorsolt ikonja "rejtve" marad.
+function playerHasTeritettHistory(playerIndex) {
+  return state.history.some(h => h.declarerIndex === playerIndex && h.lineSummaries.some(l => l.teritett));
+}
+
 function renderScoreLedger() {
   let html = '<tr><th>Kör</th>';
-  state.players.forEach(name => { html += `<th>${escapeHtml(name)}</th>`; });
+  state.players.forEach((name, i) => {
+    const icon = state.playerIcons && state.playerIcons[i];
+    const showIcon = icon && playerHasTeritettHistory(i);
+    html += `<th>${showIcon ? `<span class="player-icon">${icon}</span> ` : ''}${escapeHtml(name)}</th>`;
+  });
   html += '</tr>';
   const running = new Array(state.playerCount).fill(0);
   state.history.forEach(h => {
     h.perPlayerDelta.forEach((d, i) => { running[i] += d; });
-    html += `<tr><td class="player-name">${h.round}.</td>`;
-    running.forEach(v => {
+    const isTeritett = h.lineSummaries.some(l => l.teritett);
+    const rowClass = isTeritett ? ' class="row-teritett"' : '';
+    html += `<tr${rowClass}><td class="player-name">${h.round}.</td>`;
+    running.forEach((v, i) => {
       const cls = v > 0 ? 'amount-pos' : (v < 0 ? 'amount-neg' : '');
-      html += `<td class="${cls}">${v}</td>`;
+      const icon = isTeritett && i === h.declarerIndex && state.playerIcons && state.playerIcons[i];
+      const iconHtml = icon ? `<span class="player-icon">${icon}</span> ` : '';
+      html += `<td class="${cls}">${iconHtml}${v}</td>`;
     });
     html += '</tr>';
   });
@@ -736,29 +805,31 @@ function availableBemondasok(excludeLineEl) {
     if (b.jatekAlap && usedJatekAlap) return false;
     if ((b.id === 'durchmars_szines' || b.id === 'redurchmars_szines') && usedColoredDurchmarsFamily) return false;
     // Színes durchmars/redurchmars mellé csak 40-100 vagy 20-100 alapjáték
-    // választható, sima Parti mellett nem lehet durchmars-t/redurchmars-t
-    // bemondani.
+    // adható hozzá (opcionálisan) — sima Parti mellé nem választható.
     if (b.id === 'parti' && usedColoredDurchmarsFamily) return false;
     if ((b.id === 'durchmars_szines' || b.id === 'redurchmars_szines') && usedIds.has('parti')) return false;
     return true;
   });
 }
 
-// Ha egy olyan extra bemondás marad "árván" a leosztásban (pl. Ulti), amihez
-// kötelezően kellene egy alapjáték (parti/40-100/20-100) vagy egy azt
-// helyettesítő színtelen bemondás, de az még nincs jelen, automatikusan
-// hozzáadjuk az alapjátékot egy külön sorként — színes durchmars/redurchmars
-// mellé "40-100"-at (mert sima Parti mellett az nem választható), egyébként
-// "Parti"-t.
+// Ha egy olyan extra bemondás marad "árván" a leosztásban (Ulti vagy Négy
+// ász), amihez kötelezően kellene egy alapjáték (parti/40-100/20-100) vagy egy
+// azt helyettesítő színtelen bemondás, de az még nincs jelen, automatikusan
+// hozzáadjuk a "Parti" alapjátékot egy külön sorként. A színes
+// durchmars/redurchmars ezzel szemben önálló játékként is bemondható —
+// alapjáték nélkül is megáll, egy alapjáték (csak 40-100/20-100, Parti nem)
+// legfeljebb opcionálisan társulhat mellé —, ezért ez nem számít "árvának".
 function ensureBaseGameLine() {
   const boms = [...bemondasLinesDiv.querySelectorAll('.bemondas-line')]
     .map(lineEl => bemondasById(lineEl.querySelector('.line-bemondas').value));
   const hasColorless = boms.some(b => b.kategoria === 'adu_nelkuli');
   const hasJatekAlap = boms.some(b => b.jatekAlap);
-  const hasOrphanSzinExtra = boms.some(b => b.kategoria === 'szin' && !b.jatekAlap);
+  const hasOrphanSzinExtra = boms.some(b =>
+    b.kategoria === 'szin' && !b.jatekAlap &&
+    b.id !== 'durchmars_szines' && b.id !== 'redurchmars_szines'
+  );
   if (hasOrphanSzinExtra && !hasColorless && !hasJatekAlap) {
-    const needsHigherAlap = boms.some(b => b.id === 'durchmars_szines' || b.id === 'redurchmars_szines');
-    addBemondasLine(needsHigherAlap ? '40_100' : 'parti');
+    addBemondasLine('parti');
   }
 }
 
@@ -801,16 +872,66 @@ function updateAllLineResultTexts() {
 
 pirosAduToggle.addEventListener('change', () => { updateAllLineResultTexts(); renderPreview(); });
 
+function applyBukott(lineEl, checked) {
+  lineEl.querySelector('.line-bukott-checkbox').checked = checked;
+  lineEl.querySelector('.result-toggle-label').textContent = checked ? 'Bukott' : 'Sikerült';
+  lineEl.classList.toggle('is-bukott', checked);
+}
+
+function isLineBukott(lineEl) {
+  return lineEl.querySelector('.line-bukott-checkbox').checked;
+}
+
+// A színes durchmars/redurchmars valójában az összes ütés megnyerését jelenti,
+// ezért ha a hozzá tartozó alapjáték (40-100/20-100) vagy a mellé bemondott
+// ulti bukik, a durchmars/redurchmars is automatikusan (és szükségszerűen)
+// bukik — ez nem a felhasználó döntése, tehát nem is módosítható kézzel.
+function durchmarsAutoBukasReason(lineEl) {
+  const bem = bemondasById(lineEl.querySelector('.line-bemondas').value);
+  if (bem.id !== 'durchmars_szines' && bem.id !== 'redurchmars_szines') return null;
+  const others = [...bemondasLinesDiv.querySelectorAll('.bemondas-line')].filter(l => l !== lineEl);
+  const baseLine = others.find(l => bemondasById(l.querySelector('.line-bemondas').value).jatekAlap);
+  if (baseLine && isLineBukott(baseLine)) {
+    return `${bemondasById(baseLine.querySelector('.line-bemondas').value).nev} bukott`;
+  }
+  const ultiLine = others.find(l => l.querySelector('.line-bemondas').value === 'ulti');
+  if (ultiLine && isLineBukott(ultiLine)) {
+    return 'az Ulti bukott';
+  }
+  return null;
+}
+
+// Minden sort végignéz, és a színes durchmars/redurchmars sorokat a fenti
+// szabály szerint zárolja (automatikusan bukásra állítja, letiltja a kézi
+// módosítást) vagy — ha a feltétel már nem áll fenn — feloldja.
+function updateDurchmarsAutoBukas() {
+  bemondasLinesDiv.querySelectorAll('.bemondas-line').forEach(lineEl => {
+    const noteEl = lineEl.querySelector('.line-lock-note');
+    const reason = durchmarsAutoBukasReason(lineEl);
+    if (reason) {
+      const wasLocked = lineEl.classList.contains('is-auto-bukott');
+      lineEl.classList.add('is-auto-bukott');
+      if (!wasLocked) {
+        applyBukott(lineEl, true);
+        updateLineResultText(lineEl);
+      }
+      noteEl.hidden = false;
+      noteEl.textContent = `Automatikusan bukott, mert ${reason} — ezen nem lehet módosítani.`;
+    } else if (lineEl.classList.contains('is-auto-bukott')) {
+      lineEl.classList.remove('is-auto-bukott');
+      applyBukott(lineEl, false);
+      updateLineResultText(lineEl);
+      noteEl.hidden = true;
+    }
+  });
+}
+
 function addBemondasLine(presetId) {
   const clone = lineTemplate.content.cloneNode(true);
   const lineEl = clone.querySelector('.bemondas-line');
 
   const bukottCheckbox = lineEl.querySelector('.line-bukott-checkbox');
-  const bukottLabel = lineEl.querySelector('.result-toggle-label');
-  function refreshResultLabel() {
-    bukottLabel.textContent = bukottCheckbox.checked ? 'Bukott' : 'Sikerült';
-    lineEl.classList.toggle('is-bukott', bukottCheckbox.checked);
-  }
+  const lockNoteEl = lineEl.querySelector('.line-lock-note');
 
   const bemondasSelect = lineEl.querySelector('.line-bemondas');
   bemondasSelect.innerHTML = bemondasOptionsHtml(null, presetId || null);
@@ -840,11 +961,21 @@ function addBemondasLine(presetId) {
     refreshKategoria();
     refreshAllLineOptions();
     ensureBaseGameLine();
+    updateDurchmarsAutoBukas();
     renderPreview();
   });
+  bukottCheckbox.addEventListener('click', (e) => {
+    if (lineEl.classList.contains('is-auto-bukott')) {
+      e.preventDefault();
+      lockNoteEl.classList.remove('shake');
+      void lockNoteEl.offsetWidth;
+      lockNoteEl.classList.add('shake');
+    }
+  });
   bukottCheckbox.addEventListener('change', () => {
-    refreshResultLabel();
+    applyBukott(lineEl, bukottCheckbox.checked);
     updateLineResultText(lineEl);
+    updateDurchmarsAutoBukas();
     renderPreview();
   });
   [jointSelect, aSelect, bSelect, pirosCheckbox].forEach(sel =>
@@ -854,15 +985,17 @@ function addBemondasLine(presetId) {
     lineEl.remove();
     refreshAllLineOptions();
     ensureBaseGameLine();
+    updateDurchmarsAutoBukas();
     renderPreview();
   });
 
   bemondasLinesDiv.appendChild(lineEl);
   refreshKategoria();
-  refreshResultLabel();
+  applyBukott(lineEl, false);
   updateAllKontraSplitLabels();
   refreshAllLineOptions();
   ensureBaseGameLine();
+  updateDurchmarsAutoBukas();
   renderPreview();
 }
 
@@ -939,7 +1072,8 @@ function computeHandDeltas() {
     perPlayerDelta[defenders[0]] -= sign * amountA;
     perPlayerDelta[defenders[1]] -= sign * amountB;
 
-    lineSummaries.push({ nev: bem.nev + (piros ? ' (piros)' : ''), result, amountA, amountB });
+    const teritett = bem.id === 'rebetli' || bem.id === 'redurchmars_szintelen' || bem.id === 'redurchmars_szines';
+    lineSummaries.push({ nev: bem.nev + (piros ? ' (piros)' : ''), result, amountA, amountB, teritett });
   });
 
   return { declarer, defenders, perPlayerDelta, lineSummaries };
@@ -1038,16 +1172,23 @@ function escapeHtml(str) {
 
 function buildExportHtml() {
   const dateStr = new Date().toLocaleDateString('hu-HU');
-  let headerCells = '<th>Kör</th>' + state.players.map(n => `<th>${escapeHtml(n)}</th>`).join('');
+  let headerCells = '<th>Kör</th>' + state.players.map((n, i) => {
+    const icon = state.playerIcons && state.playerIcons[i];
+    const showIcon = icon && playerHasTeritettHistory(i);
+    return `<th>${showIcon ? `<span class="icon">${icon}</span> ` : ''}${escapeHtml(n)}</th>`;
+  }).join('');
   const running = new Array(state.playerCount).fill(0);
   let rows = '';
   state.history.forEach(h => {
     h.perPlayerDelta.forEach((d, i) => { running[i] += d; });
-    const cells = running.map(v => {
+    const isTeritett = h.lineSummaries.some(l => l.teritett);
+    const rowClass = isTeritett ? ' class="teritett"' : '';
+    const cells = running.map((v, i) => {
       const cls = v > 0 ? 'pos' : (v < 0 ? 'neg' : '');
-      return `<td class="${cls}">${v}</td>`;
+      const icon = isTeritett && i === h.declarerIndex && state.playerIcons && state.playerIcons[i];
+      return `<td class="${cls}">${icon ? `<span class="icon">${icon}</span> ` : ''}${v}</td>`;
     }).join('');
-    rows += `<tr><td class="round">${h.round}.</td>${cells}</tr>`;
+    rows += `<tr${rowClass}><td class="round">${h.round}.</td>${cells}</tr>`;
   });
   const finalCells = running.map(v => {
     const cls = v > 0 ? 'pos' : (v < 0 ? 'neg' : '');
@@ -1072,6 +1213,8 @@ function buildExportHtml() {
   tr.final td { font-weight: 700; border-top: 2px solid #4a5a48; }
   td.pos { color: #2f6b2f; font-weight: 600; }
   td.neg { color: #a33a2e; font-weight: 600; }
+  tr.teritett { background: #fff7e0; }
+  .icon { font-size: 0.85em; }
 </style>
 </head>
 <body>

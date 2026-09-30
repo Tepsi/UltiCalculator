@@ -34,12 +34,12 @@ function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 // ---------- DOM segédfüggvények ----------
 
-async function newApp() {
+async function newApp(beforeParse) {
   // omitJSDOMErrors: az Exportálás gomb egy <a download> elemet klikkeltet,
   // amit jsdom navigációként próbál kezelni és "Not implemented" hibát ír ki —
   // ez az app szempontjából irreleváns zaj, nem valós hiba.
   const virtualConsole = new VirtualConsole().forwardTo(console, { jsdomErrors: 'none' });
-  const dom = new JSDOM(HTML, { runScripts: 'dangerously', resources: 'usable', url: 'http://localhost/', virtualConsole });
+  const dom = new JSDOM(HTML, { runScripts: 'dangerously', resources: 'usable', url: 'http://localhost/', virtualConsole, beforeParse });
   const win = dom.window;
   // A confirm()/alert() jsdom alatt nem implementált — ezek nélkül a
   // megerősítést kérő gombok (Undo, Elvetés, Új parti-est) nem tesztelhetők.
@@ -226,6 +226,49 @@ test('Ulti bukása: a szorzó 2^szint+1, nem a szokásos 2^szint', async () => {
   assertEqual(r.verb, 'fizet');
 });
 
+test('Színes Durchmars automatikusan bukik, ha a hozzá tartozó alapjáték (40-100) bukik, és nem módosítható', async () => {
+  const doc = await newApp();
+  startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });
+  const baseLine = lines(doc)[0];
+  setValue(baseLine.querySelector('.line-bemondas'), '40_100');
+  const durchmarsLine = addLine(doc, 'durchmars_szines');
+
+  assert(!durchmarsLine.classList.contains('is-auto-bukott'), 'Sikerült alapjáték mellett a Durchmars ne legyen zárolva');
+
+  setBukott(baseLine, true);
+  assert(durchmarsLine.classList.contains('is-auto-bukott'), 'Bukott alapjáték mellett a színes Durchmarsnak automatikusan zárolódnia kell');
+  assert(durchmarsLine.querySelector('.line-bukott-checkbox').checked, 'A zárolt Durchmars sornak Bukottra kell állnia');
+  assertEqual(durchmarsLine.querySelector('.result-toggle-label').textContent, 'Bukott');
+  assert(!durchmarsLine.querySelector('.line-lock-note').hidden, 'Látható hibaüzenetnek kell megjelennie');
+  assert(durchmarsLine.querySelector('.line-lock-note').textContent.includes('40-100'), 'Az üzenetnek utalnia kell az okra (40-100 bukott)');
+
+  // Kattintásra (próbált módosítás) nem változhat, és jeleznie kell a hibát.
+  durchmarsLine.querySelector('.line-bukott-checkbox').click();
+  assert(durchmarsLine.querySelector('.line-bukott-checkbox').checked, 'Zárolt sornál a kattintás nem módosíthatja a Bukott állapotot');
+  assert(durchmarsLine.querySelector('.line-lock-note').classList.contains('shake'), 'A kattintásnak vizuális jelzést kell adnia');
+
+  // Ha az alapjáték újra sikerül, a zárolásnak fel kell oldódnia.
+  setBukott(baseLine, false);
+  assert(!durchmarsLine.classList.contains('is-auto-bukott'), 'Sikerült alapjáték mellett a zárolásnak fel kell oldódnia');
+  assert(!durchmarsLine.querySelector('.line-bukott-checkbox').checked, 'Feloldás után a Durchmarsnak vissza kell állnia Sikerültre');
+  assert(durchmarsLine.querySelector('.line-lock-note').hidden, 'A hibaüzenetnek el kell tűnnie feloldás után');
+});
+
+test('Színes Redurchmars automatikusan bukik, ha a mellé bemondott Ulti bukik', async () => {
+  const doc = await newApp();
+  startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });
+  setValue(lines(doc)[0].querySelector('.line-bemondas'), '40_100');
+  const ultiLine = addLine(doc, 'ulti');
+  const redurchmarsLine = addLine(doc, 'redurchmars_szines');
+
+  assert(!redurchmarsLine.classList.contains('is-auto-bukott'));
+
+  setBukott(ultiLine, true);
+  assert(redurchmarsLine.classList.contains('is-auto-bukott'), 'Bukott Ulti mellett a színes Redurchmarsnak zárolódnia kell');
+  assert(redurchmarsLine.querySelector('.line-bukott-checkbox').checked);
+  assert(redurchmarsLine.querySelector('.line-lock-note').textContent.includes('Ulti'), 'Az üzenetnek utalnia kell az okra (Ulti bukott)');
+});
+
 test('Színtelen bemondás (Durchmars, színtelen) kizár minden mást, és letiltja a sor hozzáadását', async () => {
   const doc = await newApp();
   startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });
@@ -265,17 +308,32 @@ test('Ha az egyetlen alapjáték-sort törlik, és marad mellette extra bemondá
   assert(after.some(l => l.querySelector('.line-bemondas').value === 'ulti'));
 });
 
-test('Színes Durchmars csak 40-100/20-100 alapjáték mellett választható, sima Parti mellett nem', async () => {
+test('Színes Durchmars/Redurchmars önálló játékként bemondható, alapjáték nélkül, automatikus pótlás nélkül (regresszió)', async () => {
   const doc = await newApp();
   startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });
-  const baseLine = lines(doc)[0]; // 'parti'
-  const secondLine = addLine(doc); // default preset egy második sorban
-  let opts = bemondasOptionValues(secondLine.querySelector('.line-bemondas'));
-  assert(!opts.includes('durchmars_szines'), 'Parti alapjáték mellett a színes Durchmars nem lehet választható');
+  const baseLine = lines(doc)[0]; // induláskor alapból 'parti'
+  setValue(baseLine.querySelector('.line-bemondas'), 'durchmars_szines');
 
-  setValue(baseLine.querySelector('.line-bemondas'), '40_100');
-  opts = bemondasOptionValues(secondLine.querySelector('.line-bemondas'));
-  assert(opts.includes('durchmars_szines'), '40-100 alapjáték mellett a színes Durchmars választható legyen');
+  assertEqual(lines(doc).length, 1, 'A színes Durchmars önmagában megáll, nem pótlódhat mellé automatikusan semmi');
+  assertEqual(lines(doc)[0].querySelector('.line-bemondas').value, 'durchmars_szines');
+
+  const r = lineResult(lines(doc)[0]);
+  assertEqual(r.amountA, 6, 'A színes Durchmars önálló alapértéke (6) érvényesüljön, alapjáték hozzáadása nélkül');
+});
+
+test('Színes Durchmars mellé opcionálisan hozzáadható 40-100/20-100, de a Parti nem', async () => {
+  const doc = await newApp();
+  startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });
+  setValue(lines(doc)[0].querySelector('.line-bemondas'), 'durchmars_szines');
+
+  const secondLine = addLine(doc);
+  const opts = bemondasOptionValues(secondLine.querySelector('.line-bemondas'));
+  assert(!opts.includes('parti'), 'A Parti ne legyen választható a színes Durchmars mellé');
+  assert(opts.includes('40_100'));
+  assert(opts.includes('20_100'));
+
+  setValue(secondLine.querySelector('.line-bemondas'), '40_100');
+  assertEqual(lines(doc).length, 2, 'A 40-100 hozzáadása után is csak a két sor legyen jelen (nincs pótlás)');
 });
 
 test('Színtelen (split) kontránál a két ellenjátékos szintje egymástól függetlenül számít', async () => {
@@ -388,6 +446,98 @@ test('A leosztás mentése után az állás a localStorage-ba is elmentődik', a
   assertEqual(saved.round, 2);
   assertEqual(saved.history.length, 1);
   assertEqual(saved.alapTet, 2);
+});
+
+test('Terített bemondás (Rebetli/Redurchmars) kiemeli a leosztás sorát, és a felvevő cellájában megjelenik az ikonja', async () => {
+  const doc = await newApp();
+  startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });
+  const cellsOf = (row) => [...row.querySelectorAll('td')];
+
+  // 1. kör: Rebetli, felvevő alapból Bela (első aktív játékos, dealer=Anna).
+  setValue(lines(doc)[0].querySelector('.line-bemondas'), 'rebetli');
+  submitHand(doc);
+
+  // 2. kör: sima Parti — ne emelkedjen ki semmi.
+  submitHand(doc);
+
+  // 3. kör: színes Redurchmars (40-100 alapjáték mellett) — újra ki kell emelkednie.
+  setValue(lines(doc)[0].querySelector('.line-bemondas'), '40_100');
+  addLine(doc, 'redurchmars_szines');
+  submitHand(doc);
+
+  const saved = JSON.parse(doc.defaultView.localStorage.getItem('ultiCalculator_session_v1'));
+  const rows = doc.querySelectorAll('#score-ledger tr');
+  assertEqual(rows.length, 4, '1 fejléc + 3 leosztás sor');
+
+  assert(rows[1].classList.contains('row-teritett'), '1. kör (Rebetli) sorának ki kell emelkednie');
+  const declarer1 = saved.history[0].declarerIndex;
+  const iconCell1 = cellsOf(rows[1])[1 + declarer1];
+  assert(iconCell1.querySelector('.player-icon'), 'A felvevő cellájában meg kell jelennie az ikonjának');
+  assertEqual(iconCell1.querySelector('.player-icon').textContent, saved.playerIcons[declarer1]);
+  assert(!iconCell1.classList.contains('cell-declarer-teritett'), 'Külön színkiemelő class már nem kell, elég az ikon');
+
+  assert(!rows[2].classList.contains('row-teritett'), '2. kör (sima Parti) sora ne emelkedjen ki');
+  assert(cellsOf(rows[2]).every(td => !td.querySelector('.player-icon')), '2. körben semelyik cellában ne legyen ikon');
+
+  assert(rows[3].classList.contains('row-teritett'), '3. kör (színes Redurchmars) sorának ki kell emelkednie');
+  const declarer3 = saved.history[2].declarerIndex;
+  assert(cellsOf(rows[3])[1 + declarer3].querySelector('.player-icon'), 'A 3. kör felvevőjének cellájában is ikon legyen');
+});
+
+test('A játékos ikonja csak az első terített bemondása után jelenik meg a Pontállás fejlécében', async () => {
+  const doc = await newApp();
+  startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });
+
+  const headerIconOf = (i) => {
+    const th = [...doc.querySelectorAll('#score-ledger tr')[0].querySelectorAll('th')][1 + i];
+    return th.querySelector('.player-icon');
+  };
+
+  const saved0 = JSON.parse(doc.defaultView.localStorage.getItem('ultiCalculator_session_v1'));
+  assert(Array.isArray(saved0.playerIcons) && saved0.playerIcons.length === 4, 'Az ikonokat már induláskor ki kell osztani');
+  assertEqual(new Set(saved0.playerIcons).size, 4, 'Az ikonoknak egyedieknek kell lenniük a parti-esten belül');
+  for (let i = 0; i < 4; i++) assert(!headerIconOf(i), 'Induláskor még senkinek nem látszódhat az ikonja');
+
+  // 1. kör: sima Parti — utána se látszódjon senkinek az ikonja.
+  submitHand(doc);
+  for (let i = 0; i < 4; i++) assert(!headerIconOf(i), 'Sima kör (nincs terítve bemondás) után se jelenjen meg ikon');
+
+  // 2. kör: Rebetli — csak a felvevő ikonjának kell megjelennie.
+  setValue(lines(doc)[0].querySelector('.line-bemondas'), 'rebetli');
+  submitHand(doc);
+
+  const saved = JSON.parse(doc.defaultView.localStorage.getItem('ultiCalculator_session_v1'));
+  const declarerIndex = saved.history[1].declarerIndex;
+  for (let i = 0; i < 4; i++) {
+    if (i === declarerIndex) {
+      const iconEl = headerIconOf(i);
+      assert(iconEl, `A felvevő (${saved.players[i]}) ikonjának meg kell jelennie a terített bemondás után`);
+      assertEqual(iconEl.textContent, saved.playerIcons[i]);
+    } else {
+      assert(!headerIconOf(i), `${saved.players[i]} ikonja ne jelenjen meg, ő nem mondott be terítettet`);
+    }
+  }
+});
+
+test('Régi (ikon nélküli) mentett parti-est visszatöltésekor pótlólag egyedi ikonokat kap minden játékos', async () => {
+  const legacyState = {
+    playerCount: 3,
+    players: ['Anna', 'Bela', 'Cili'],
+    dealerIndex: 0,
+    round: 1,
+    totals: [0, 0, 0],
+    history: [],
+    pirosAszOsztNemOszt: false,
+    negyaszEnabled: false,
+    alapTet: 1,
+  };
+  const doc = await newApp((window) => {
+    window.localStorage.setItem('ultiCalculator_session_v1', JSON.stringify(legacyState));
+  });
+  const saved = JSON.parse(doc.defaultView.localStorage.getItem('ultiCalculator_session_v1'));
+  assert(Array.isArray(saved.playerIcons));
+  assertEqual(saved.playerIcons.length, 3);
+  assertEqual(new Set(saved.playerIcons).size, 3);
 });
 
 test('Exportálás gomb nem dob hibát (a "Pontállás körről-körre" .html generálásakor)', async () => {

@@ -97,17 +97,40 @@ oldalán, kattints a **"Raw"** gombra, majd `Ctrl+S`/`Cmd+S`-sel mentsd el.)
 ### 3.2 Főképernyő — pontállás táblázat
 
 A lap tetején egyetlen táblázat látható, a **"Pontállás körről-körre"**: a
-fejlécében a játékosok nevével, majd minden mentett leosztás után egy új
-sorral — kör számmal és az akkori (kumulált) állással minden játékosra. Ez a
-hagyományos, papíron vezetett ulti-jegyzőkönyv szerinti forma: soronként
-visszakövethető, hogy egy adott körben ki hogyan állt; a legutolsó sor mindig
-a jelenlegi végállást mutatja. Azt, hogy éppen ki oszt és (4 fős módban) ki áll
-ki, a "Leosztás" kártya fejléce ("Osztó és kiálló: ...") mutatja.
+fejlécében a játékosok nevével (mindegyik mellett egy-egy kis ikonnal, ld.
+lentebb), majd minden mentett leosztás után egy új sorral — kör számmal és az
+akkori (kumulált) állással minden játékosra. Ez a hagyományos, papíron
+vezetett ulti-jegyzőkönyv szerinti forma: soronként visszakövethető, hogy egy
+adott körben ki hogyan állt; a legutolsó sor mindig a jelenlegi végállást
+mutatja. Azt, hogy éppen ki oszt és (4 fős módban) ki áll ki, a "Leosztás"
+kártya fejléce ("Osztó és kiálló: ...") mutatja.
+
+**Játékos-ikonok**: a parti-est indításakor minden játékos egy véletlenszerűen
+kiosztott, a többiekétől eltérő egyszerű ikont kap egy alapkészletből (●, ▲,
+■, ◆, ★, ▼) — ez a parti-est végéig hozzá van kötve. Az ikon a "Pontállás
+körről-körre" táblázat fejlécében a neve mellett azonban csak azután jelenik
+meg, hogy az adott játékos **legalább egyszer terített bemondást tett** —
+addig, ha még senki nem terített, a fejléc csak a neveket mutatja.
+
+Ha egy leosztásban **terített** bemondás (Rebetli/Terített betli, vagy
+Redurchmars/Terített durchmars — színes vagy színtelen formában) is szerepelt,
+az adott kör sora kiemelt (sárga) háttérrel jelenik meg, és a felvevő
+cellájában megjelenik a saját ikonja is (ez az esemény az, ami a fenti
+fejléc-ikonját "felfedi") — így egy hosszabb parti-est jegyzőkönyvében is
+könnyen visszakereshetők a legnagyobb tételű, terített leosztások, és az is,
+ki mondta be. Ez az "Exportálás" gombbal mentett `.html`-ben is megjelenik.
 
 ### 3.3 Leosztás rögzítése
 
-0. **Osztás iránya**: a "Leosztás" kártyán egy jelölőnégyzet — **"Piros ász
-   oszt, nem oszt"** — szabályozza, ki lesz a következő osztó a leosztás
+0. **Osztó**: a "Leosztás" kártya tetején egy legördülő menü mutatja az
+   aktuális osztót — alapesetben automatikusan a szabály szerint van
+   kitöltve, de bármikor kézzel felülírható, ha hiba csúszna a felállásba.
+   **Fontos**: az osztó kézi módosítása visszaállítja alapállapotba a
+   folyamatban lévő leosztás összes beállítását (Felvevő, Piros adu, az
+   összes bemondás-sor) — hiszen ezek mind attól függnek, ki az osztó (4 fős
+   módban ő áll ki), tehát a kontraszintek/eredmények a régi felálláshoz
+   tartoznának, ha megmaradnának. Emellett egy jelölőnégyzet — **"Piros ász
+   oszt, nem oszt"** — szabályozza, ki lesz a *következő* osztó a leosztás
    mentése után:
    - **Kikapcsolva (alapértelmezett)**: a következő osztó az lesz, aki az
      imént mentett leosztásban **felvevő** volt.
@@ -134,9 +157,10 @@ ki, a "Leosztás" kártya fejléce ("Osztó és kiálló: ...") mutatja.
      leosztásban, az app **automatikusan hozzáadja a "Parti" alapjátékot** egy
      külön sorként (ezt utána át is állíthatod 40-100-ra/20-100-ra, ha az
      történt valójában). Ugyanez fordítva is igaz: ha eltávolítod az egyetlen
-     alapjáték-sort, miközben még van mellette ulti/négy ász/színes
-     durchmars-redurchmars sor, az app újra pótolja az alapjátékot, hogy sose
-     maradjon "árva" extra bemondás alapjáték nélkül.
+     alapjáték-sort, miközben még van mellette ulti/négy ász sor, az app újra
+     pótolja az alapjátékot, hogy sose maradjon "árva" extra bemondás
+     alapjáték nélkül. (A színes durchmars/redurchmars-ra ez nem vonatkozik —
+     ld. lentebb, az önmagában, alapjáték nélkül is megáll.)
    - **Betli, rebetli / terített betli**: mindig "színtelen" (nincs adu)
      játékok, tehát helyettesítik az alapjátékot, és nem is kombinálhatók
      semmi mással. A betli sorban — egyedüliként a katalógusban — saját,
@@ -145,16 +169,22 @@ ki, a "Leosztás" kártya fejléce ("Osztó és kiálló: ...") mutatja.
      a leosztás tényleges adu-színétől függetlenül be- és kikapcsolható.
    - **Durchmars / redurchmars (más néven terített durchmars)**: mindkettőnek
      van egy **"színtelen"** (nincs adu — helyettesíti az alapjátékot, mint a
-     betli, nem kombinálható mással) és egy **"színes"** (van adu — egy
-     alapjáték *mellé* társul, kombinálható pl. ulti-val, és a 2. pontbeli
-     "Piros adu" kapcsoló szerint duplázódik) változata, ezért ezek külön
-     tételként jelennek meg a legördülőben. A **színes** durchmars/redurchmars
-     mellé **csak 40-100 vagy 20-100 alapjáték** tehető — sima **Parti** mellé
-     nem választható (ha ilyet választasz alapjáték nélkül, az app "40-100"-at
-     ad hozzá automatikusan, nem "Parti"-t; és amíg a durchmars/redurchmars sor
-     megvan, a "Parti" opció el is tűnik az alapjáték legördülőjéből). A
-     **színtelen** durchmars/redurchmars-ra ez a korlátozás nem vonatkozik,
-     mivel az nem társul semmilyen alapjátékhoz.
+     betli, nem kombinálható mással) és egy **"színes"** (van adu, a 2.
+     pontbeli "Piros adu" kapcsoló szerint duplázódik) változata, ezért ezek
+     külön tételként jelennek meg a legördülőben. A **színes** durchmars/
+     redurchmars **önálló játékként is bemondható**, alapjáték nélkül is —
+     ilyenkor egyedüli sorként áll a leosztásban. Emellett opcionálisan
+     *mellé* is társítható **40-100 vagy 20-100** alapjáték (sima **Parti**
+     mellé nem választható) és/vagy az Ulti, ha az adott leosztásban valóban
+     ez történt — ez utóbbiak sosem kötelezőek/automatikusak, csak választható
+     lehetőségek. Ha a színes
+     durchmars/redurchmars mellé **van** bemondva alapjáték vagy Ulti, és az
+     bukik, a durchmars/redurchmars sor is **automatikusan Bukottra áll, és a
+     jelölőnégyzete letiltásra kerül** (a sor alatt megjelenik az ok is) —
+     mivel a durchmars valójában az összes ütés megnyerését jelenti, ez nem a
+     jegyző döntése, a szabály szerint szükségszerű, ezért az app nem engedi
+     kézzel felülírni. Amint az alapjáték/Ulti újra sikerül (vagy törlődik),
+     a zárolás feloldódik, és a sor visszaáll Sikerültre.
    A legördülő mindig csak azokat az opciókat kínálja fel, amelyek a
    leosztásban már megadott többi sor mellett még valóban választhatók (pl. ha
    már van egy Ulti sor, onnantól az Ulti eltűnik a további sorok listájából;
@@ -164,7 +194,8 @@ ki, a "Leosztás" kártya fejléce ("Osztó és kiálló: ...") mutatja.
    ezeket a valóságnak megfelelően az app **külön-külön** számolja el, majd
    összeadja a hatásukat.
 4. Minden bemondás sorban beállítható:
-   - **Sikerült / Bukott** rádiógomb.
+   - **Sikerült / Bukott** jelölőnégyzet: alapból nincs bejelölve (Sikerült),
+     bejelölve Bukott-ra vált (és pirosra színezi a sort).
    - **Kontra szintje**:
      - *Színes soroknál* (alapjáték, ulti, négy ász, és a "színes"
        durchmars/redurchmars variánsok) egyetlen kontraszint-választó jelenik
@@ -241,9 +272,9 @@ jelölőnégyzet adja hozzá (ld. 3.3/3. pont):
 | Négy ász *(kapcsolóval engedélyezhető, ld. 3.1 pont)* | 4 | 8 | Színes |
 | Ulti | 4 | 8 | Színes (speciális bukás-szabály, ld. 5. pont) |
 | Durchmars (színtelen) | 6 | — | Színtelen |
-| Durchmars (színes)*(csak 40-100/20-100 alapjáték mellett)* | 6 | 12 | Színes |
+| Durchmars (színes)*(önállóan is bemondható; 40-100/20-100 opcionálisan társítható, Parti nem)* | 6 | 12 | Színes |
 | Redurchmars / Terített durchmars (színtelen) | 24 | — | Színtelen |
-| Redurchmars / Terített durchmars (színes)*(csak 40-100/20-100 alapjáték mellett)* | 24 | 48 | Színes |
+| Redurchmars / Terített durchmars (színes)*(önállóan is bemondható; 40-100/20-100 opcionálisan társítható, Parti nem)* | 24 | 48 | Színes |
 | Betli | 5 | 10 | Színtelen |
 | Rebetli / Terített betli | 20 | — | Színtelen |
 
@@ -350,11 +381,14 @@ opciót.
 
 ```
 UltiCalculator/
-├── index.html      -- a teljes app: HTML szerkezet, beágyazott <style> és <script> egyetlen fájlban
-└── DOKUMENTACIO.md -- ez a dokumentum
+├── index.html               -- a teljes app: HTML szerkezet, beágyazott <style> és <script> egyetlen fájlban
+├── DOKUMENTACIO.md          -- ez a dokumentum
+├── package.json             -- csak fejlesztői eszköz: a regressziós teszt futtatásához (nem kell az app működéséhez)
+└── tests/regression.test.js -- jsdom-alapú regressziós teszt-készlet, futtatás: `npm test`
 ```
 
-Az `index.html` szándékosan egyetlen, önálló fájl — nincs benne külső
+Az `index.html` az app maga — továbbra is szándékosan egyetlen, önálló
+fájl, nincs benne külső
 `style.css`/`app.js` hivatkozás. Ennek oka egy Androidon (Edge-en, néha
 Chrome-on is) tapasztalt hiba: ha valaki a fájlkezelőből "Megnyitás ezzel" /
 "Megosztás" úton nyit meg egy HTML fájlt, a böngésző csak az adott fájlra kap
@@ -379,3 +413,9 @@ katalógus-elem: a "színes" (`kategoria: 'szin'`) bemondásoknál a leosztás
 egészére vonatkozó "Piros adu" kapcsolóból jön, a `pirosVariant: true` jelölésű
 bemondásnál (jelenleg csak a betlinél) pedig saját, soronkénti
 jelölőnégyzetből.
+
+Ha módosítasz az `index.html`-en, a `tests/regression.test.js` egy jsdom-alapú
+regressziós teszt-készlet, amely a fenti szabályok jó részét (pontszámítás,
+kontra, alapjáték-pótlás, osztás menete stb.) valódi DOM-interakciókkal
+ellenőrzi. Futtatás: `npm install` (egyszer), majd `npm test` — ez nem
+igényli az app futtatásához szükséges böngészőt, csak Node.js-t.

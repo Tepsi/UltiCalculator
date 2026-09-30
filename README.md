@@ -37,7 +37,9 @@ Részletek (git klónozás, mobilos webszerver-trükk, ha a böngésző nem enge
 - Színes bemondásoknál közös, színtelen bemondásoknál ellenjátékosonkénti
   kontra.
 - Osztás menete: alapesetben a felvevő lesz a következő osztó; "Piros ász
-  oszt, nem oszt" kapcsolóval egyszerű körbe járó osztásra állítható.
+  oszt, nem oszt" kapcsolóval egyszerű körbe járó osztásra állítható. Az
+  osztó kézzel is felülírható (elgépelés javítására) — ilyenkor a
+  folyamatban lévő leosztás beállításai alapállapotba állnak vissza.
 - "Pontállás körről-körre" táblázat, élő előnézet, leosztás-visszavonás.
 - Automatikus mentés a böngésző `localStorage`-ába, exportálás jól olvasható
   `.html` fájlba.
@@ -50,7 +52,8 @@ kontraszintek) lásd: [DOKUMENTACIO.md](DOKUMENTACIO.md).
 ```
 UltiCalculator/
 ├── index.html      -- a teljes app: HTML szerkezet, beágyazott CSS és JS egyetlen fájlban
-└── DOKUMENTACIO.md -- részletes dokumentáció
+├── DOKUMENTACIO.md -- részletes dokumentáció
+└── tests/          -- fejlesztői regressziós tesztek (jsdom, `npm test`) — nem kell az app futtatásához
 ```
 
 Az `index.html` szándékosan egyetlen, önálló fájl (nincs benne külső
