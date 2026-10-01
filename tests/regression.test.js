@@ -308,6 +308,25 @@ test('Ha az egyetlen alapjáték-sort törlik, és marad mellette extra bemondá
   assert(after.some(l => l.querySelector('.line-bemondas').value === 'ulti'));
 });
 
+test('Ulti mellé utólag bemondott színes Durchmars/Redurchmars megszünteti a "Parti" automatikus pótlásának szükségességét (regresszió)', async () => {
+  const doc = await newApp();
+  startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });
+  removeLine(lines(doc)[0]); // az induló "Parti" sor eltávolítása
+  addLine(doc, 'ulti'); // Ulti árván marad -> automatikusan pótlódik mellé a "Parti"
+  assertEqual(lines(doc).length, 2);
+  assert(lines(doc).some(l => l.querySelector('.line-bemondas').value === 'parti'));
+
+  const partiLine = lineById(doc, 'parti');
+  setValue(partiLine.querySelector('.line-bemondas'), 'redurchmars_szines');
+
+  const after = lines(doc);
+  assertEqual(after.length, 2, 'A színes Redurchmars önmagában elég az Ultinak, nem pótlódhat mellé újra a "Parti"');
+  const values = after.map(l => l.querySelector('.line-bemondas').value);
+  assert(values.includes('ulti'));
+  assert(values.includes('redurchmars_szines'));
+  assert(!values.includes('parti'), 'A "Parti" nem térhet vissza, amíg a színes Durchmars/Redurchmars jelen van');
+});
+
 test('Színes Durchmars/Redurchmars önálló játékként bemondható, alapjáték nélkül, automatikus pótlás nélkül (regresszió)', async () => {
   const doc = await newApp();
   startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });

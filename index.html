@@ -824,11 +824,12 @@ function ensureBaseGameLine() {
     .map(lineEl => bemondasById(lineEl.querySelector('.line-bemondas').value));
   const hasColorless = boms.some(b => b.kategoria === 'adu_nelkuli');
   const hasJatekAlap = boms.some(b => b.jatekAlap);
+  const hasColoredDurchmarsFamily = boms.some(b => b.id === 'durchmars_szines' || b.id === 'redurchmars_szines');
   const hasOrphanSzinExtra = boms.some(b =>
     b.kategoria === 'szin' && !b.jatekAlap &&
     b.id !== 'durchmars_szines' && b.id !== 'redurchmars_szines'
   );
-  if (hasOrphanSzinExtra && !hasColorless && !hasJatekAlap) {
+  if (hasOrphanSzinExtra && !hasColorless && !hasJatekAlap && !hasColoredDurchmarsFamily) {
     addBemondasLine('parti');
   }
 }
