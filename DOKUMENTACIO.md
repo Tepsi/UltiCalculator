@@ -88,11 +88,15 @@ oldalán, kattints a **"Raw"** gombra, majd `Ctrl+S`/`Cmd+S`-sel mentsd el.)
   4. **Alaptét**: add meg, mennyit ér egy pont (alapértéke 1). Ha nem
      egyforintos alapon játszotok, itt állítsd be a tényleges tétet — minden
      bemondás automatikusan ehhez arányosan skálázva fizet.
-  5. **Négyász bemondás engedélyezése**: alapértelmezetten kikapcsolva (a
-     katalógusban nem is jelenik meg a "Négy ász" / "Piros négy ász" opció),
-     mert sok asztalnál nem játszanak négyásszal. Bekapcsolható, ha az adott
-     parti-esten szeretnétek négyászt is bemondani.
+  5. **Négyász bemondás engedélyezése**: ha bekapcsolod, a katalógusban megjelenik
+     a "Négy ász" / "Piros négy ász" opció is.
   6. "Parti-est indítása" — ettől kezdve minden változás automatikusan mentődik.
+- Az indítási képernyő összes beállítása (létszám, játékosnevek, kezdő osztó,
+  alaptét, négyász kapcsoló) a "Parti-est indítása" gombra kattintva
+  elmentődik ugyanabban a böngészőben (ld. 6. pont), és a következő
+  parti-est indításakor (pl. "Új parti-est" után) ezekkel az értékekkel van
+  előre kitöltve az űrlap — nem kell minden alkalommal újra beírni ugyanazokat
+  az adatokat. Természetesen bármelyik mező felülírható indítás előtt.
 
 ### 3.2 Főképernyő — pontállás táblázat
 
@@ -338,11 +342,16 @@ opciót.
 
 ## 6. Adatmentés, adatvesztés
 
-- Minden mentés a böngésző `localStorage`-ába kerül, kulcs:
-  `ultiCalculator_session_v1`. Ez azt jelenti:
+- Minden mentés a böngésző `localStorage`-ába kerül, a folyamatban lévő
+  parti-est a `ultiCalculator_session_v1` kulcs alatt, az indítási képernyő
+  legutóbb használt beállításai (ld. 3.1 pont) pedig a
+  `ultiCalculator_setup_defaults_v1` kulcs alatt. Ez azt jelenti:
   - Ugyanazon böngészőben, ugyanazon eszközön bezárás/újranyitás után is megmarad
     az állás (amíg nem törlöd a böngésző adatait, vagy nem kattintasz az
-    "Új parti-est" gombra).
+    "Új parti-est" gombra). Az "Új parti-est" gomb csak a folyamatban lévő
+    parti-est állását törli — az indítási képernyő legutóbb használt
+    beállításait (ld. fent) nem, azok a következő indításnál is default-ként
+    megjelennek.
   - **Nem szinkronizálódik** más eszközre vagy böngészőre — ha telefonon és
     laptopon is megnyitod, két külön, egymástól független parti-est lesz.
   - Böngésző "inkognitó" módban bezárás után elveszik.

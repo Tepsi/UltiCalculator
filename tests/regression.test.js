@@ -566,6 +566,36 @@ test('Exportálás gomb nem dob hibát (a "Pontállás körről-körre" .html ge
   doc.getElementById('btn-export').click();
 });
 
+test('Parti-est indítása elmenti az indítási képernyő beállításait default-ként', async () => {
+  const doc = await newApp();
+  startGame(doc, { playerCount: 3, names: ['Anna', 'Bela', 'Cili'], startingDealer: 2, alapTet: 5, negyasz: true });
+  const saved = JSON.parse(doc.defaultView.localStorage.getItem('ultiCalculator_setup_defaults_v1'));
+  assertEqual(saved.playerCount, 3);
+  assertEqual(saved.players.join(','), 'Anna,Bela,Cili');
+  assertEqual(saved.dealerIndex, 2);
+  assertEqual(saved.alapTet, 5);
+  assertEqual(saved.negyaszEnabled, true);
+});
+
+test('Új parti-est indításakor az előző indítási beállítások vannak default-ként betöltve', async () => {
+  const defaults = {
+    playerCount: 3,
+    players: ['Elek', 'Feri', 'Gizi'],
+    dealerIndex: 1,
+    alapTet: 2.5,
+    negyaszEnabled: true,
+  };
+  const doc = await newApp((window) => {
+    window.localStorage.setItem('ultiCalculator_setup_defaults_v1', JSON.stringify(defaults));
+  });
+  assertEqual(doc.getElementById('player-count').value, '3');
+  const nameInputs = [...doc.querySelectorAll('#player-names input')];
+  assertEqual(nameInputs.map(i => i.value).join(','), 'Elek,Feri,Gizi');
+  assertEqual(doc.getElementById('starting-dealer').value, '1');
+  assertEqual(doc.getElementById('alap-tet').value, '2.5');
+  assertEqual(doc.getElementById('negyasz-toggle').checked, true);
+});
+
 // ---------- Futtatás ----------
 
 const useColor = process.stdout.isTTY && !process.env.NO_COLOR;

@@ -128,6 +128,18 @@ h2 { margin-top: 0; }
   color: var(--color-muted);
 }
 
+.field-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.field-checkbox input[type="checkbox"] {
+  width: auto;
+  margin-top: 0;
+  flex-shrink: 0;
+}
+
 .control-lg {
   font-size: 1.15rem !important;
   padding: 0.8rem !important;
@@ -324,9 +336,9 @@ h2 { margin-top: 0; }
         <input type="number" id="alap-tet" value="1" min="0.01" step="any">
       </label>
 
-      <label class="checkbox-inline">
+      <label class="field field-checkbox">
+        Négyász bemondás engedélyezése
         <input type="checkbox" id="negyasz-toggle">
-        Négyász bemondás engedélyezése (alapértelmezetten kikapcsolva)
       </label>
 
       <button id="btn-start" class="btn btn-primary btn-large">Parti-est indítása</button>
@@ -427,6 +439,7 @@ h2 { margin-top: 0; }
 'use strict';
 
 const STORAGE_KEY = 'ultiCalculator_session_v1';
+const SETUP_DEFAULTS_KEY = 'ultiCalculator_setup_defaults_v1';
 
 // Minden leosztásban pontosan egy "alapjáték" van jelen (parti / 40-100 /
 // 20-100 — jatekAlap: true — vagy egy "színtelen" bemondás, amely helyettesíti
@@ -524,6 +537,23 @@ function clearState() {
   state = null;
 }
 
+// Az indítási képernyő beállításait (létszám, nevek, osztó, alaptét, négyász
+// kapcsoló) a legutóbbi parti-est indításakor elmentjük, és a következő
+// indításnál ezekkel előtöltjük az űrlapot — nem kell minden parti-estnél
+// újra beírni ugyanazokat az adatokat.
+function loadSetupDefaults() {
+  try {
+    const raw = localStorage.getItem(SETUP_DEFAULTS_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function saveSetupDefaults(defaults) {
+  localStorage.setItem(SETUP_DEFAULTS_KEY, JSON.stringify(defaults));
+}
+
 // ---------- SETUP SCREEN ----------
 
 const setupScreen = document.getElementById('setup-screen');
@@ -566,6 +596,22 @@ function renderStartingDealerOptions() {
   }
 }
 
+function applySetupDefaults() {
+  const defaults = loadSetupDefaults();
+  if (defaults && defaults.playerCount) {
+    playerCountSelect.value = String(defaults.playerCount);
+  }
+  renderPlayerNameInputs();
+  if (!defaults) return;
+  (defaults.players || []).forEach((name, i) => {
+    const input = document.getElementById(`player-name-${i}`);
+    if (input) input.value = name;
+  });
+  if (defaults.dealerIndex != null) startingDealerSelect.value = String(defaults.dealerIndex);
+  if (defaults.alapTet != null) alapTetInput.value = defaults.alapTet;
+  negyaszToggle.checked = !!defaults.negyaszEnabled;
+}
+
 playerCountSelect.addEventListener('change', renderPlayerNameInputs);
 
 document.getElementById('btn-start').addEventListener('click', () => {
@@ -577,6 +623,14 @@ document.getElementById('btn-start').addEventListener('click', () => {
   }
   const dealerIndex = parseInt(startingDealerSelect.value, 10);
   const alapTet = parseFloat(alapTetInput.value) || 1;
+
+  saveSetupDefaults({
+    playerCount: count,
+    players: players,
+    dealerIndex: dealerIndex,
+    alapTet: alapTet,
+    negyaszEnabled: negyaszToggle.checked,
+  });
 
   state = {
     playerCount: count,
@@ -1243,7 +1297,7 @@ btnExport.addEventListener('click', () => {
 
 // ---------- INIT ----------
 
-renderPlayerNameInputs();
+applySetupDefaults();
 
 if (state) {
   resumeBanner.hidden = false;
