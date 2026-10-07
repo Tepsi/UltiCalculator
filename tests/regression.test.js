@@ -241,6 +241,24 @@ test('Csendes ulti: feleannyi mint az ulti, bukáskor duplán fizet, nincs kontr
   assert(bemondasOptionValues(lines(doc)[0].querySelector('.line-bemondas')).includes('ulti'));
 });
 
+test('Csendes 100 nem jelölhető, ha az alapjáték (Parti) bukott', async () => {
+  const doc = await newApp();
+  startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });
+  const toggle = doc.getElementById('csendes-100-toggle');
+  setChecked(toggle, true);
+  setBukott(lines(doc)[0], true);
+  assertEqual(toggle.checked, false, 'Bukott Parti mellett törlődnie kell');
+  const note = doc.getElementById('csendes-100-note');
+  assert(note.hidden, 'Kattintás előtt nincs üzenet');
+  toggle.click();
+  assertEqual(toggle.checked, false, 'Zárolt állapotban a kattintás nem jelölheti be');
+  assert(!note.hidden, 'Kattintásra hibaüzenetet kell adni');
+  setBukott(lines(doc)[0], false);
+  assert(note.hidden, 'Feloldás után eltűnik az üzenet');
+  toggle.click();
+  assertEqual(toggle.checked, true, 'Teljesült Parti mellett újra jelölhető');
+});
+
 test('Piros betli külön bemondás (10 pont), és színtelen sornál eltűnik a Piros adu kapcsoló', async () => {
   const doc = await newApp();
   startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });

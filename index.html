@@ -192,6 +192,11 @@ h2 { margin-top: 0; }
   opacity: 0.85;
 }
 
+.is-locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .line-lock-note {
   color: var(--color-danger);
   font-weight: 600;
@@ -406,6 +411,7 @@ h2 { margin-top: 0; }
           <input type="checkbox" id="csendes-100-toggle">
         </label>
         </div>
+        <p class="line-lock-note" id="csendes-100-note" hidden>A Csendes 100 nem jelölhető, mert az alapjáték bukott — bukott alapjátékkal nem lehet meg a 100 pont.</p>
 
         <div id="bemondas-lines"></div>
         <button type="button" id="btn-add-line" class="btn btn-secondary">+ Bemondás hozzáadása</button>
@@ -975,6 +981,16 @@ const pirosAduField = document.getElementById('piros-adu-field');
 const csendes100Field = document.getElementById('csendes-100-field');
 const csendes100Toggle = document.getElementById('csendes-100-toggle');
 csendes100Toggle.addEventListener('change', renderPreview);
+const csendes100Note = document.getElementById('csendes-100-note');
+csendes100Toggle.addEventListener('click', (e) => {
+  if (csendes100Field.classList.contains('is-locked')) {
+    e.preventDefault();
+    csendes100Note.hidden = false;
+    csendes100Note.classList.remove('shake');
+    void csendes100Note.offsetWidth;
+    csendes100Note.classList.add('shake');
+  }
+});
 
 // A csendes 100 csak színes leosztásban, bemondott 40-100 / 20-100 nélkül
 // jelölhető; ha a sorok változása miatt ez megszűnik, a jelölés is törlődik.
@@ -988,6 +1004,13 @@ function updateCsendes100Availability() {
   const available = !hasColorless && !boms.some(b => b.id === '40_100' || b.id === '20_100');
   csendes100Field.hidden = !available;
   if (!available) csendes100Toggle.checked = false;
+  // Ha az alapjáték (Parti) bukott, nem lehetett meg a 100 pont sem: a csendes
+  // 100 ilyenkor letiltva és kikapcsolva marad.
+  const baseFailed = [...bemondasLinesDiv.querySelectorAll('.bemondas-line')].some(lineEl =>
+    bemondasById(lineEl.querySelector('.line-bemondas').value).jatekAlap && isLineBukott(lineEl));
+  csendes100Field.classList.toggle('is-locked', baseFailed);
+  if (!baseFailed) csendes100Note.hidden = true;
+  if (baseFailed) csendes100Toggle.checked = false;
 }
 
 function applyBukott(lineEl, checked) {

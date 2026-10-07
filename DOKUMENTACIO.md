@@ -154,7 +154,8 @@ ki mondta be. Ez az "Exportálás" gombbal mentett `.html`-ben is megjelenik.
    alaptéttel skálázva. Nincs rajta kontra, és nem "bukhat" (csak akkor
    jelölöd be, ha tényleg megvolt). Csak akkor jelenik meg, ha a
    leosztásban nincs bemondott 40-100 / 20-100 és nincs színtelen sor; ha ez
-   megszűnik, a jelölés is törlődik. A leosztás mentése után kikapcsol, és
+   megszűnik, a jelölés is törlődik. Ha az alapjáték (pl. Parti) bukott, a csendes 100 zárolt
+   (halvány) és kikapcsolva; ha ilyenkor rákattintasz, hibaüzenet jelenik meg (nem lehet meg a 100 pont bukott alapjátékkal). A leosztás mentése után kikapcsol, és
    az előzményekben külön tételként ("Csendes 100") szerepel.
 3. **Bemondás sorok**: nincs külön "kötelező játék" mező — egyetlen közös
    katalógusból választasz, soronként, a "+ Bemondás hozzáadása" gombbal
