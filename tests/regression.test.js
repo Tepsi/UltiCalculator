@@ -105,9 +105,6 @@ function setSplitKontra(line, levelA, levelB) {
 function setBukott(line, bukott) {
   setChecked(line.querySelector('.line-bukott-checkbox'), bukott);
 }
-function setPirosVariant(line, val) {
-  setChecked(line.querySelector('.line-piros-checkbox'), val);
-}
 function lineById(doc, presetId) {
   return lines(doc).find(l => l.querySelector('.line-bemondas').value === presetId);
 }
@@ -198,7 +195,53 @@ test('Piros adu duplázza a színes sor (Parti) értékét', async () => {
   assert(r.piros);
 });
 
-test('Betli piros fokozata duplázza az értéket, függetlenül a Piros adu kapcsolótól', async () => {
+test('Csendes 100: 2 pont ellenjátékosonként (piros adunál 4), 40-100 mellett nem választható', async () => {
+  const doc = await newApp();
+  startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });
+  const field = doc.getElementById('csendes-100-field');
+  const toggle = doc.getElementById('csendes-100-toggle');
+  assert(!field.hidden, 'Parti mellett választhatónak kell lennie');
+  setChecked(toggle, true);
+  setDeclarer(doc, 1);
+  submitHand(doc);
+  // Parti 1+1, csendes 100: 2+2 -> felvevő +6, ellenjátékosok -3
+  assertEqual(JSON.stringify(ledgerLastRow(doc)), JSON.stringify([0, 6, -3, -3]));
+
+  setChecked(doc.getElementById('piros-adu-toggle'), true);
+  setChecked(toggle, true);
+  setDeclarer(doc, 2); // Bela oszt, Cili a felvevő
+  submitHand(doc);
+  // Parti 2+2 + csendes 100 4+4 = Cili +12, Anna/Deszo -6
+  assertEqual(JSON.stringify(ledgerLastRow(doc)), JSON.stringify([-6, 6, 9, -9]));
+  assertEqual(toggle.checked, false, 'Mentés után törlődnie kell');
+
+  setChecked(toggle, true);
+  setValue(lines(doc)[0].querySelector('.line-bemondas'), '40_100');
+  assert(field.hidden, '40-100 mellett el kell tűnnie');
+  assertEqual(toggle.checked, false, 'El kell veszítenie a jelölést');
+});
+
+test('Csendes ulti: feleannyi mint az ulti, bukáskor duplán fizet, nincs kontra, kizárja az ultit', async () => {
+  const doc = await newApp();
+  startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });
+  const line = addLine(doc, 'csendes_ulti');
+  assert(line.querySelector('.kontra-joint').hidden, 'Nem lehet kontrázni');
+  assert(line.querySelector('.kontra-split').hidden);
+  let r = lineResult(line);
+  assertEqual(r.amountA, 2, 'Siker: 2 pont');
+  setBukott(line, true);
+  r = lineResult(line);
+  assertEqual(r.verb, 'fizet');
+  assertEqual(r.amountA, 4, 'Bukás: duplán fizet (2*2)');
+  setChecked(doc.getElementById('piros-adu-toggle'), true);
+  assertEqual(lineResult(line).amountA, 8, 'Piros adu duplázza');
+  const optsOfParti = bemondasOptionValues(lines(doc)[0].querySelector('.line-bemondas'));
+  assert(!optsOfParti.includes('ulti'), 'Csendes ulti mellett nem választható az ulti');
+  removeLine(line);
+  assert(bemondasOptionValues(lines(doc)[0].querySelector('.line-bemondas')).includes('ulti'));
+});
+
+test('Piros betli külön bemondás (10 pont), és színtelen sornál eltűnik a Piros adu kapcsoló', async () => {
   const doc = await newApp();
   startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });
   const line = lines(doc)[0];
@@ -206,10 +249,42 @@ test('Betli piros fokozata duplázza az értéket, függetlenül a Piros adu kap
   let r = lineResult(line);
   assertEqual(r.amountA, 5, 'Betli alapértéke 5 legyen');
 
-  setPirosVariant(line, true);
+  const pirosAdu = doc.getElementById('piros-adu-toggle');
+  setChecked(pirosAdu, true);
+  assertEqual(lineResult(line).amountA, 5, 'A Piros adu nem hat a betlire');
+  assert(doc.getElementById('piros-adu-field').hidden, 'Színtelen sornál el kell tűnnie a Piros adu kapcsolónak');
+  assertEqual(pirosAdu.checked, false, 'El kell veszítenie a jelölést');
+  assert(!line.querySelector('.line-piros-checkbox'), 'Nincs soronkénti piros jelölőnégyzet');
+
+  setValue(line.querySelector('.line-bemondas'), 'piros_betli');
   r = lineResult(line);
-  assertEqual(r.amountA, 10, 'Piros betli duplázva 10 legyen');
-  assert(r.piros);
+  assertEqual(r.amountA, 10, 'Piros betli 10 legyen');
+  assert(!line.querySelector('.kontra-split').hidden, 'Egyénenkénti kontra');
+
+  setValue(line.querySelector('.line-bemondas'), 'parti');
+  assert(!doc.getElementById('piros-adu-field').hidden, 'Színes sornál vissza kell jönnie');
+});
+
+test('Háromlapos ulti / csendes ulti: siker +20, bukás +10 ellenjátékosonként, kontra és piros adu nem szorozza', async () => {
+  const doc = await newApp();
+  startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0, negyasz: true });
+  const parti = lines(doc)[0];
+  assert(parti.querySelector('.line-haromlapos-toggle').hidden, 'Partin nincs háromlapos');
+  const ulti = addLine(doc, 'ulti');
+  const box = ulti.querySelector('.line-haromlapos-checkbox');
+  assert(!ulti.querySelector('.line-haromlapos-toggle').hidden);
+  setChecked(box, true);
+  assertEqual(lineResult(ulti).amountA, 24, 'Ulti 4 + 20');
+  setJointKontra(ulti, 1);
+  setChecked(doc.getElementById('piros-adu-toggle'), true);
+  assertEqual(lineResult(ulti).amountA, 36, '8*2 + 20: a felár fix');
+  setBukott(ulti, true);
+  assertEqual(lineResult(ulti).amountA, 8 * 3 + 10, 'bukás: 8*(2+1) + 10');
+  setValue(ulti.querySelector('.line-bemondas'), 'csendes_ulti');
+  assert(!ulti.querySelector('.line-haromlapos-toggle').hidden, 'Csendes ultin is van');
+  setValue(ulti.querySelector('.line-bemondas'), 'negy_asz');
+  assert(ulti.querySelector('.line-haromlapos-toggle').hidden);
+  assertEqual(box.checked, false, 'Elveszti a jelölést');
 });
 
 test('Ulti bukása: a szorzó 2^szint+1, nem a szokásos 2^szint', async () => {

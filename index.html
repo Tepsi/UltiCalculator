@@ -140,6 +140,12 @@ h2 { margin-top: 0; }
   flex-shrink: 0;
 }
 
+.checkbox-row {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 1.8rem;
+}
+
 .control-lg {
   font-size: 1.15rem !important;
   padding: 0.8rem !important;
@@ -374,10 +380,17 @@ h2 { margin-top: 0; }
         </label>
         <p id="defenders-info" class="muted"></p>
 
-        <label class="field field-checkbox" title="Duplázza a leosztás színes bemondásait: a játékot, ultit, négy ászt, színes durchmars/redurchmars-t.">
+        <div class="checkbox-row">
+        <label class="field field-checkbox" id="piros-adu-field" title="Duplázza a leosztás színes bemondásait: a játékot, ultit, négy ászt, színes durchmars/redurchmars-t.">
           Piros adu
           <input type="checkbox" id="piros-adu-toggle">
         </label>
+
+        <label class="field field-checkbox" id="csendes-100-field" title="Nem bemondott 100 pont a színjátékban: feleannyit fizet, mint egy bemondott 40-100. Csak akkor választható, ha nincs 40-100 / 20-100 a leosztásban.">
+          Csendes 100
+          <input type="checkbox" id="csendes-100-toggle">
+        </label>
+        </div>
 
         <div id="bemondas-lines"></div>
         <button type="button" id="btn-add-line" class="btn btn-secondary">+ Bemondás hozzáadása</button>
@@ -406,9 +419,9 @@ h2 { margin-top: 0; }
       <select class="line-bemondas control-lg"></select>
       <button type="button" class="btn btn-icon btn-remove-line" title="Bemondás törlése">✕</button>
     </div>
-    <label class="checkbox-inline line-piros-toggle" hidden>
-      <input type="checkbox" class="line-piros-checkbox">
-      Piros (duplázza az értéket)
+    <label class="checkbox-inline line-haromlapos-toggle" hidden>
+      <input type="checkbox" class="line-haromlapos-checkbox">
+      Háromlapos
     </label>
     <label class="checkbox-inline result-toggle">
       <input type="checkbox" class="line-bukott-checkbox">
@@ -463,21 +476,35 @@ const SETUP_DEFAULTS_KEY = 'ultiCalculator_setup_defaults_v1';
 // egységesen mindannyiukra, nincs rá külön választás soronként.
 // A betli ezzel szemben mindig "színtelen" (nem kombinálható semmi mással), a
 // "piros betli" pedig nem aduszínt jelent, csak egy önálló, erősebb (dupla
-// értékű) fokozatot — ezért ez az egyetlen bemondás, amelynek saját,
-// soronkénti piros jelölőnégyzete van (pirosVariant: true).
+// értékű) fokozatot — ezért külön katalógus-elem; színtelen sor mellett a
+// "Piros adu" kapcsoló el is tűnik.
 const BEMONDASOK = [
   { id: 'parti', nev: 'Parti', ertek: 1, kategoria: 'szin', jatekAlap: true },
   { id: '40_100', nev: '40-100', ertek: 4, kategoria: 'szin', jatekAlap: true },
   { id: '20_100', nev: '20-100', ertek: 8, kategoria: 'szin', jatekAlap: true },
   { id: 'negy_asz', nev: 'Négy ász', ertek: 4, kategoria: 'szin', optional: 'negyasz' },
-  { id: 'ulti', nev: 'Ulti', ertek: 4, kategoria: 'szin', ultiSpecial: true },
+  { id: 'ulti', nev: 'Ulti', ertek: 4, kategoria: 'szin', ultiSpecial: true, haromlapos: true },
+  { id: 'csendes_ulti', nev: 'Csendes ulti', ertek: 2, kategoria: 'szin', ultiSpecial: true, nincsKontra: true, haromlapos: true },
   { id: 'durchmars_szintelen', nev: 'Durchmars (színtelen)', ertek: 6, kategoria: 'adu_nelkuli' },
   { id: 'durchmars_szines', nev: 'Durchmars (színes)', ertek: 6, kategoria: 'szin' },
   { id: 'redurchmars_szintelen', nev: 'Redurchmars / Terített durchmars (színtelen)', ertek: 24, kategoria: 'adu_nelkuli' },
   { id: 'redurchmars_szines', nev: 'Redurchmars / Terített durchmars (színes)', ertek: 24, kategoria: 'szin' },
-  { id: 'betli', nev: 'Betli', ertek: 5, kategoria: 'adu_nelkuli', pirosVariant: true },
+  { id: 'betli', nev: 'Betli', ertek: 5, kategoria: 'adu_nelkuli' },
+  { id: 'piros_betli', nev: 'Piros betli', ertek: 10, kategoria: 'adu_nelkuli' },
   { id: 'rebetli', nev: 'Rebetli / Terített betli', ertek: 20, kategoria: 'adu_nelkuli' },
 ];
+
+// A csendes 100 (nem bemondott 100 pont színjátékban) feleannyit fizet, mint
+// egy bemondott 40-100 (4 pont → 2). Nem külön bemondás-sor: nincs rajta
+// kontra és nem bukhat, csak akkor jelölhető, ha nincs 40-100 / 20-100 és
+// nincs színtelen sor; a "Piros adu" kapcsoló ezt is duplázza.
+const CSENDES_100_ERTEK = 2;
+
+// Háromlapos ulti (az ulti / csendes ulti soron jelölhető): fix felár, amit
+// sem a kontra, sem a piros adu nem szoroz — siker esetén ennyit kap a felvevő
+// minden ellenjátékostól, bukásnál ennyit fizet nekik (az alaptéttel skálázva).
+const HAROMLAPOS_SIKER = 20;
+const HAROMLAPOS_BUKAS = 10;
 
 const KONTRA_SZINTEK = ['Nincs kontra', 'Kontra', 'Rekontra', 'Szubkontra', 'Mordkontra', 'Hirschkontra', 'Fedák Sári'];
 
@@ -857,6 +884,8 @@ function availableBemondasok(excludeLineEl) {
     if (usedIds.has(b.id)) return false;
     if (b.kategoria === 'adu_nelkuli' && used.length > 0) return false;
     if (b.jatekAlap && usedJatekAlap) return false;
+    // A csendes ulti és a bemondott ulti kizárja egymást.
+    if ((b.id === 'ulti' && usedIds.has('csendes_ulti')) || (b.id === 'csendes_ulti' && usedIds.has('ulti'))) return false;
     if ((b.id === 'durchmars_szines' || b.id === 'redurchmars_szines') && usedColoredDurchmarsFamily) return false;
     // Színes durchmars/redurchmars mellé csak 40-100 vagy 20-100 alapjáték
     // adható hozzá (opcionálisan) — sima Parti mellé nem választható.
@@ -927,6 +956,25 @@ function updateAllLineResultTexts() {
 
 pirosAduToggle.addEventListener('change', () => { updateAllLineResultTexts(); renderPreview(); });
 
+const pirosAduField = document.getElementById('piros-adu-field');
+const csendes100Field = document.getElementById('csendes-100-field');
+const csendes100Toggle = document.getElementById('csendes-100-toggle');
+csendes100Toggle.addEventListener('change', renderPreview);
+
+// A csendes 100 csak színes leosztásban, bemondott 40-100 / 20-100 nélkül
+// jelölhető; ha a sorok változása miatt ez megszűnik, a jelölés is törlődik.
+function updateCsendes100Availability() {
+  const boms = [...bemondasLinesDiv.querySelectorAll('.bemondas-line')]
+    .map(lineEl => bemondasById(lineEl.querySelector('.line-bemondas').value));
+  const hasColorless = boms.some(b => b.kategoria === 'adu_nelkuli');
+  // Színtelen bemondásnál nincs adu, tehát Piros adu sincs.
+  pirosAduField.hidden = hasColorless;
+  if (hasColorless) pirosAduToggle.checked = false;
+  const available = !hasColorless && !boms.some(b => b.id === '40_100' || b.id === '20_100');
+  csendes100Field.hidden = !available;
+  if (!available) csendes100Toggle.checked = false;
+}
+
 function applyBukott(lineEl, checked) {
   lineEl.querySelector('.line-bukott-checkbox').checked = checked;
   lineEl.querySelector('.result-toggle-label').textContent = checked ? 'Bukott' : 'Sikerült';
@@ -949,9 +997,9 @@ function durchmarsAutoBukasReason(lineEl) {
   if (baseLine && isLineBukott(baseLine)) {
     return `${bemondasById(baseLine.querySelector('.line-bemondas').value).nev} bukott`;
   }
-  const ultiLine = others.find(l => l.querySelector('.line-bemondas').value === 'ulti');
+  const ultiLine = others.find(l => ['ulti', 'csendes_ulti'].includes(l.querySelector('.line-bemondas').value));
   if (ultiLine && isLineBukott(ultiLine)) {
-    return 'az Ulti bukott';
+    return ultiLine.querySelector('.line-bemondas').value === 'ulti' ? 'az Ulti bukott' : 'a csendes ulti bukott';
   }
   return null;
 }
@@ -995,8 +1043,8 @@ function addBemondasLine(presetId) {
   const jointSelect = lineEl.querySelector('.kontra-joint-select');
   const aSelect = lineEl.querySelector('.kontra-a-select');
   const bSelect = lineEl.querySelector('.kontra-b-select');
-  const pirosToggleLabel = lineEl.querySelector('.line-piros-toggle');
-  const pirosCheckbox = lineEl.querySelector('.line-piros-checkbox');
+  const haromlaposLabel = lineEl.querySelector('.line-haromlapos-toggle');
+  const haromlaposCheckbox = lineEl.querySelector('.line-haromlapos-checkbox');
   jointSelect.innerHTML = kontraOptionsHtml();
   aSelect.innerHTML = kontraOptionsHtml();
   bSelect.innerHTML = kontraOptionsHtml();
@@ -1004,11 +1052,10 @@ function addBemondasLine(presetId) {
   function refreshKategoria() {
     const bem = bemondasById(bemondasSelect.value);
     const isSzin = bem.kategoria === 'szin';
-    lineEl.querySelector('.kontra-joint').hidden = !isSzin;
+    lineEl.querySelector('.kontra-joint').hidden = !isSzin || !!bem.nincsKontra;
     lineEl.querySelector('.kontra-split').hidden = isSzin;
-    const showPiros = !!bem.pirosVariant;
-    pirosToggleLabel.hidden = !showPiros;
-    if (!showPiros) pirosCheckbox.checked = false;
+    haromlaposLabel.hidden = !bem.haromlapos;
+    if (!bem.haromlapos) haromlaposCheckbox.checked = false;
     updateLineResultText(lineEl);
   }
 
@@ -1033,7 +1080,7 @@ function addBemondasLine(presetId) {
     updateDurchmarsAutoBukas();
     renderPreview();
   });
-  [jointSelect, aSelect, bSelect, pirosCheckbox].forEach(sel =>
+  [jointSelect, aSelect, bSelect, haromlaposCheckbox].forEach(sel =>
     sel.addEventListener('change', () => { updateLineResultText(lineEl); renderPreview(); })
   );
   lineEl.querySelector('.btn-remove-line').addEventListener('click', () => {
@@ -1059,6 +1106,7 @@ btnAddLine.addEventListener('click', () => addBemondasLine());
 function resetHandForm() {
   bemondasLinesDiv.innerHTML = '';
   pirosAduToggle.checked = false;
+  csendes100Toggle.checked = false;
   addBemondasLine('parti');
 }
 
@@ -1067,7 +1115,9 @@ function readLine(lineEl) {
   const result = lineEl.querySelector('.line-bukott-checkbox').checked ? 'bukas' : 'siker';
   const isSzin = bem.kategoria === 'szin';
   let levelA, levelB;
-  if (isSzin) {
+  if (bem.nincsKontra) {
+    levelA = levelB = 0;
+  } else if (isSzin) {
     levelA = levelB = parseInt(lineEl.querySelector('.kontra-joint-select').value, 10);
   } else {
     levelA = parseInt(lineEl.querySelector('.kontra-a-select').value, 10);
@@ -1075,15 +1125,10 @@ function readLine(lineEl) {
   }
   // Színes bemondásnál (beleértve az alapjátékot is) a piros adu a leosztás
   // egészére vonatkozó, közös kapcsolóból jön (nem választható el egymástól);
-  // a betlinél (az egyetlen pirosVariant bemondásnál) ez egy önálló,
-  // soronkénti kapcsoló.
-  let piros = false;
-  if (isSzin) {
-    piros = pirosAduToggle.checked;
-  } else if (bem.pirosVariant) {
-    piros = lineEl.querySelector('.line-piros-checkbox').checked;
-  }
-  return { bem, result, levelA, levelB, piros };
+  // színtelennél nincs piros adu (a piros betli külön katalógus-elem).
+  const piros = isSzin && pirosAduToggle.checked;
+  const haromlapos = !!bem.haromlapos && lineEl.querySelector('.line-haromlapos-checkbox').checked;
+  return { bem, result, levelA, levelB, piros, haromlapos };
 }
 
 // Az alaptét (Ft/pont) egységesen szorozza mindegyik bemondás alapértékét,
@@ -1092,14 +1137,23 @@ function bemondasErtek(bem, piros) {
   return bem.ertek * (piros ? 2 : 1) * (state.alapTet || 1);
 }
 
+// Egy sor ellenjátékosonkénti kifizetése: érték × kontraszorzó (+ a háromlapos
+// fix felára).
+function lineAmounts({ bem, result, levelA, levelB, piros, haromlapos }) {
+  const ertek = bemondasErtek(bem, piros);
+  const bonus = !haromlapos ? 0
+    : (result === 'siker' ? HAROMLAPOS_SIKER : HAROMLAPOS_BUKAS) * (state.alapTet || 1);
+  return {
+    amountA: ertek * multiplier(levelA, bem.ultiSpecial, result) + bonus,
+    amountB: ertek * multiplier(levelB, bem.ultiSpecial, result) + bonus,
+  };
+}
+
 function updateLineResultText(lineEl) {
   const defenders = currentDefenderIndices();
-  const { bem, result, levelA, levelB, piros } = readLine(lineEl);
-  const ertek = bemondasErtek(bem, piros);
-  const multA = multiplier(levelA, bem.ultiSpecial, result);
-  const multB = multiplier(levelB, bem.ultiSpecial, result);
-  const amountA = ertek * multA;
-  const amountB = ertek * multB;
+  const line = readLine(lineEl);
+  const { result, piros } = line;
+  const { amountA, amountB } = lineAmounts(line);
   const nameA = state.players[defenders[0]] || '1. ellenjátékos';
   const nameB = state.players[defenders[1]] || '2. ellenjátékos';
   const verb = result === 'siker' ? 'kap' : 'fizet';
@@ -1115,12 +1169,9 @@ function computeHandDeltas() {
   const lineSummaries = [];
 
   bemondasLinesDiv.querySelectorAll('.bemondas-line').forEach(lineEl => {
-    const { bem, result, levelA, levelB, piros } = readLine(lineEl);
-    const ertek = bemondasErtek(bem, piros);
-    const multA = multiplier(levelA, bem.ultiSpecial, result);
-    const multB = multiplier(levelB, bem.ultiSpecial, result);
-    const amountA = ertek * multA;
-    const amountB = ertek * multB;
+    const line = readLine(lineEl);
+    const { bem, result, piros, haromlapos } = line;
+    const { amountA, amountB } = lineAmounts(line);
     const sign = result === 'siker' ? 1 : -1;
 
     perPlayerDelta[declarer] += sign * (amountA + amountB);
@@ -1128,13 +1179,26 @@ function computeHandDeltas() {
     perPlayerDelta[defenders[1]] -= sign * amountB;
 
     const teritett = bem.id === 'rebetli' || bem.id === 'redurchmars_szintelen' || bem.id === 'redurchmars_szines';
-    lineSummaries.push({ nev: bem.nev + (piros ? ' (piros)' : ''), result, amountA, amountB, teritett });
+    lineSummaries.push({ nev: bem.nev + (piros ? ' (piros)' : '') + (haromlapos ? ' (háromlapos)' : ''), result, amountA, amountB, teritett });
   });
+
+  if (csendes100Toggle.checked && !csendes100Field.hidden) {
+    const piros = pirosAduToggle.checked;
+    const amount = CSENDES_100_ERTEK * (piros ? 2 : 1) * (state.alapTet || 1);
+    perPlayerDelta[declarer] += 2 * amount;
+    perPlayerDelta[defenders[0]] -= amount;
+    perPlayerDelta[defenders[1]] -= amount;
+    lineSummaries.push({
+      nev: 'Csendes 100' + (piros ? ' (piros)' : ''),
+      result: 'siker', amountA: amount, amountB: amount, teritett: false,
+    });
+  }
 
   return { declarer, defenders, perPlayerDelta, lineSummaries };
 }
 
 function renderPreview() {
+  updateCsendes100Availability();
   if (bemondasLinesDiv.children.length === 0) {
     handPreviewEl.hidden = true;
     return;
