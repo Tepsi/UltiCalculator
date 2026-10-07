@@ -259,6 +259,48 @@ test('Csendes 100 nem jelölhető, ha az alapjáték (Parti) bukott', async () =
   assertEqual(toggle.checked, true, 'Teljesült Parti mellett újra jelölhető');
 });
 
+test('Pontállás melletti gomb a leosztás beírásához görget', async () => {
+  const doc = await newApp();
+  startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });
+  const btn = doc.getElementById('btn-jump-to-hand');
+  assert(btn, 'Legyen ugrás gomb');
+  assert(btn.closest('.card').querySelector('h2').textContent.includes('Pontállás'), 'A Pontállás címsor mellett legyen');
+  let target = null;
+  doc.getElementById('round-title').scrollIntoView = function () { target = this; };
+  btn.click();
+  assertEqual(target && target.id, 'round-title', 'A Leosztás kártyához kell ugrania');
+});
+
+test('Pontállás összecsukó gomb: összecsukva csak a fejléc és az utolsó sor látszik, az állapot új sornál is megmarad', async () => {
+  const doc = await newApp();
+  startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });
+  submitHand(doc);
+  submitHand(doc);
+  const table = doc.getElementById('score-ledger');
+  const btn = doc.getElementById('btn-collapse-ledger');
+  assert(btn.compareDocumentPosition(doc.getElementById('btn-jump-to-hand')) & 4, 'Az összecsukó gomb a bal oldali (előbb áll)');
+  assert(!table.classList.contains('is-collapsed'));
+  btn.click();
+  assert(table.classList.contains('is-collapsed'), 'Összecsukva');
+  assertEqual(btn.getAttribute('aria-expanded'), 'false');
+  submitHand(doc);
+  assert(table.classList.contains('is-collapsed'), 'Új leosztás után is összecsukva marad');
+  btn.click();
+  assert(!table.classList.contains('is-collapsed'), 'Újra kinyitva');
+  assertEqual(btn.getAttribute('aria-expanded'), 'true');
+});
+
+test('A Leosztás melletti gomb az oldal tetejére görget', async () => {
+  const doc = await newApp();
+  startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });
+  const btn = doc.getElementById('btn-jump-to-top');
+  assert(btn.closest('.card').contains(doc.getElementById('round-title')), 'A Leosztás címsor mellett legyen');
+  let args = null;
+  doc.defaultView.scrollTo = (a) => { args = a; };
+  btn.click();
+  assertEqual(args && args.top, 0, 'A lap tetejére kell görgetnie');
+});
+
 test('Piros betli külön bemondás (10 pont), és színtelen sornál eltűnik a Piros adu kapcsoló', async () => {
   const doc = await newApp();
   startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });

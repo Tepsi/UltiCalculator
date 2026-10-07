@@ -248,6 +248,34 @@ h2 { margin-top: 0; }
   border: 1px solid var(--color-border);
 }
 
+.header-buttons {
+  display: flex;
+  gap: 0.4rem;
+}
+
+/* Összecsukva csak a fejléc és az utolsó sor látszik. */
+.scoreboard.is-collapsed tr:not(:first-child):not(:last-child) {
+  display: none;
+}
+
+.btn-jump {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  color: #fff;
+  border: none;
+}
+
+.btn-jump svg { display: block; }
+
+#btn-collapse-ledger { background: var(--color-secondary); }
+#btn-jump-to-hand, #btn-jump-to-top { background: #2f5d7c; }
+#btn-collapse-ledger:hover { background: #3a4739; }
+#btn-jump-to-hand:hover, #btn-jump-to-top:hover { background: #244a63; }
+
 .screen { }
 
 .banner {
@@ -375,14 +403,23 @@ h2 { margin-top: 0; }
   <section id="game-screen" class="screen" hidden>
 
     <section class="card">
-      <h2>Pontállás körről-körre</h2>
+      <div class="card-header-row">
+        <h2>Pontállás körről-körre</h2>
+        <div class="header-buttons">
+          <button type="button" id="btn-collapse-ledger" class="btn btn-secondary btn-jump" title="Pontállás összecsukása" aria-label="Pontállás összecsukása" aria-expanded="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4l6 6 6-6"/><path d="M6 20l6-6 6 6"/></svg></button>
+          <button type="button" id="btn-jump-to-hand" class="btn btn-secondary btn-jump" title="Ugrás a leosztás beírásához" aria-label="Ugrás a leosztás beírásához"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v15"/><path d="M6 13l6 6 6-6"/></svg></button>
+        </div>
+      </div>
       <div class="scoreboard-wrapper">
         <table id="score-ledger" class="scoreboard"></table>
       </div>
     </section>
 
     <section class="card">
-      <h2 id="round-title">Leosztás</h2>
+      <div class="card-header-row">
+        <h2 id="round-title">Leosztás</h2>
+        <button type="button" id="btn-jump-to-top" class="btn btn-secondary btn-jump" title="Ugrás az oldal tetejére" aria-label="Ugrás az oldal tetejére"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20V5"/><path d="M6 11l6-6 6 6"/></svg></button>
+      </div>
       <label class="field">
         Osztó
         <select id="dealer-select" class="control-lg" title="A szabály szerint automatikusan kitöltve, de kézzel is módosítható, ha hiba csúszna a felállásba."></select>
@@ -721,6 +758,26 @@ const scoreLedgerEl = document.getElementById('score-ledger');
 const roundTitleEl = document.getElementById('round-title');
 const roundMetaEl = document.getElementById('round-meta');
 const dealerSelect = document.getElementById('dealer-select');
+const ICON_COLLAPSE = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4l6 6 6-6"/><path d="M6 20l6-6 6 6"/></svg>';
+const ICON_EXPAND = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 10l6-6 6 6"/><path d="M6 14l6 6 6-6"/></svg>';
+const btnCollapseLedger = document.getElementById('btn-collapse-ledger');
+btnCollapseLedger.addEventListener('click', () => {
+  const collapsed = document.getElementById('score-ledger').classList.toggle('is-collapsed');
+  const label = collapsed ? 'Pontállás kinyitása' : 'Pontállás összecsukása';
+  btnCollapseLedger.innerHTML = collapsed ? ICON_EXPAND : ICON_COLLAPSE;
+  btnCollapseLedger.title = label;
+  btnCollapseLedger.setAttribute('aria-label', label);
+  btnCollapseLedger.setAttribute('aria-expanded', String(!collapsed));
+});
+
+document.getElementById('btn-jump-to-hand').addEventListener('click', () => {
+  document.getElementById('round-title').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+document.getElementById('btn-jump-to-top').addEventListener('click', () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
 const pirosAszToggle = document.getElementById('piros-asz-toggle');
 const declarerSelect = document.getElementById('declarer-select');
 const defendersInfoEl = document.getElementById('defenders-info');

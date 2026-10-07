@@ -100,6 +100,13 @@ oldalán, kattints a **"Raw"** gombra, majd `Ctrl+S`/`Cmd+S`-sel mentsd el.)
 
 ### 3.2 Főképernyő — pontállás táblázat
 
+A **"Pontállás körről-körre"** címsor mellett egy lefelé mutató nyilas, kék gomb a
+leosztás beírásához (a "Leosztás" kártyához) görgeti az oldalt — hosszú
+táblázatnál nem kell lefelé tekerni. Mellette, balra egy zöld, egymás felé mutató nyilas gomb a táblázatot
+összecsukja úgy, hogy csak a fejléc és az utolsó (aktuális állás) sor látszik
+(az ikonja kifelé mutató nyilakra változik, azzal nyitható vissza; az állapot új leosztásnál megmarad,
+de nem kerül mentésre).
+
 A lap tetején egyetlen táblázat látható, a **"Pontállás körről-körre"**: a
 fejlécében a játékosok nevével (mindegyik mellett egy-egy kis ikonnal, ld.
 lentebb), majd minden mentett leosztás után egy új sorral — kör számmal és az
@@ -125,6 +132,9 @@ könnyen visszakereshetők a legnagyobb tételű, terített leosztások, és az 
 ki mondta be. Ez az "Exportálás" gombbal mentett `.html`-ben is megjelenik.
 
 ### 3.3 Leosztás rögzítése
+
+A "Leosztás" kártya címsora mellett egy felfelé mutató nyilas, kék gomb az
+oldal tetejére (a pontállás táblázathoz) görget vissza.
 
 0. **Osztó**: a "Leosztás" kártya tetején egy legördülő menü mutatja az
    aktuális osztót — alapesetben automatikusan a szabály szerint van
