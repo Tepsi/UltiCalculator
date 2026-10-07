@@ -207,7 +207,7 @@ ki mondta be. Ez az "Exportálás" gombbal mentett `.html`-ben is megjelenik.
      mivel a durchmars valójában az összes ütés megnyerését jelenti, ez nem a
      jegyző döntése, a szabály szerint szükségszerű, ezért az app nem engedi
      kézzel felülírni. Amint az alapjáték/Ulti újra sikerül (vagy törlődik),
-     a zárolás feloldódik, és a sor visszaáll Sikerültre.
+     a zárolás feloldódik, és a sor visszaáll Teljesültre.
    A legördülő mindig csak azokat az opciókat kínálja fel, amelyek a
    leosztásban már megadott többi sor mellett még valóban választhatók (pl. ha
    már van egy Ulti sor, onnantól az Ulti eltűnik a további sorok listájából;
@@ -217,8 +217,8 @@ ki mondta be. Ez az "Exportálás" gombbal mentett `.html`-ben is megjelenik.
    ezeket a valóságnak megfelelően az app **külön-külön** számolja el, majd
    összeadja a hatásukat.
 4. Minden bemondás sorban beállítható:
-   - **Sikerült / Bukott** jelölőnégyzet: alapból nincs bejelölve (Sikerült),
-     bejelölve Bukott-ra vált (és pirosra színezi a sort).
+   - **Teljesült / Bukott** kapcsoló: alapból zöld pipa (Teljesült),
+     kattintásra piros X-re (Bukott) vált, és a sor pirosra színeződik.
    - **Kontra szintje**:
      - *Színes soroknál* (alapjáték, ulti, négy ász, és a "színes"
        durchmars/redurchmars variánsok) egyetlen kontraszint-választó jelenik

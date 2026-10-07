@@ -158,10 +158,25 @@ h2 { margin-top: 0; }
   color: var(--color-secondary);
 }
 
+/* Teljesült / Bukott kapcsoló: jelöletlenül zöld pipa, bejelölve piros X. */
+.result-toggle {
+  color: #2e7d32;
+}
+
 .result-toggle input[type="checkbox"] {
-  width: 1.3rem;
-  height: 1.3rem;
-  accent-color: var(--color-danger);
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1.7rem;
+  height: 1.7rem;
+  flex-shrink: 0;
+  margin: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #2e7d32 center / 80% no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 12.5l5 5L20 6.5'/%3E%3C/svg%3E");
+}
+
+.result-toggle input[type="checkbox"]:checked {
+  background: #c62828 center / 80% no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E");
 }
 
 .bemondas-line.is-bukott {
@@ -425,7 +440,7 @@ h2 { margin-top: 0; }
     </label>
     <label class="checkbox-inline result-toggle">
       <input type="checkbox" class="line-bukott-checkbox">
-      <span class="result-toggle-label">Sikerült</span>
+      <span class="result-toggle-label">Teljesült</span>
     </label>
     <p class="line-lock-note" hidden></p>
     <div class="line-row kontra-joint">
@@ -977,7 +992,7 @@ function updateCsendes100Availability() {
 
 function applyBukott(lineEl, checked) {
   lineEl.querySelector('.line-bukott-checkbox').checked = checked;
-  lineEl.querySelector('.result-toggle-label').textContent = checked ? 'Bukott' : 'Sikerült';
+  lineEl.querySelector('.result-toggle-label').textContent = checked ? 'Bukott' : 'Teljesült';
   lineEl.classList.toggle('is-bukott', checked);
 }
 

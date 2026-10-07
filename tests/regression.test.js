@@ -167,11 +167,11 @@ test('Alapjáték (Parti), sikerült, kontra nélkül: 1 pont mindkét ellenját
   assertEqual(r.amountB, 1);
 });
 
-test('Bukott checkbox: alapból "Sikerült", bejelölve "Bukott"-ra vált és a felvevő fizet', async () => {
+test('Bukott checkbox: alapból "Teljesült", bejelölve "Bukott"-ra vált és a felvevő fizet', async () => {
   const doc = await newApp();
   startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });
   const line = lines(doc)[0];
-  assertEqual(line.querySelector('.result-toggle-label').textContent, 'Sikerült');
+  assertEqual(line.querySelector('.result-toggle-label').textContent, 'Teljesült');
   assert(!line.classList.contains('is-bukott'));
 
   setBukott(line, true);
@@ -180,7 +180,7 @@ test('Bukott checkbox: alapból "Sikerült", bejelölve "Bukott"-ra vált és a 
   assertEqual(lineResult(line).verb, 'fizet');
 
   setBukott(line, false);
-  assertEqual(line.querySelector('.result-toggle-label').textContent, 'Sikerült');
+  assertEqual(line.querySelector('.result-toggle-label').textContent, 'Teljesült');
   assert(!line.classList.contains('is-bukott'));
 });
 
