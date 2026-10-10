@@ -241,6 +241,76 @@ test('Csendes ulti: feleannyi mint az ulti, bukáskor duplán fizet, nincs kontr
   assert(bemondasOptionValues(lines(doc)[0].querySelector('.line-bemondas')).includes('ulti'));
 });
 
+test('Ellenulti: mint a csendes ulti, de fordított előjellel (ellenjátékosok kapnak/fizetnek), nincs kontra, kizárja az ultit', async () => {
+  const doc = await newApp();
+  startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });
+  const line = addLine(doc, 'ellenulti');
+  assert(line.querySelector('.kontra-joint').hidden && line.querySelector('.kontra-split').hidden, 'Nem lehet kontrázni');
+  assert(!bemondasOptionValues(lines(doc)[0].querySelector('.line-bemondas')).includes('ulti'), 'Ellenulti mellett nem választható az ulti');
+  assert(!bemondasOptionValues(lines(doc)[0].querySelector('.line-bemondas')).includes('csendes_ulti'));
+  setDeclarer(doc, 1);
+  assert(line.querySelector('.line-result').textContent.startsWith('Ellenjátékosok kapnak 2 pontot'));
+  const dealerRow = () => JSON.stringify(ledgerLastRow(doc));
+  submitHand(doc);
+  // Parti 1+1 a felvevőnek (+2), ellenulti 2+2 az ellenjátékosoknak: Bela -2, Cili/Deszo +1
+  assertEqual(dealerRow(), JSON.stringify([0, -2, 1, 1]));
+
+  const line2 = addLine(doc, 'ellenulti');
+  setBukott(line2, true);
+  assert(line2.querySelector('.line-result').textContent.startsWith('Ellenjátékosok fizetnek 4 pontot'), 'Bukás: duplán fizet');
+});
+
+test('Ellen csendes 100: csendes 100 tükörképe, ellenjátékosok kapják, kizárja a csendes 100-at', async () => {
+  const doc = await newApp();
+  startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });
+  const ellen = doc.getElementById('ellen-100-toggle');
+  const csendes = doc.getElementById('csendes-100-toggle');
+  setChecked(csendes, true);
+  setChecked(ellen, true);
+  assertEqual(csendes.checked, false, 'A kettő kizárja egymást');
+  setDeclarer(doc, 1);
+  submitHand(doc);
+  // Parti +2 a felvevőnek, ellen csendes 100: 2+2 az ellenjátékosoknak
+  assertEqual(JSON.stringify(ledgerLastRow(doc)), JSON.stringify([0, -2, 1, 1]));
+  assertEqual(ellen.checked, false, 'Mentés után törlődnie kell');
+
+  setChecked(ellen, true);
+  setValue(lines(doc)[0].querySelector('.line-bemondas'), '40_100');
+  assert(doc.getElementById('ellen-100-field').hidden, '40-100 mellett el kell tűnnie');
+  assertEqual(ellen.checked, false);
+});
+
+test('Ha a pontok összege nem nulla: piros pontállás, hibaüzenet, zárolt leosztás-rögzítés; visszavonás után újra működik', async () => {
+  const bad = {
+    playerCount: 4,
+    players: ['Anna', 'Bela', 'Cili', 'Deszo'],
+    playerIcons: ['●', '▲', '■', '◆'],
+    dealerIndex: 0,
+    round: 2,
+    totals: [0, 5, -3, 0],
+    history: [{ round: 1, dealerIndex: 0, declarerIndex: 1, defenderIndices: [2, 3], lineSummaries: [], perPlayerDelta: [0, 5, -3, 0] }],
+    pirosAszOsztNemOszt: false,
+    negyaszEnabled: false,
+    alapTet: 1,
+  };
+  const doc = await newApp((window) => {
+    window.localStorage.setItem('ultiCalculator_session_v1', JSON.stringify(bad));
+  });
+  doc.getElementById('btn-resume').click();
+  assert(doc.getElementById('ledger-card').classList.contains('balance-error'), 'Piros háttér kell');
+  assert(!doc.getElementById('balance-error').hidden, 'Hibaüzenet kell');
+  assert(doc.getElementById('hand-form').inert, 'A leosztás-űrlap zárolt');
+  assertEqual(doc.getElementById('dealer-select').disabled, true);
+  submitHand(doc);
+  assertEqual(doc.querySelectorAll('#score-ledger tr').length, 2, 'Zárolt állapotban a mentés nem megy át');
+  assert(!doc.getElementById('btn-undo').hidden, 'A visszavonás elérhető');
+  doc.getElementById('btn-undo').click();
+  assert(!doc.getElementById('ledger-card').classList.contains('balance-error'), 'Visszavonás után nincs hiba');
+  assert(doc.getElementById('balance-error').hidden);
+  assert(!doc.getElementById('hand-form').inert);
+  assertEqual(doc.getElementById('dealer-select').disabled, false);
+});
+
 test('Csendes 100 nem jelölhető, ha az alapjáték (Parti) bukott', async () => {
   const doc = await newApp();
   startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });
@@ -712,12 +782,25 @@ test('Parti-est indítása elmenti az indítási képernyő beállításait defa
   assertEqual(saved.negyaszEnabled, true);
 });
 
+test('Az alaptét csak nullánál nagyobb egész szám lehet: tört, nulla, negatív és üres érték nem indít partit', async () => {
+  for (const bad of ['2.5', '0', '-3', '', 'abc', '1e1']) {
+    const doc = await newApp();
+    startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0, alapTet: bad });
+    assert(doc.getElementById('game-screen').hidden, `"${bad}" alaptéttel nem indulhat el a parti-est`);
+    assert(!doc.getElementById('alap-tet-error').hidden, `"${bad}" esetén hibaüzenet kell`);
+    assertEqual(doc.defaultView.localStorage.getItem('ultiCalculator_session_v1'), null);
+  }
+  const doc = await newApp();
+  startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0, alapTet: 3 });
+  assert(!doc.getElementById('game-screen').hidden, 'Egész alaptéttel elindul');
+});
+
 test('Új parti-est indításakor az előző indítási beállítások vannak default-ként betöltve', async () => {
   const defaults = {
     playerCount: 3,
     players: ['Elek', 'Feri', 'Gizi'],
     dealerIndex: 1,
-    alapTet: 2.5,
+    alapTet: 3,
     negyaszEnabled: true,
   };
   const doc = await newApp((window) => {
@@ -727,7 +810,7 @@ test('Új parti-est indításakor az előző indítási beállítások vannak de
   const nameInputs = [...doc.querySelectorAll('#player-names input')];
   assertEqual(nameInputs.map(i => i.value).join(','), 'Elek,Feri,Gizi');
   assertEqual(doc.getElementById('starting-dealer').value, '1');
-  assertEqual(doc.getElementById('alap-tet').value, '2.5');
+  assertEqual(doc.getElementById('alap-tet').value, '3');
   assertEqual(doc.getElementById('negyasz-toggle').checked, true);
 });
 

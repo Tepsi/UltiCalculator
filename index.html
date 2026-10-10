@@ -140,6 +140,16 @@ h2 { margin-top: 0; }
   flex-shrink: 0;
 }
 
+/* Piros adu: a jelölőnégyzet és a felirat is kulturált, mély piros. */
+#piros-adu-field {
+  color: #b3262b;
+  font-weight: 600;
+}
+
+#piros-adu-field input[type="checkbox"] {
+  accent-color: #b3262b;
+}
+
 .checkbox-row {
   display: flex;
   flex-wrap: wrap;
@@ -256,6 +266,29 @@ h2 { margin-top: 0; }
 /* Összecsukva csak a fejléc és az utolsó sor látszik. */
 .scoreboard.is-collapsed tr:not(:first-child):not(:last-child) {
   display: none;
+}
+
+/* Ha a pontok összege nem nulla, a pontállás piros hátteret kap és a leosztás
+   rögzítése zárolt (csak az utolsó leosztás visszavonása engedett). */
+#ledger-card.balance-error {
+  background: #f8d7da;
+  border-color: #c62828;
+}
+
+#ledger-card.balance-error .scoreboard,
+#ledger-card.balance-error .scoreboard tr.row-teritett {
+  background: #f8d7da;
+}
+
+.balance-error-msg {
+  color: #8c1c1c;
+  font-weight: 700;
+  margin: 0 0 0.75rem 0;
+}
+
+#hand-form.is-locked-balance {
+  opacity: 0.45;
+  pointer-events: none;
 }
 
 .btn-jump {
@@ -387,8 +420,9 @@ h2 { margin-top: 0; }
 
       <label class="field">
         Alaptét (mennyit ér egy parti pont)
-        <input type="number" id="alap-tet" value="1" min="0.01" step="any">
+        <input type="number" id="alap-tet" value="1" min="1" step="1" inputmode="numeric">
       </label>
+      <p class="line-lock-note" id="alap-tet-error" hidden>Az alaptét csak nullánál nagyobb egész szám lehet.</p>
 
       <label class="field field-checkbox">
         Négyász bemondás engedélyezése
@@ -402,7 +436,7 @@ h2 { margin-top: 0; }
   <!-- GAME SCREEN -->
   <section id="game-screen" class="screen" hidden>
 
-    <section class="card">
+    <section class="card" id="ledger-card">
       <div class="card-header-row">
         <h2>Pontállás körről-körre</h2>
         <div class="header-buttons">
@@ -410,6 +444,7 @@ h2 { margin-top: 0; }
           <button type="button" id="btn-jump-to-hand" class="btn btn-secondary btn-jump" title="Ugrás a leosztás beírásához" aria-label="Ugrás a leosztás beírásához"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v15"/><path d="M6 13l6 6 6-6"/></svg></button>
         </div>
       </div>
+      <p class="balance-error-msg" id="balance-error" role="alert" hidden></p>
       <div class="scoreboard-wrapper">
         <table id="score-ledger" class="scoreboard"></table>
       </div>
@@ -446,6 +481,11 @@ h2 { margin-top: 0; }
         <label class="field field-checkbox" id="csendes-100-field" title="Nem bemondott 100 pont a színjátékban: feleannyit fizet, mint egy bemondott 40-100. Csak akkor választható, ha nincs 40-100 / 20-100 a leosztásban.">
           Csendes 100
           <input type="checkbox" id="csendes-100-toggle">
+        </label>
+
+        <label class="field field-checkbox" id="ellen-100-field" title="Csendes 40-100 az ellenjátékosoknál: a nem bemondott 100 pont az ellenjátékosoké. Ugyanannyit ér, mint a csendes 100, de ők kapják a felvevőtől. Csak akkor választható, ha nincs 40-100 / 20-100 a leosztásban.">
+          Ellen csendes 100
+          <input type="checkbox" id="ellen-100-toggle">
         </label>
         </div>
         <p class="line-lock-note" id="csendes-100-note" hidden>A Csendes 100 nem jelölhető, mert az alapjáték bukott — bukott alapjátékkal nem lehet meg a 100 pont.</p>
@@ -543,6 +583,9 @@ const BEMONDASOK = [
   { id: 'negy_asz', nev: 'Négy ász', ertek: 4, kategoria: 'szin', optional: 'negyasz' },
   { id: 'ulti', nev: 'Ulti', ertek: 4, kategoria: 'szin', ultiSpecial: true, haromlapos: true },
   { id: 'csendes_ulti', nev: 'Csendes ulti', ertek: 2, kategoria: 'szin', ultiSpecial: true, nincsKontra: true, haromlapos: true },
+  // Ellenulti: mint a csendes ulti, de az ellenjátékosok játsszák — ha sikerül,
+  // ők kapnak a felvevőtől, ha bukik, ők fizetnek neki (ellen: az előjel fordított).
+  { id: 'ellenulti', nev: 'Ellenulti', ertek: 2, kategoria: 'szin', ultiSpecial: true, nincsKontra: true, ellen: true },
   { id: 'durchmars_szintelen', nev: 'Durchmars (színtelen)', ertek: 6, kategoria: 'adu_nelkuli' },
   { id: 'durchmars_szines', nev: 'Durchmars (színes)', ertek: 6, kategoria: 'szin' },
   { id: 'redurchmars_szintelen', nev: 'Redurchmars / Terített durchmars (színtelen)', ertek: 24, kategoria: 'adu_nelkuli' },
@@ -557,6 +600,9 @@ const BEMONDASOK = [
 // kontra és nem bukhat, csak akkor jelölhető, ha nincs 40-100 / 20-100 és
 // nincs színtelen sor; a "Piros adu" kapcsoló ezt is duplázza.
 const CSENDES_100_ERTEK = 2;
+// Ellen csendes 100: ugyanannyit ér, mint a csendes 100, de az ellenjátékosoké
+// (ők kapják a felvevőtől); szintén nincs kontra és nem bukhat.
+const ELLEN_100_ERTEK = CSENDES_100_ERTEK;
 
 // Háromlapos ulti (az ulti / csendes ulti soron jelölhető): fix felár, amit
 // sem a kontra, sem a piros adu nem szoroz — siker esetén ennyit kap a felvevő
@@ -693,7 +739,7 @@ function applySetupDefaults() {
     if (input) input.value = name;
   });
   if (defaults.dealerIndex != null) startingDealerSelect.value = String(defaults.dealerIndex);
-  if (defaults.alapTet != null) alapTetInput.value = defaults.alapTet;
+  if (Number.isInteger(defaults.alapTet) && defaults.alapTet >= 1) alapTetInput.value = defaults.alapTet;
   negyaszToggle.checked = !!defaults.negyaszEnabled;
 }
 
@@ -707,7 +753,16 @@ document.getElementById('btn-start').addEventListener('click', () => {
     players.push(val || `Játékos ${i + 1}`);
   }
   const dealerIndex = parseInt(startingDealerSelect.value, 10);
-  const alapTet = parseFloat(alapTetInput.value) || 1;
+  // Az alaptét csak pozitív egész lehet, hogy sose szülessen tört eredmény.
+  const alapTetRaw = alapTetInput.value.trim();
+  const alapTetErrorEl = document.getElementById('alap-tet-error');
+  if (!/^\d+$/.test(alapTetRaw) || parseInt(alapTetRaw, 10) < 1) {
+    alapTetErrorEl.hidden = false;
+    alapTetInput.focus();
+    return;
+  }
+  alapTetErrorEl.hidden = true;
+  const alapTet = parseInt(alapTetRaw, 10);
 
   saveSetupDefaults({
     playerCount: count,
@@ -822,6 +877,30 @@ function renderAll() {
   renderHistory();
   renderPreview();
   pirosAszToggle.checked = !!state.pirosAszOsztNemOszt;
+  updateBalanceCheck();
+}
+
+// A pontok összegének mindig nulla kell legyen (amit az egyik nyer, azt a
+// másik veszíti). Ha nem az, valahol hiba van: a pontállás piros lesz, és a
+// játék nem folytatható — csak az utolsó leosztás visszavonása engedett.
+function isBalanced() {
+  return Math.abs(state.totals.reduce((a, b) => a + b, 0)) < 1e-6;
+}
+
+function updateBalanceCheck() {
+  const sum = state.totals.reduce((a, b) => a + b, 0);
+  const bad = !isBalanced();
+  document.getElementById('ledger-card').classList.toggle('balance-error', bad);
+  const msg = document.getElementById('balance-error');
+  msg.hidden = !bad;
+  if (bad) {
+    msg.textContent = `Hiba: a pontok összege ${Math.round(sum * 100) / 100}, pedig nullának kellene lennie. ` +
+      'A játék nem folytatható — vond vissza az utolsó leosztást.';
+  }
+  handForm.classList.toggle('is-locked-balance', bad);
+  handForm.inert = bad;
+  dealerSelect.disabled = bad;
+  pirosAszToggle.disabled = bad;
 }
 
 // Az osztót a szabály szerint az app automatikusan kitölti (ld. dealerIndex
@@ -962,8 +1041,9 @@ function availableBemondasok(excludeLineEl) {
     if (usedIds.has(b.id)) return false;
     if (b.kategoria === 'adu_nelkuli' && used.length > 0) return false;
     if (b.jatekAlap && usedJatekAlap) return false;
-    // A csendes ulti és a bemondott ulti kizárja egymást.
-    if ((b.id === 'ulti' && usedIds.has('csendes_ulti')) || (b.id === 'csendes_ulti' && usedIds.has('ulti'))) return false;
+    // Az ulti, a csendes ulti és az ellenulti kizárják egymást.
+    const ultiFamily = ['ulti', 'csendes_ulti', 'ellenulti'];
+    if (ultiFamily.includes(b.id) && ultiFamily.some(id => usedIds.has(id))) return false;
     if ((b.id === 'durchmars_szines' || b.id === 'redurchmars_szines') && usedColoredDurchmarsFamily) return false;
     // Színes durchmars/redurchmars mellé csak 40-100 vagy 20-100 alapjáték
     // adható hozzá (opcionálisan) — sima Parti mellé nem választható.
@@ -1037,7 +1117,17 @@ pirosAduToggle.addEventListener('change', () => { updateAllLineResultTexts(); re
 const pirosAduField = document.getElementById('piros-adu-field');
 const csendes100Field = document.getElementById('csendes-100-field');
 const csendes100Toggle = document.getElementById('csendes-100-toggle');
-csendes100Toggle.addEventListener('change', renderPreview);
+const ellen100Field = document.getElementById('ellen-100-field');
+const ellen100Toggle = document.getElementById('ellen-100-toggle');
+// A 100 pont vagy a felvevőé, vagy az ellenjátékosoké: a kettő kizárja egymást.
+csendes100Toggle.addEventListener('change', () => {
+  if (csendes100Toggle.checked) ellen100Toggle.checked = false;
+  renderPreview();
+});
+ellen100Toggle.addEventListener('change', () => {
+  if (ellen100Toggle.checked) csendes100Toggle.checked = false;
+  renderPreview();
+});
 const csendes100Note = document.getElementById('csendes-100-note');
 csendes100Toggle.addEventListener('click', (e) => {
   if (csendes100Field.classList.contains('is-locked')) {
@@ -1061,6 +1151,8 @@ function updateCsendes100Availability() {
   const available = !hasColorless && !boms.some(b => b.id === '40_100' || b.id === '20_100');
   csendes100Field.hidden = !available;
   if (!available) csendes100Toggle.checked = false;
+  ellen100Field.hidden = !available;
+  if (!available) ellen100Toggle.checked = false;
   // Ha az alapjáték (Parti) bukott, nem lehetett meg a 100 pont sem: a csendes
   // 100 ilyenkor letiltva és kikapcsolva marad.
   const baseFailed = [...bemondasLinesDiv.querySelectorAll('.bemondas-line')].some(lineEl =>
@@ -1202,6 +1294,7 @@ function resetHandForm() {
   bemondasLinesDiv.innerHTML = '';
   pirosAduToggle.checked = false;
   csendes100Toggle.checked = false;
+  ellen100Toggle.checked = false;
   addBemondasLine('parti');
 }
 
@@ -1251,8 +1344,15 @@ function updateLineResultText(lineEl) {
   const { amountA, amountB } = lineAmounts(line);
   const nameA = state.players[defenders[0]] || '1. ellenjátékos';
   const nameB = state.players[defenders[1]] || '2. ellenjátékos';
-  const verb = result === 'siker' ? 'kap' : 'fizet';
   const pirosNote = piros ? ' (piros)' : '';
+  if (line.bem.ellen) {
+    const ellenVerb = result === 'siker' ? 'kapnak' : 'fizetnek';
+    const ellenDir = result === 'siker' ? 'a felvevőtől' : 'a felvevőnek';
+    lineEl.querySelector('.line-result').textContent =
+      `Ellenjátékosok ${ellenVerb} ${amountA} pontot (${nameA}) és ${amountB} pontot (${nameB}) ${ellenDir}${pirosNote}.`;
+    return;
+  }
+  const verb = result === 'siker' ? 'kap' : 'fizet';
   lineEl.querySelector('.line-result').textContent =
     `Felvevő ${verb} ${amountA} pontot (${nameA}) és ${amountB} pontot (${nameB}) ellen${pirosNote}.`;
 }
@@ -1267,7 +1367,8 @@ function computeHandDeltas() {
     const line = readLine(lineEl);
     const { bem, result, piros, haromlapos } = line;
     const { amountA, amountB } = lineAmounts(line);
-    const sign = result === 'siker' ? 1 : -1;
+    // Ellenulti: az ellenjátékosok játsszák, ezért az előjel fordított.
+    const sign = (result === 'siker' ? 1 : -1) * (bem.ellen ? -1 : 1);
 
     perPlayerDelta[declarer] += sign * (amountA + amountB);
     perPlayerDelta[defenders[0]] -= sign * amountA;
@@ -1285,6 +1386,18 @@ function computeHandDeltas() {
     perPlayerDelta[defenders[1]] -= amount;
     lineSummaries.push({
       nev: 'Csendes 100' + (piros ? ' (piros)' : ''),
+      result: 'siker', amountA: amount, amountB: amount, teritett: false,
+    });
+  }
+
+  if (ellen100Toggle.checked && !ellen100Field.hidden) {
+    const piros = pirosAduToggle.checked;
+    const amount = ELLEN_100_ERTEK * (piros ? 2 : 1) * (state.alapTet || 1);
+    perPlayerDelta[declarer] -= 2 * amount;
+    perPlayerDelta[defenders[0]] += amount;
+    perPlayerDelta[defenders[1]] += amount;
+    lineSummaries.push({
+      nev: 'Ellen csendes 100' + (piros ? ' (piros)' : ''),
       result: 'siker', amountA: amount, amountB: amount, teritett: false,
     });
   }
@@ -1313,6 +1426,7 @@ function renderPreview() {
 
 handForm.addEventListener('submit', (e) => {
   e.preventDefault();
+  if (!isBalanced()) return;
   if (bemondasLinesDiv.children.length === 0) {
     alert('Adj hozzá legalább egy bemondást a leosztáshoz.');
     return;

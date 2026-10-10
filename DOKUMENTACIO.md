@@ -85,7 +85,7 @@ oldalán, kattints a **"Raw"** gombra, majd `Ctrl+S`/`Cmd+S`-sel mentsd el.)
   1. Válaszd ki a létszámot (3 vagy 4 fő).
   2. Add meg a játékosok nevét (üresen hagyva "Játékos 1", "Játékos 2"... néven fut).
   3. Válaszd ki, ki osztja az elsőt (ő lesz 4 fős módban az első kiálló is).
-  4. **Alaptét**: add meg, mennyit ér egy pont (alapértéke 1). Ha nem
+  4. **Alaptét**: add meg, mennyit ér egy pont (alapértéke 1; csak nullánál nagyobb egész szám lehet, törtet vagy nullát az app nem fogad el, így tört eredmény sosem keletkezik). Ha nem
      egyforintos alapon játszotok, itt állítsd be a tényleges tétet — minden
      bemondás automatikusan ehhez arányosan skálázva fizet.
   5. **Négyász bemondás engedélyezése**: ha bekapcsolod, a katalógusban megjelenik
@@ -167,6 +167,13 @@ oldal tetejére (a pontállás táblázathoz) görget vissza.
    megszűnik, a jelölés is törlődik. Ha az alapjáték (pl. Parti) bukott, a csendes 100 zárolt
    (halvány) és kikapcsolva; ha ilyenkor rákattintasz, hibaüzenet jelenik meg (nem lehet meg a 100 pont bukott alapjátékkal). A leosztás mentése után kikapcsol, és
    az előzményekben külön tételként ("Csendes 100") szerepel.
+2/c. **"Ellen csendes 100"**: jelölőnégyzet a Csendes 100 mellett — a csendes 100
+   tükörképe: a nem bemondott 100 pont az ellenjátékosoké. Ugyanannyit ér (2
+   pont ellenjátékosonként, piros adunál 4, alaptéttel skálázva), de ők
+   kapják a felvevőtől. Nincs kontra, nem bukhat. Ugyanúgy csak 40-100 /
+   20-100 és színtelen sor nélkül jelenik meg, és a Csendes 100-zal kizárja
+   egymást (a 100 pont vagy a felvevőé, vagy az ellenjátékosoké). Az
+   előzményekben "Ellen csendes 100" tételként szerepel.
 3. **Bemondás sorok**: nincs külön "kötelező játék" mező — egyetlen közös
    katalógusból választasz, soronként, a "+ Bemondás hozzáadása" gombbal
    felvehető további sorokban. A leosztás indításakor automatikusan megjelenik
@@ -190,6 +197,11 @@ oldal tetejére (a pontállás táblázathoz) görget vissza.
      pedig ugyanúgy duplán fizet (2ⁿ+1 szabály, kontra nélkül 2×). **Nem
      kontrázható**, ezért nincs kontra-választó a soron. Az Ulti és a Csendes
      ulti egymást kizárja egy leosztásban.
+   - **Ellenulti**: mint a csendes ulti (alapérték 2, nem kontrázható, bukáskor
+     duplán fizet, a "Piros adu" duplázza, alapjátékot pótol), de az
+     **ellenjátékosok** játsszák: ha sikerül, ők kapnak a felvevőtől (2-2
+     pontot), ha bukik, ők fizetnek neki (4-4-et). Az Ulti, a Csendes ulti és az
+     Ellenulti egymást kizárja egy leosztásban.
    - **Háromlapos** (Ulti és Csendes ulti soron): a sorban egy külön jelölőnégyzet.
      Bejelölve a sor értékéhez fix felár jön: sikerült ultinál a felvevő +20-at
      kap minden ellenjátékostól, bukottnál +10-et fizet nekik. A felár nem
@@ -252,6 +264,16 @@ oldal tetejére (a pontállás táblázathoz) görget vissza.
    beállítja a következő osztót, a kör száma nő, és az űrlap újra egy alapból
    Parti-ra állított sorral kezdődik a következő leosztáshoz.
 
+**Egyenleg-ellenőrzés**: minden alkalommal, amikor az app kiszámolja az
+állást (leosztás mentése, visszavonás, parti-est betöltése), összeadja az
+összes játékos pontját — ennek mindig nullának kell lennie (amit az egyik
+nyer, azt a másik veszíti). Ha nem nulla, a "Pontállás körről-körre" kártya
+piros hátteret kap, hibaüzenet jelenik meg az aktuális összeggel, és a
+leosztás rögzítése zárolt (az űrlap, az osztó és a "Piros ász oszt, nem
+oszt" kapcsoló nem használható). Egyedül az **"Utolsó leosztás
+visszavonása"** gomb használható; a visszavonás után, ha az összeg újra
+nulla, a játék folytatható.
+
 ### 3.4 Előzmények
 
 A "Leosztás mentése" után minden korábbi leosztás megjelenik időrendben visszafelé:
@@ -305,6 +327,7 @@ külön katalógus-elem (ld. 3.3/3. pont):
 |---|---|---|---|
 | Négy ász *(kapcsolóval engedélyezhető, ld. 3.1 pont)* | 4 | 8 | Színes |
 | Ulti | 4 | 8 | Színes (speciális bukás-szabály, ld. 5. pont) |
+| Ellenulti *(az ellenjátékosok játsszák, ld. 3.3 pont)* | 2 | 4 | Színes (ulti bukás-szabály, nincs kontra) |
 | Durchmars (színtelen) | 6 | — | Színtelen |
 | Durchmars (színes)*(önállóan is bemondható; 40-100/20-100 opcionálisan társítható, Parti nem)* | 6 | 12 | Színes |
 | Redurchmars / Terített durchmars (színtelen) | 24 | — | Színtelen |
