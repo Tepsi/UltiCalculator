@@ -50,7 +50,7 @@ UltiCalculator/
 
 ## Verziószám
 
-A fejlécben halványan látszik (`#app-version`, jelenleg `v1.0`). A verzióemelés szabálya még nincs eldöntve — ld. TODO a felhasználónál.
+A fejlécben halványan látszik (`#app-version`, jelenleg `v1.0.1`). A verzióemelés szabálya még nincs eldöntve — ld. TODO a felhasználónál.
 
 ## Tesztelés
 

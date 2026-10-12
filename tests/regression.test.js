@@ -349,7 +349,7 @@ test('Csendes 100 mellett az alapjáték biztosan teljesül, ellen csendes 100 m
 test('A fejlécben halványan látszik a verziószám', async () => {
   const doc = await newApp();
   const v = doc.getElementById('app-version');
-  assert(v && /^v[0-9]+[.][0-9]+$/.test(v.textContent), 'Verziószám kell a fejlécben');
+  assert(v && /^v[0-9]+([.][0-9]+){1,2}$/.test(v.textContent), 'Verziószám kell a fejlécben');
 });
 
 test('Pontállás melletti gomb a leosztás beírásához görget', async () => {

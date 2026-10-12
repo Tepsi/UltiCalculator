@@ -118,7 +118,7 @@ kártya fejléce ("Osztó és kiálló: ...") mutatja.
 
 **Játékos-ikonok**: a parti-est indításakor minden játékos egy véletlenszerűen
 kiosztott, a többiekétől eltérő egyszerű ikont kap egy alapkészletből (●, ▲,
-■, ◆, ★, ▼) — ez a parti-est végéig hozzá van kötve. Az ikon a "Pontállás
+■, ◆, ★, ▼, ⛵, ⚓) — ez a parti-est végéig hozzá van kötve. Minden ikonnak saját színe van (egyszínű, de nem szürke). Az ikon a "Pontállás
 körről-körre" táblázat fejlécében a neve mellett azonban csak azután jelenik
 meg, hogy az adott játékos **legalább egyszer terített bemondást tett** —
 addig, ha még senki nem terített, a fejléc csak a neveket mutatja.

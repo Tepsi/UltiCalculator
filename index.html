@@ -359,7 +359,6 @@ h2 { margin-top: 0; }
   font-size: 0.85em;
   color: var(--color-primary-dark);
 }
-.scoreboard th .player-icon { color: #fff; }
 
 .preview {
   background: #eef1ea;
@@ -391,7 +390,7 @@ h2 { margin-top: 0; }
 <body>
 
 <header class="app-header">
-  <h1>Ulti Pontozó <small class="app-version" id="app-version">v1.0</small></h1>
+  <h1>Ulti Pontozó <small class="app-version" id="app-version">v1.0.1</small></h1>
   <div class="header-actions">
     <button id="btn-export" class="btn btn-secondary" hidden>Exportálás</button>
     <button id="btn-reset" class="btn btn-danger" hidden>Új parti-est</button>
@@ -632,7 +631,25 @@ function multiplier(level, ultiSpecial, result) {
 // Minden játékos egy véletlenszerűen kiosztott, egyedi ikont kap a parti-est
 // indításakor — ez a parti-est végéig hozzá kötve marad, és a terített
 // bemondások (ld. teritett mező) felvevőjét jelöli a pontállás táblázatban.
-const PLAYER_ICONS = ['●', '▲', '■', '◆', '★', '▼'];
+const PLAYER_ICONS = ['●', '▲', '■', '◆', '★', '▼', '⛵︎', '⚓︎'];
+// Minden ikonhoz egy-egy szín tartozik: sötétebb a világos hátterű cellákhoz,
+// világosabb a sötétzöld fejléchez (és az exportált fejléchez).
+const ICON_COLORS = {
+  '●': ['#c62828', '#ff8a80'],
+  '▲': ['#1565c0', '#82b1ff'],
+  '■': ['#e65100', '#ffb74d'],
+  '◆': ['#6a1b9a', '#ea80fc'],
+  '★': ['#b8860b', '#ffd740'],
+  '▼': ['#00796b', '#64ffda'],
+  '⛵︎': ['#283593', '#9fa8da'],
+  '⚓︎': ['#ad1457', '#ff80ab'],
+};
+
+function playerIconHtml(icon, cls, inHeader) {
+  const colors = ICON_COLORS[icon];
+  const style = colors ? ` style="color:${colors[inHeader ? 1 : 0]}"` : '';
+  return `<span class="${cls}"${style}>${icon}</span> `;
+}
 
 function pickRandomIcons(count) {
   const pool = [...PLAYER_ICONS];
@@ -946,7 +963,7 @@ function renderScoreLedger() {
   state.players.forEach((name, i) => {
     const icon = state.playerIcons && state.playerIcons[i];
     const showIcon = icon && playerHasTeritettHistory(i);
-    html += `<th>${showIcon ? `<span class="player-icon">${icon}</span> ` : ''}${escapeHtml(name)}</th>`;
+    html += `<th>${showIcon ? playerIconHtml(icon, 'player-icon', true) : ''}${escapeHtml(name)}</th>`;
   });
   html += '</tr>';
   const running = new Array(state.playerCount).fill(0);
@@ -958,7 +975,7 @@ function renderScoreLedger() {
     running.forEach((v, i) => {
       const cls = v > 0 ? 'amount-pos' : (v < 0 ? 'amount-neg' : '');
       const icon = isTeritett && i === h.declarerIndex && state.playerIcons && state.playerIcons[i];
-      const iconHtml = icon ? `<span class="player-icon">${icon}</span> ` : '';
+      const iconHtml = icon ? playerIconHtml(icon, 'player-icon', false) : '';
       html += `<td class="${cls}">${iconHtml}${v}</td>`;
     });
     html += '</tr>';
@@ -1515,7 +1532,7 @@ function buildExportHtml() {
   let headerCells = '<th>Kör</th>' + state.players.map((n, i) => {
     const icon = state.playerIcons && state.playerIcons[i];
     const showIcon = icon && playerHasTeritettHistory(i);
-    return `<th>${showIcon ? `<span class="icon">${icon}</span> ` : ''}${escapeHtml(n)}</th>`;
+    return `<th>${showIcon ? playerIconHtml(icon, 'icon', true) : ''}${escapeHtml(n)}</th>`;
   }).join('');
   const running = new Array(state.playerCount).fill(0);
   let rows = '';
@@ -1526,7 +1543,7 @@ function buildExportHtml() {
     const cells = running.map((v, i) => {
       const cls = v > 0 ? 'pos' : (v < 0 ? 'neg' : '');
       const icon = isTeritett && i === h.declarerIndex && state.playerIcons && state.playerIcons[i];
-      return `<td class="${cls}">${icon ? `<span class="icon">${icon}</span> ` : ''}${v}</td>`;
+      return `<td class="${cls}">${icon ? playerIconHtml(icon, 'icon', false) : ''}${v}</td>`;
     }).join('');
     rows += `<tr${rowClass}><td class="round">${h.round}.</td>${cells}</tr>`;
   });
