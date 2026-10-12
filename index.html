@@ -1191,22 +1191,44 @@ function durchmarsAutoBukasReason(lineEl) {
   return null;
 }
 
-// Minden sort végignéz, és a színes durchmars/redurchmars sorokat a fenti
-// szabály szerint zárolja (automatikusan bukásra állítja, letiltja a kézi
-// módosítást) vagy — ha a feltétel már nem áll fenn — feloldja.
+// Az alapjáték eredménye a csendes 100-ból következik: ha a felvevő csendes
+// 100-at teljesített, az alapjáték biztosan megvan; ha az ellenjátékosoknak
+// sikerült az ellen csendes 100, az alapjáték biztosan bukik.
+function alapjatekForcedResult(lineEl) {
+  if (!bemondasById(lineEl.querySelector('.line-bemondas').value).jatekAlap) return null;
+  if (csendes100Toggle.checked && !csendes100Field.hidden) {
+    return { bukott: false, clickOnly: true, text: 'Automatikusan teljesült, mert a Csendes 100 megvan — ezen nem lehet módosítani.' };
+  }
+  if (ellen100Toggle.checked && !ellen100Field.hidden) {
+    return { bukott: true, clickOnly: true, text: 'Automatikusan bukott, mert az ellenjátékosoknak sikerült az Ellen csendes 100 — ezen nem lehet módosítani.' };
+  }
+  return null;
+}
+
+// Minden sort végignéz, és a kényszerített eredményű sorokat (színes
+// durchmars/redurchmars a fenti szabály szerint, illetve az alapjáték a
+// csendes 100 / ellen csendes 100 mellett) zárolja — automatikusan beállítja
+// az eredményt és letiltja a kézi módosítást —, vagy ha a feltétel már nem
+// áll fenn, feloldja.
 function updateDurchmarsAutoBukas() {
   bemondasLinesDiv.querySelectorAll('.bemondas-line').forEach(lineEl => {
     const noteEl = lineEl.querySelector('.line-lock-note');
     const reason = durchmarsAutoBukasReason(lineEl);
+    let forced = null;
     if (reason) {
-      const wasLocked = lineEl.classList.contains('is-auto-bukott');
+      forced = { bukott: true, text: `Automatikusan bukott, mert ${reason} — ezen nem lehet módosítani.` };
+    } else {
+      forced = alapjatekForcedResult(lineEl);
+    }
+    if (forced) {
+      const changed = !lineEl.classList.contains('is-auto-bukott') || isLineBukott(lineEl) !== forced.bukott;
       lineEl.classList.add('is-auto-bukott');
-      if (!wasLocked) {
-        applyBukott(lineEl, true);
+      if (changed) {
+        applyBukott(lineEl, forced.bukott);
         updateLineResultText(lineEl);
       }
-      noteEl.hidden = false;
-      noteEl.textContent = `Automatikusan bukott, mert ${reason} — ezen nem lehet módosítani.`;
+      noteEl.hidden = forced.clickOnly ? (changed || noteEl.hidden) : false;
+      noteEl.textContent = forced.text;
     } else if (lineEl.classList.contains('is-auto-bukott')) {
       lineEl.classList.remove('is-auto-bukott');
       applyBukott(lineEl, false);
@@ -1256,6 +1278,7 @@ function addBemondasLine(presetId) {
   bukottCheckbox.addEventListener('click', (e) => {
     if (lineEl.classList.contains('is-auto-bukott')) {
       e.preventDefault();
+      lockNoteEl.hidden = false;
       lockNoteEl.classList.remove('shake');
       void lockNoteEl.offsetWidth;
       lockNoteEl.classList.add('shake');
@@ -1407,6 +1430,7 @@ function computeHandDeltas() {
 
 function renderPreview() {
   updateCsendes100Availability();
+  updateDurchmarsAutoBukas();
   if (bemondasLinesDiv.children.length === 0) {
     handPreviewEl.hidden = true;
     return;

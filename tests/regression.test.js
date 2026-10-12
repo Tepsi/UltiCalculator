@@ -270,8 +270,8 @@ test('Ellen csendes 100: csendes 100 tükörképe, ellenjátékosok kapják, kiz
   assertEqual(csendes.checked, false, 'A kettő kizárja egymást');
   setDeclarer(doc, 1);
   submitHand(doc);
-  // Parti +2 a felvevőnek, ellen csendes 100: 2+2 az ellenjátékosoknak
-  assertEqual(JSON.stringify(ledgerLastRow(doc)), JSON.stringify([0, -2, 1, 1]));
+  // A Parti automatikusan bukik (-1-1), ellen csendes 100: 2+2 az ellenjátékosoknak
+  assertEqual(JSON.stringify(ledgerLastRow(doc)), JSON.stringify([0, -6, 3, 3]));
   assertEqual(ellen.checked, false, 'Mentés után törlődnie kell');
 
   setChecked(ellen, true);
@@ -315,9 +315,8 @@ test('Csendes 100 nem jelölhető, ha az alapjáték (Parti) bukott', async () =
   const doc = await newApp();
   startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });
   const toggle = doc.getElementById('csendes-100-toggle');
-  setChecked(toggle, true);
   setBukott(lines(doc)[0], true);
-  assertEqual(toggle.checked, false, 'Bukott Parti mellett törlődnie kell');
+  assertEqual(toggle.checked, false);
   const note = doc.getElementById('csendes-100-note');
   assert(note.hidden, 'Kattintás előtt nincs üzenet');
   toggle.click();
@@ -327,6 +326,36 @@ test('Csendes 100 nem jelölhető, ha az alapjáték (Parti) bukott', async () =
   assert(note.hidden, 'Feloldás után eltűnik az üzenet');
   toggle.click();
   assertEqual(toggle.checked, true, 'Teljesült Parti mellett újra jelölhető');
+});
+
+test('Csendes 100 mellett az alapjáték biztosan teljesül, ellen csendes 100 mellett biztosan bukik; nem módosítható', async () => {
+  const doc = await newApp();
+  startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });
+  const parti = lines(doc)[0];
+  const cb = parti.querySelector('.line-bukott-checkbox');
+  const note = parti.querySelector('.line-lock-note');
+  const csendes = doc.getElementById('csendes-100-toggle');
+  const ellen = doc.getElementById('ellen-100-toggle');
+  assert(note.hidden);
+  setChecked(csendes, true);
+  assert(parti.classList.contains('is-auto-bukott'), 'Csendes 100 mellett zárolt');
+  assertEqual(cb.checked, false, 'Teljesült');
+  assert(note.hidden, 'Üzenet kattintás előtt nem látszik');
+  cb.click();
+  assert(!note.hidden && note.textContent.includes('Csendes 100'), 'Kattintásra megjelenik');
+  assertEqual(cb.checked, false, 'Kattintásra nem változhat');
+  assert(note.classList.contains('shake'), 'Hibaüzenet/jelzés kell');
+  setChecked(ellen, true);
+  assertEqual(csendes.checked, false);
+  assertEqual(cb.checked, true, 'Ellen csendes 100 mellett bukott');
+  assert(parti.classList.contains('is-auto-bukott'));
+  assert(note.hidden, 'Váltás után az üzenet újra rejtett');
+  cb.click();
+  assertEqual(cb.checked, true, 'Kattintásra nem változhat');
+  setChecked(ellen, false);
+  assert(!parti.classList.contains('is-auto-bukott'), 'Feloldódik');
+  assertEqual(cb.checked, false);
+  assert(note.hidden);
 });
 
 test('Pontállás melletti gomb a leosztás beírásához görget', async () => {

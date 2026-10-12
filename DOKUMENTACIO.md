@@ -1,4 +1,4 @@
-# Ulti Pontozó — dokumentáció
+# Ulti Pontozó — felhasználói kézikönyv
 
 Egyszerű, kizárólag a böngészőben futó (nincs szerver, nincs telepítés) alkalmazás egy
 Ulti parti-est pontjainak vezetésére. Egyetlen önálló `index.html` fájlból áll (a CSS és
@@ -69,7 +69,7 @@ oldalán, kattints a **"Raw"** gombra, majd `Ctrl+S`/`Cmd+S`-sel mentsd el.)
   leosztásban felvevő volt. A parti-est végén szokásos **"Piros ász oszt, nem
   oszt"** kapcsolóval ez átállítható egyszerű körbe járó osztásra — ld. 3.3 pont.
 - **Alaptét**: a parti-est indításánál megadható szám, ami azt mondja meg, mennyit
-  ér egy "pont" (pl. a `BEMONDASOK` katalógusban a Parti alapértéke 1 pont — 2-es
+  ér egy "pont" (pl. a katalógusban a Parti alapértéke 1 pont — 2-es
   alaptétnél ez 2, az Ulti 4 pontos alapértéke pedig 8). A leosztásokban minden
   bemondás (alapjáték, ulti, négy ász, betli, durchmars stb.) ehhez arányosan
   skálázva fizet, tehát nem kell egyforintos alapon játszani. A leosztás
@@ -174,6 +174,10 @@ oldal tetejére (a pontállás táblázathoz) görget vissza.
    20-100 és színtelen sor nélkül jelenik meg, és a Csendes 100-zal kizárja
    egymást (a 100 pont vagy a felvevőé, vagy az ellenjátékosoké). Az
    előzményekben "Ellen csendes 100" tételként szerepel.
+   **Az alapjáték eredménye kényszerített**: bejelölt Csendes 100 mellett az
+   alapjáték (Parti) automatikusan Teljesült, bejelölt Ellen csendes 100 mellett
+   automatikusan Bukott, és a Teljesült/Bukott kapcsoló zárolt — az
+   magyarázó üzenet csak kattintásra jelenik meg. A jelölés megszüntetésekor a zárolás feloldódik.
 3. **Bemondás sorok**: nincs külön "kötelező játék" mező — egyetlen közös
    katalógusból választasz, soronként, a "+ Bemondás hozzáadása" gombbal
    felvehető további sorokban. A leosztás indításakor automatikusan megjelenik
@@ -423,14 +427,14 @@ opciót.
   alapján.
 - Csak az "alap kör" bemondásai szerepelnek a katalógusban (a leggyakrabban
   használt bemondások); a nagyon ritka variánsok (pl. két/négy ász ellen,
-  teljesen kifordított különleges variánsok) nincsenek benne. A katalógus a
-  `index.html` beágyazott `<script>` blokkjának elején lévő `BEMONDASOK` tömbben bővíthető/pontosítható, ha a
-  játékostársaság más pontértékekkel vagy bemondásokkal játszik.
+  teljesen kifordított különleges variánsok) nincsenek benne. Ha a
+  játékostársaság más pontértékekkel vagy bemondásokkal játszik, a katalógus
+  módosítható (fejlesztői leírás: `CLAUDE.md`).
 - A durchmars/redurchmars és betli/rebetli pontértékei és színes/színtelen
   besorolása a ti asztalotoknál szokásos, konkrét szabályokat követi (nem az
   ultiblog.hu általános táblázatát) — ha egy másik asztalnál ettől eltérő
-  értékekkel vagy besorolással játszanak, a `BEMONDASOK` tömb `ertek` és
-  `kategoria` mezői az `index.html` beágyazott `<script>` blokkjának elején szabadon átállíthatók.
+  értékekkel vagy besorolással játszanak, az értékek és a besorolás átállíthatók
+  (ld. `CLAUDE.md`).
 - Az alkalmazás nem validálja, hogy egy leosztásban legális-e a választott felvevő/
   ellenjátékos-felosztás a tényleges licitmenet szempontjából (ki miért nyerte a
   licitet) — ez emberi döntés, az app csak a végeredményt (ki a felvevő, mi lett a
@@ -438,45 +442,3 @@ opciót.
 - Az app nem validálja azt sem, hogy egy adott extra bemondás (pl. négy ász)
   kombinálható-e a kiválasztott játék-szinttel (pl. csak parti mellett szokás
   bemondani) — ez is a játékosok/jegyző felelőssége.
-
-## 8. Fájlstruktúra
-
-```
-UltiCalculator/
-├── index.html               -- a teljes app: HTML szerkezet, beágyazott <style> és <script> egyetlen fájlban
-├── DOKUMENTACIO.md          -- ez a dokumentum
-├── package.json             -- csak fejlesztői eszköz: a regressziós teszt futtatásához (nem kell az app működéséhez)
-└── tests/regression.test.js -- jsdom-alapú regressziós teszt-készlet, futtatás: `npm test`
-```
-
-Az `index.html` az app maga — továbbra is szándékosan egyetlen, önálló
-fájl, nincs benne külső
-`style.css`/`app.js` hivatkozás. Ennek oka egy Androidon (Edge-en, néha
-Chrome-on is) tapasztalt hiba: ha valaki a fájlkezelőből "Megnyitás ezzel" /
-"Megosztás" úton nyit meg egy HTML fájlt, a böngésző csak az adott fájlra kap
-hozzáférést (`content://` URI), a mellette lévő különálló fájlokat (CSS, JS)
-nem tudja relatív útvonalon betölteni — ez a felületen üres beviteli
-mezőkként (pl. a játékosnevek mezői sosem jelentek meg) vagy egyenesen
-"file not found" hibaüzenetként jelentkezett. Egyetlen fájlban ez nem
-fordulhat elő. A beágyazott `<style>` blokk tartalma megfelel a korábbi
-`style.css`-nek, a beágyazott `<script>` blokk tartalma pedig a korábbi
-`app.js`-nek — a kódot közvetlenül az `index.html`-ben kell szerkeszteni.
-
-Az összes alapjáték és bemondás (parti/40-100/20-100, négy ász, ulti, betli,
-durchmars és variánsaik) egyetlen közös `BEMONDASOK` konstansban van az
-`index.html` beágyazott `<script>` blokkjának elején — az alapjáték-elemeket a `jatekAlap: true` mező jelöli meg
-(ezekből egyszerre csak egy lehet a leosztásban); a kontraszintek a
-`KONTRA_SZINTEK` konstansban vannak — ide kell nyúlni, ha egy alapérték
-módosul, vagy új bemondást szeretnétek felvenni. Az extra bemondások (négy
-ász, ulti, színes durchmars/redurchmars) alapértékei **nem** tartalmazzák az
-alapjáték értékét, azt egy külön, automatikusan hozzáadott "Parti" sor adja
-hozzá (ld. `ensureBaseGameLine` az `index.html` beágyazott scriptjében). A piros duplázás nem önálló
-katalógus-elem: a "színes" (`kategoria: 'szin'`) bemondásoknál a leosztás
-egészére vonatkozó "Piros adu" kapcsolóból jön; a piros betli külön
-katalógus-elem (`piros_betli`).
-
-Ha módosítasz az `index.html`-en, a `tests/regression.test.js` egy jsdom-alapú
-regressziós teszt-készlet, amely a fenti szabályok jó részét (pontszámítás,
-kontra, alapjáték-pótlás, osztás menete stb.) valódi DOM-interakciókkal
-ellenőrzi. Futtatás: `npm install` (egyszer), majd `npm test` — ez nem
-igényli az app futtatásához szükséges böngészőt, csak Node.js-t.

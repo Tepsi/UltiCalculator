@@ -52,7 +52,8 @@ kontraszintek) lásd: [DOKUMENTACIO.md](DOKUMENTACIO.md).
 ```
 UltiCalculator/
 ├── index.html      -- a teljes app: HTML szerkezet, beágyazott CSS és JS egyetlen fájlban
-├── DOKUMENTACIO.md -- részletes dokumentáció
+├── DOKUMENTACIO.md -- felhasználói kézikönyv
+├── CLAUDE.md       -- fejlesztői leírás (architektúra, tesztelés, konvenciók)
 └── tests/          -- fejlesztői regressziós tesztek (jsdom, `npm test`) — nem kell az app futtatásához
 ```
 
