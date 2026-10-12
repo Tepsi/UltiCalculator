@@ -48,6 +48,10 @@ UltiCalculator/
 - `renderPreview` minden módosítás után lefut (elérhetőségek és zárolások frissítése,
   élő előnézet); az egyenleg-ellenőrzés (összeg = 0) zárolja a rögzítést eltérés esetén.
 
+## Verziószám
+
+A fejlécben halványan látszik (`#app-version`, jelenleg `v1.0`). A verzióemelés szabálya még nincs eldöntve — ld. TODO a felhasználónál.
+
 ## Tesztelés
 
 - **Az `index.html` minden módosítása után futtasd az `npm test`-et**, és javítsd a

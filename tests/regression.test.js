@@ -346,6 +346,12 @@ test('Csendes 100 mellett az alapjáték biztosan teljesül, ellen csendes 100 m
   assertEqual(cb.checked, false);
 });
 
+test('A fejlécben halványan látszik a verziószám', async () => {
+  const doc = await newApp();
+  const v = doc.getElementById('app-version');
+  assert(v && /^v[0-9]+[.][0-9]+$/.test(v.textContent), 'Verziószám kell a fejlécben');
+});
+
 test('Pontállás melletti gomb a leosztás beírásához görget', async () => {
   const doc = await newApp();
   startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });

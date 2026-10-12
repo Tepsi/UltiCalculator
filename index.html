@@ -50,6 +50,13 @@ body {
   font-size: 1.3rem;
 }
 
+.app-version {
+  font-size: 0.65rem;
+  font-weight: normal;
+  opacity: 0.5;
+  margin-left: 0.4rem;
+}
+
 .header-actions {
   display: flex;
   gap: 0.5rem;
@@ -384,7 +391,7 @@ h2 { margin-top: 0; }
 <body>
 
 <header class="app-header">
-  <h1>Ulti Pontozó</h1>
+  <h1>Ulti Pontozó <small class="app-version" id="app-version">v1.0</small></h1>
   <div class="header-actions">
     <button id="btn-export" class="btn btn-secondary" hidden>Exportálás</button>
     <button id="btn-reset" class="btn btn-danger" hidden>Új parti-est</button>
