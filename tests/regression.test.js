@@ -311,23 +311,6 @@ test('Ha a pontok összege nem nulla: piros pontállás, hibaüzenet, zárolt le
   assertEqual(doc.getElementById('dealer-select').disabled, false);
 });
 
-test('Csendes 100 nem jelölhető, ha az alapjáték (Parti) bukott', async () => {
-  const doc = await newApp();
-  startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });
-  const toggle = doc.getElementById('csendes-100-toggle');
-  setBukott(lines(doc)[0], true);
-  assertEqual(toggle.checked, false);
-  const note = doc.getElementById('csendes-100-note');
-  assert(note.hidden, 'Kattintás előtt nincs üzenet');
-  toggle.click();
-  assertEqual(toggle.checked, false, 'Zárolt állapotban a kattintás nem jelölheti be');
-  assert(!note.hidden, 'Kattintásra hibaüzenetet kell adni');
-  setBukott(lines(doc)[0], false);
-  assert(note.hidden, 'Feloldás után eltűnik az üzenet');
-  toggle.click();
-  assertEqual(toggle.checked, true, 'Teljesült Parti mellett újra jelölhető');
-});
-
 test('Csendes 100 mellett az alapjáték biztosan teljesül, ellen csendes 100 mellett biztosan bukik; nem módosítható', async () => {
   const doc = await newApp();
   startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });
@@ -337,7 +320,9 @@ test('Csendes 100 mellett az alapjáték biztosan teljesül, ellen csendes 100 m
   const csendes = doc.getElementById('csendes-100-toggle');
   const ellen = doc.getElementById('ellen-100-toggle');
   assert(note.hidden);
+  setBukott(parti, true);
   setChecked(csendes, true);
+  assert(!csendes.closest('#csendes-100-field').classList.contains('is-locked'), 'Sosem inaktív');
   assert(parti.classList.contains('is-auto-bukott'), 'Csendes 100 mellett zárolt');
   assertEqual(cb.checked, false, 'Teljesült');
   assert(note.hidden, 'Üzenet kattintás előtt nem látszik');
@@ -356,6 +341,9 @@ test('Csendes 100 mellett az alapjáték biztosan teljesül, ellen csendes 100 m
   assert(!parti.classList.contains('is-auto-bukott'), 'Feloldódik');
   assertEqual(cb.checked, false);
   assert(note.hidden);
+  assert(!doc.getElementById('csendes-100-field').classList.contains('is-locked'), 'Sosem inaktív');
+  setChecked(csendes, true);
+  assertEqual(cb.checked, false);
 });
 
 test('Pontállás melletti gomb a leosztás beírásához görget', async () => {

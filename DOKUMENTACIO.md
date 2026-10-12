@@ -164,8 +164,7 @@ oldal tetejére (a pontállás táblázathoz) görget vissza.
    alaptéttel skálázva. Nincs rajta kontra, és nem "bukhat" (csak akkor
    jelölöd be, ha tényleg megvolt). Csak akkor jelenik meg, ha a
    leosztásban nincs bemondott 40-100 / 20-100 és nincs színtelen sor; ha ez
-   megszűnik, a jelölés is törlődik. Ha az alapjáték (pl. Parti) bukott, a csendes 100 zárolt
-   (halvány) és kikapcsolva; ha ilyenkor rákattintasz, hibaüzenet jelenik meg (nem lehet meg a 100 pont bukott alapjátékkal). A leosztás mentése után kikapcsol, és
+   megszűnik, a jelölés is törlődik. A leosztás mentése után kikapcsol, és
    az előzményekben külön tételként ("Csendes 100") szerepel.
 2/c. **"Ellen csendes 100"**: jelölőnégyzet a Csendes 100 mellett — a csendes 100
    tükörképe: a nem bemondott 100 pont az ellenjátékosoké. Ugyanannyit ér (2
