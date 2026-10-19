@@ -116,6 +116,19 @@ adott körben ki hogyan állt; a legutolsó sor mindig a jelenlegi végállást
 mutatja. Azt, hogy éppen ki oszt és (4 fős módban) ki áll ki, a "Leosztás"
 kártya fejléce ("Osztó és kiálló: ...") mutatja.
 
+**Kézi szerkesztés** (ceruza ikonú gomb a másik két gomb mellett): a táblázat
+végén megjelenik egy új sor (✎ jellel), ahol a játékosok állása szabadon átírható.
+Alapértékei az utolsó sor értékei. A sor alatt a **Jóváhagyás** és a **Mégse** gomb
+van. Jóváhagyáskor az új sor értékeinek egész számnak kell lenniük, és az
+összegüknek 0-nak kell lennie (mint a normál leosztásoknál) — különben az app
+hibát jelez, és szerkesztésben marad. Jóváhagyás után az előzményekben
+"Kézi módosítás" bejegyzés jelenik meg a pontmozgással; a kör- és osztószámláló nem
+változik. Szerkesztés közben az oldal többi része (leosztás, előzmények, exportálás,
+új parti-est, a többi gomb) zárolt: csak szerkeszteni, jóváhagyni vagy mégse gombot
+nyomni lehet. A szerkesztés nincs elmentve, oldalfrissítés a Mégse-vel egyenértékű.
+Az "Utolsó leosztás visszavonása" a kézi módosítást is visszavonja. Ez a funkció
+hibás pontállás javítására is használható (pl. ha az egyenleg-ellenőrzés hibát jelez).
+
 **Játékos-ikonok**: a parti-est indításakor minden játékos egy véletlenszerűen
 kiosztott, a többiekétől eltérő egyszerű ikont kap egy alapkészletből (●, ▲,
 ■, ◆, ★, ▼, ⛵, ⚓) — ez a parti-est végéig hozzá van kötve. Minden ikonnak saját színe van (egyszínű, de nem szürke). Az ikon a "Pontállás
@@ -136,6 +149,14 @@ ki mondta be. Ez az "Exportálás" gombbal mentett `.html`-ben is megjelenik.
 A "Leosztás" kártya címsora mellett egy felfelé mutató nyilas, kék gomb az
 oldal tetejére (a pontállás táblázathoz) görget vissza.
 
+00. **Bedobás**: a "Leosztás" kártya címsorában, a felfelé nyilas gomb mellett. Megnyomására
+   a kiválasztott **felvevő** automatikusan elbukik egy kontrázott Partit (2 × alaptét
+   pont), amit **csak a két ellenjátékos** kap meg tőle fejenként — a kiálló osztó
+   (4 fős módban) nem kap semmit. A leosztás azonnal rögzítődik a pontállás
+   táblázatban, az előzményekben pedig "Bedobás" felirattal szerepel a pontmozgás
+   mellett. A következő osztó a szokásos szabály szerint alakul (a felvevő oszt tovább,
+   "Piros ász oszt, nem oszt" esetén körbe). Az "Utolsó leosztás visszavonása" a
+   bedobást is visszavonja.
 0. **Osztó**: a "Leosztás" kártya tetején egy legördülő menü mutatja az
    aktuális osztót — alapesetben automatikusan a szabály szerint van
    kitöltve, de bármikor kézzel felülírható, ha hiba csúszna a felállásba.
@@ -173,6 +194,11 @@ oldal tetejére (a pontállás táblázathoz) görget vissza.
    20-100 és színtelen sor nélkül jelenik meg, és a Csendes 100-zal kizárja
    egymást (a 100 pont vagy a felvevőé, vagy az ellenjátékosoké). Az
    előzményekben "Ellen csendes 100" tételként szerepel.
+   **Speciális szabály**: a Parti és a Csendes 100 (vagy Ellen csendes 100) csak
+   akkor fizet külön-külön, ha a Partin kívül nincs más bemondás. Ha van más
+   bemondás is (pl. ulti, négy ász, színes durchmars) és be van jelölve a
+   Csendes 100 vagy az Ellen csendes 100, a Parti sor eltűnik, és nem fizet; a
+   jelölés megszüntetésekor vagy a többi bemondás törlésekor újra megjelenik.
    **Az alapjáték eredménye kényszerített**: bejelölt Csendes 100 mellett az
    alapjáték (Parti) automatikusan Teljesült, bejelölt Ellen csendes 100 mellett
    automatikusan Bukott, és a Teljesült/Bukott kapcsoló zárolt — az
@@ -205,7 +231,7 @@ oldal tetejére (a pontállás táblázathoz) görget vissza.
      **ellenjátékosok** játsszák: ha sikerül, ők kapnak a felvevőtől (2-2
      pontot), ha bukik, ők fizetnek neki (4-4-et). Az Ulti, a Csendes ulti és az
      Ellenulti egymást kizárja egy leosztásban.
-   - **Háromlapos** (Ulti és Csendes ulti soron): a sorban egy külön jelölőnégyzet.
+   - **Háromlapos** (csak az Ulti soron; a Csendes ultin és az Ellenultin nincs): a sorban egy külön jelölőnégyzet.
      Bejelölve a sor értékéhez fix felár jön: sikerült ultinál a felvevő +20-at
      kap minden ellenjátékostól, bukottnál +10-et fizet nekik. A felár nem
      függ a kontrától és a Piros adutól, az alaptéttel viszont skálázódik

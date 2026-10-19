@@ -221,6 +221,85 @@ test('Csendes 100: 2 pont ellenjátékosonként (piros adunál 4), 40-100 mellet
   assertEqual(toggle.checked, false, 'El kell veszítenie a jelölést');
 });
 
+test('Csendes 100 / ellen csendes 100 mellett, ha van más bemondás is, a Parti eltűnik és nem fizet', async () => {
+  const doc = await newApp();
+  startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });
+  const csendes = doc.getElementById('csendes-100-toggle');
+  const ellen = doc.getElementById('ellen-100-toggle');
+  const parti = lines(doc)[0];
+  setChecked(csendes, true);
+  assert(!parti.hidden, 'Önmagában a Parti látszik');
+  addLine(doc, 'ulti');
+  assert(parti.hidden, 'Más bemondás mellett a Parti eltűnik');
+  setDeclarer(doc, 1);
+  submitHand(doc);
+  // Ulti 4+4, csendes 100 2+2 (Parti nem fizet) -> felvevő +12, ellenjátékosok -6
+  assertEqual(JSON.stringify(ledgerLastRow(doc)), JSON.stringify([0, 12, -6, -6]));
+
+  setChecked(ellen, true);
+  addLine(doc, 'ulti');
+  assert(lines(doc)[0].hidden, 'Ellen csendes 100 mellett is eltűnik');
+  setChecked(ellen, false);
+  assert(!lines(doc)[0].hidden, 'A jelölés nélkül újra látszik');
+});
+
+test('Bedobás: a felvevő elbukik egy kontrázott Partit, csak az ellenjátékosoknak fizet (az osztónak nem)', async () => {
+  const doc = await newApp();
+  startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });
+  setDeclarer(doc, 1);
+  fire(doc.getElementById('btn-bedobas'), 'click');
+  // Parti 1 × kontra bukás 2 = 2 pont az ellenjátékosoknak (Cili, Deszo); Bela -4; Anna (osztó) 0
+  assertEqual(JSON.stringify(ledgerLastRow(doc)), JSON.stringify([0, -4, 2, 2]));
+  const text = doc.getElementById('history-list').textContent;
+  assert(text.includes('Bedobás') && text.includes('Bela: -4'), 'Előzményekben szerepel: ' + text);
+  assertEqual(doc.getElementById('dealer-select').value, '1', 'A felvevő oszt tovább');
+});
+
+test('Kézi szerkesztés: új sor az utolsó sor értékeivel, jóváhagyáskor 0 összeg kell, előzményben rögzül, közben minden más zárolt', async () => {
+  const doc = await newApp();
+  startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });
+  setDeclarer(doc, 1);
+  submitHand(doc); // Bela +2 (parti), Cili/Deszo -1
+  const before = JSON.stringify(ledgerLastRow(doc));
+  const round = doc.getElementById('round-title').textContent;
+
+  fire(doc.getElementById('btn-edit-ledger'), 'click');
+  const inputs = [...doc.querySelectorAll('.manual-input')];
+  assertEqual(inputs.length, 4);
+  assertEqual(JSON.stringify(inputs.map(i => Number(i.value))), before, 'Alapérték = utolsó sor');
+  assert(doc.getElementById('hand-card').inert && doc.getElementById('history-card').inert, 'Többi rész zárolt');
+  assert(doc.getElementById('btn-export').inert, 'Export zárolt');
+
+  // nem nulla összeg -> nem hagyható jóvá
+  setValue(inputs[0], 5);
+  fire(doc.getElementById('btn-manual-ok'), 'click');
+  assert(doc.querySelectorAll('.manual-input').length === 4, 'Marad szerkesztésben');
+  assert(doc.getElementById('manual-edit-msg').textContent.includes('összege'), 'Hibaüzenet');
+
+  // mégse: semmi sem változik
+  fire(doc.getElementById('btn-manual-cancel'), 'click');
+  assertEqual(doc.querySelectorAll('.manual-input').length, 0);
+  assertEqual(JSON.stringify(ledgerLastRow(doc)), before);
+  assert(!doc.getElementById('hand-card').inert, 'Zárolás feloldva');
+
+  // érvényes módosítás
+  fire(doc.getElementById('btn-edit-ledger'), 'click');
+  const inp = [...doc.querySelectorAll('.manual-input')];
+  setValue(inp[0], 3);
+  setValue(inp[1], -1);
+  fire(doc.getElementById('btn-manual-ok'), 'click');
+  assertEqual(JSON.stringify(ledgerLastRow(doc)), JSON.stringify([3, -1, -1, -1]));
+  assertEqual(doc.getElementById('round-title').textContent, round, 'A kör nem lép tovább');
+  assert(doc.getElementById('history-list').textContent.includes('Kézi módosítás'), 'Előzményben szerepel');
+
+  // visszavonható
+  const orig = doc.defaultView.confirm;
+  doc.defaultView.confirm = () => true;
+  fire(doc.getElementById('btn-undo'), 'click');
+  doc.defaultView.confirm = orig;
+  assertEqual(JSON.stringify(ledgerLastRow(doc)), before);
+});
+
 test('Csendes ulti: feleannyi mint az ulti, bukáskor duplán fizet, nincs kontra, kizárja az ultit', async () => {
   const doc = await newApp();
   startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0 });
@@ -418,7 +497,7 @@ test('Piros betli külön bemondás (10 pont), és színtelen sornál eltűnik a
   assert(!doc.getElementById('piros-adu-field').hidden, 'Színes sornál vissza kell jönnie');
 });
 
-test('Háromlapos ulti / csendes ulti: siker +20, bukás +10 ellenjátékosonként, kontra és piros adu nem szorozza', async () => {
+test('Háromlapos ulti: siker +20, bukás +10 ellenjátékosonként, kontra és piros adu nem szorozza', async () => {
   const doc = await newApp();
   startGame(doc, { playerCount: 4, names: ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer: 0, negyasz: true });
   const parti = lines(doc)[0];
@@ -434,7 +513,8 @@ test('Háromlapos ulti / csendes ulti: siker +20, bukás +10 ellenjátékosonké
   setBukott(ulti, true);
   assertEqual(lineResult(ulti).amountA, 8 * 3 + 10, 'bukás: 8*(2+1) + 10');
   setValue(ulti.querySelector('.line-bemondas'), 'csendes_ulti');
-  assert(!ulti.querySelector('.line-haromlapos-toggle').hidden, 'Csendes ultin is van');
+  assert(ulti.querySelector('.line-haromlapos-toggle').hidden, 'Csendes ultin nincs háromlapos');
+  assertEqual(box.checked, false, 'Csendes ultira váltva elveszti a jelölést');
   setValue(ulti.querySelector('.line-bemondas'), 'negy_asz');
   assert(ulti.querySelector('.line-haromlapos-toggle').hidden);
   assertEqual(box.checked, false, 'Elveszti a jelölést');

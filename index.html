@@ -253,6 +253,15 @@ h2 { margin-top: 0; }
 
 .btn-secondary { background: #fff; color: var(--color-text); border: 1px solid var(--color-border); }
 
+.manual-edit-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.manual-edit-bar p { flex: 1 1 100%; margin: 0; }
+.manual-edit-bar p.is-error { color: var(--color-danger); font-weight: 600; }
+.scoreboard tr.row-manual-edit { background: #eef3ea; }
+.manual-input { width: 4.5rem; max-width: 100%; text-align: center; font: inherit; padding: 0.25rem; box-sizing: border-box; }
+
+.btn-bedobas { background: #c98a2b; color: #fff; }
+.btn-bedobas:hover { background: #a86f1c; }
+
 .btn-danger { background: var(--color-danger); color: #fff; }
 
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -313,6 +322,8 @@ h2 { margin-top: 0; }
 
 #btn-collapse-ledger { background: var(--color-secondary); }
 #btn-jump-to-hand, #btn-jump-to-top { background: #2f5d7c; }
+#btn-edit-ledger { background: #8a6d3b; }
+#btn-edit-ledger:hover { background: #6f562d; }
 #btn-collapse-ledger:hover { background: #3a4739; }
 #btn-jump-to-hand:hover, #btn-jump-to-top:hover { background: #244a63; }
 
@@ -390,7 +401,7 @@ h2 { margin-top: 0; }
 <body>
 
 <header class="app-header">
-  <h1>Ulti Pontozó <small class="app-version" id="app-version">v1.0.1</small></h1>
+  <h1>Ulti Pontozó <small class="app-version" id="app-version">v1.1</small></h1>
   <div class="header-actions">
     <button id="btn-export" class="btn btn-secondary" hidden>Exportálás</button>
     <button id="btn-reset" class="btn btn-danger" hidden>Új parti-est</button>
@@ -446,6 +457,7 @@ h2 { margin-top: 0; }
       <div class="card-header-row">
         <h2>Pontállás körről-körre</h2>
         <div class="header-buttons">
+          <button type="button" id="btn-edit-ledger" class="btn btn-secondary btn-jump" title="Pontállás kézi szerkesztése" aria-label="Pontállás kézi szerkesztése"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 013 3L8 19z"/><path d="M14 7l3 3"/></svg></button>
           <button type="button" id="btn-collapse-ledger" class="btn btn-secondary btn-jump" title="Pontállás összecsukása" aria-label="Pontállás összecsukása" aria-expanded="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4l6 6 6-6"/><path d="M6 20l6-6 6 6"/></svg></button>
           <button type="button" id="btn-jump-to-hand" class="btn btn-secondary btn-jump" title="Ugrás a leosztás beírásához" aria-label="Ugrás a leosztás beírásához"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v15"/><path d="M6 13l6 6 6-6"/></svg></button>
         </div>
@@ -454,12 +466,20 @@ h2 { margin-top: 0; }
       <div class="scoreboard-wrapper">
         <table id="score-ledger" class="scoreboard"></table>
       </div>
+      <div id="manual-edit-bar" class="manual-edit-bar" hidden>
+        <p id="manual-edit-msg" class="muted"></p>
+        <button type="button" id="btn-manual-ok" class="btn btn-primary">Jóváhagyás</button>
+        <button type="button" id="btn-manual-cancel" class="btn btn-secondary">Mégse</button>
+      </div>
     </section>
 
-    <section class="card">
+    <section class="card" id="hand-card">
       <div class="card-header-row">
         <h2 id="round-title">Leosztás</h2>
-        <button type="button" id="btn-jump-to-top" class="btn btn-secondary btn-jump" title="Ugrás az oldal tetejére" aria-label="Ugrás az oldal tetejére"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20V5"/><path d="M6 11l6-6 6 6"/></svg></button>
+        <div class="header-buttons">
+          <button type="button" id="btn-bedobas" class="btn btn-bedobas" title="Bedobás: a kiválasztott felvevő automatikusan elbukik egy kontrázott Partit, és a leosztás rögzítésre kerül.">Bedobás</button>
+          <button type="button" id="btn-jump-to-top" class="btn btn-secondary btn-jump" title="Ugrás az oldal tetejére" aria-label="Ugrás az oldal tetejére"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20V5"/><path d="M6 11l6-6 6 6"/></svg></button>
+        </div>
       </div>
       <label class="field">
         Osztó
@@ -504,7 +524,7 @@ h2 { margin-top: 0; }
       </form>
     </section>
 
-    <section class="card">
+    <section class="card" id="history-card">
       <div class="card-header-row">
         <h2>Előzmények</h2>
         <button id="btn-undo" class="btn btn-secondary" hidden>Utolsó leosztás visszavonása</button>
@@ -587,7 +607,7 @@ const BEMONDASOK = [
   { id: '20_100', nev: '20-100', ertek: 8, kategoria: 'szin', jatekAlap: true },
   { id: 'negy_asz', nev: 'Négy ász', ertek: 4, kategoria: 'szin', optional: 'negyasz' },
   { id: 'ulti', nev: 'Ulti', ertek: 4, kategoria: 'szin', ultiSpecial: true, haromlapos: true },
-  { id: 'csendes_ulti', nev: 'Csendes ulti', ertek: 2, kategoria: 'szin', ultiSpecial: true, nincsKontra: true, haromlapos: true },
+  { id: 'csendes_ulti', nev: 'Csendes ulti', ertek: 2, kategoria: 'szin', ultiSpecial: true, nincsKontra: true },
   // Ellenulti: mint a csendes ulti, de az ellenjátékosok játsszák — ha sikerül,
   // ők kapnak a felvevőtől, ha bukik, ők fizetnek neki (ellen: az előjel fordított).
   { id: 'ellenulti', nev: 'Ellenulti', ertek: 2, kategoria: 'szin', ultiSpecial: true, nincsKontra: true, ellen: true },
@@ -971,7 +991,7 @@ function renderScoreLedger() {
     h.perPlayerDelta.forEach((d, i) => { running[i] += d; });
     const isTeritett = h.lineSummaries.some(l => l.teritett);
     const rowClass = isTeritett ? ' class="row-teritett"' : '';
-    html += `<tr${rowClass}><td class="player-name">${h.round}.</td>`;
+    html += `<tr${rowClass}><td class="player-name">${h.manual ? '✎' : h.round + '.'}</td>`;
     running.forEach((v, i) => {
       const cls = v > 0 ? 'amount-pos' : (v < 0 ? 'amount-neg' : '');
       const icon = isTeritett && i === h.declarerIndex && state.playerIcons && state.playerIcons[i];
@@ -980,8 +1000,92 @@ function renderScoreLedger() {
     });
     html += '</tr>';
   });
+  if (editingLedger) {
+    html += '<tr class="row-manual-edit"><td class="player-name">✎</td>';
+    running.forEach((v, i) => {
+      html += `<td><input type="number" step="1" class="manual-input" data-player="${i}" value="${v}" aria-label="${escapeHtml(state.players[i])} új állása"></td>`;
+    });
+    html += '</tr>';
+  }
   scoreLedgerEl.innerHTML = html;
 }
+
+// ---------- KÉZI SZERKESZTÉS ----------
+// A pontállás kézzel átírható: egy új sorban a játékosok állása szerkeszthető
+// (alapértéke az utolsó sor). Szerkesztés közben az oldal többi része zárolt;
+// jóváhagyáskor az új sor összegének 0-nak kell lennie, és a különbség
+// "manual" előzmény-bejegyzésként rögzítődik (a kör- és osztó-számláló nem változik).
+let editingLedger = false;
+const manualEditBar = document.getElementById('manual-edit-bar');
+const manualEditMsg = document.getElementById('manual-edit-msg');
+
+function setEditLock(on) {
+  ['hand-card', 'history-card', 'btn-export', 'btn-reset'].forEach(id => { document.getElementById(id).inert = on; });
+  document.querySelector('#ledger-card .header-buttons').inert = on;
+}
+
+function readManualInputs() {
+  const values = [...scoreLedgerEl.querySelectorAll('.manual-input')].map(inp => (inp.value.trim() === '' ? NaN : Number(inp.value)));
+  return values.every(Number.isInteger) ? values : null;
+}
+
+function updateManualEditMsg(showError) {
+  const values = readManualInputs();
+  const sum = values ? values.reduce((a, b) => a + b, 0) : null;
+  let text = 'Írd át az új sor értékeit, majd hagyd jóvá. Az értékek összegének 0-nak kell lennie.';
+  let isError = false;
+  if (!values) {
+    if (showError) { text = 'Minden mezőbe egész számot kell írni.'; isError = true; }
+  } else if (sum !== 0) {
+    text = `A sor összege ${sum}, pedig nullának kell lennie.`;
+    isError = showError;
+  }
+  manualEditMsg.textContent = text;
+  manualEditMsg.classList.toggle('is-error', isError);
+}
+
+function startManualEdit() {
+  editingLedger = true;
+  renderScoreLedger();
+  manualEditBar.hidden = false;
+  setEditLock(true);
+  updateManualEditMsg(false);
+  const first = scoreLedgerEl.querySelector('.manual-input');
+  if (first) first.focus();
+}
+
+function endManualEdit() {
+  editingLedger = false;
+  manualEditBar.hidden = true;
+  setEditLock(false);
+  renderAll();
+}
+
+scoreLedgerEl.addEventListener('input', () => { if (editingLedger) updateManualEditMsg(false); });
+document.getElementById('btn-edit-ledger').addEventListener('click', startManualEdit);
+document.getElementById('btn-manual-cancel').addEventListener('click', endManualEdit);
+document.getElementById('btn-manual-ok').addEventListener('click', () => {
+  const values = readManualInputs();
+  if (!values || values.reduce((a, b) => a + b, 0) !== 0) {
+    updateManualEditMsg(true);
+    return;
+  }
+  const perPlayerDelta = values.map((v, i) => v - state.totals[i]);
+  if (perPlayerDelta.some(d => d !== 0)) {
+    state.history.push({
+      round: state.round,
+      dealerIndex: state.dealerIndex,
+      declarerIndex: -1,
+      defenderIndices: [],
+      lineSummaries: [],
+      perPlayerDelta,
+      manual: true,
+    });
+    perPlayerDelta.forEach((d, i) => { state.totals[i] += d; });
+    saveState();
+  }
+  endManualEdit();
+});
 
 function renderRoundHeader() {
   roundTitleEl.textContent = `${state.round}. leosztás`;
@@ -1165,6 +1269,23 @@ function updateCsendes100Availability() {
   if (!available) csendes100Toggle.checked = false;
   ellen100Field.hidden = !available;
   if (!available) ellen100Toggle.checked = false;
+}
+
+// Ha csendes 100 / ellen csendes 100 van bejelölve, és a Partin kívül van más
+// bemondás is a leosztásban, a Parti nem fizet külön (a 100 pont már magában
+// foglalja): a sor eltűnik és nem számít bele. Csak önmagában (más bemondás
+// nélkül) fizet a Parti és a csendes 100 külön-külön.
+function isPartiSuppressed(lineEl) {
+  if (lineEl.querySelector('.line-bemondas').value !== 'parti') return false;
+  const any100 = (csendes100Toggle.checked && !csendes100Field.hidden) ||
+    (ellen100Toggle.checked && !ellen100Field.hidden);
+  return any100 && bemondasLinesDiv.children.length > 1;
+}
+
+function updatePartiSuppression() {
+  bemondasLinesDiv.querySelectorAll('.bemondas-line').forEach(lineEl => {
+    lineEl.hidden = isPartiSuppressed(lineEl);
+  });
 }
 
 function applyBukott(lineEl, checked) {
@@ -1392,6 +1513,7 @@ function computeHandDeltas() {
   const lineSummaries = [];
 
   bemondasLinesDiv.querySelectorAll('.bemondas-line').forEach(lineEl => {
+    if (isPartiSuppressed(lineEl)) return;
     const line = readLine(lineEl);
     const { bem, result, piros, haromlapos } = line;
     const { amountA, amountB } = lineAmounts(line);
@@ -1436,6 +1558,7 @@ function computeHandDeltas() {
 function renderPreview() {
   updateCsendes100Availability();
   updateDurchmarsAutoBukas();
+  updatePartiSuppression();
   if (bemondasLinesDiv.children.length === 0) {
     handPreviewEl.hidden = true;
     return;
@@ -1461,8 +1584,7 @@ handForm.addEventListener('submit', (e) => {
     return;
   }
   const { declarer, defenders, perPlayerDelta, lineSummaries } = computeHandDeltas();
-
-  state.history.push({
+  commitHand({
     round: state.round,
     dealerIndex: state.dealerIndex,
     declarerIndex: declarer,
@@ -1470,7 +1592,35 @@ handForm.addEventListener('submit', (e) => {
     lineSummaries,
     perPlayerDelta,
   });
-  perPlayerDelta.forEach((d, i) => { state.totals[i] += d; });
+});
+
+// Bedobás: a kiválasztott felvevő automatikusan elbukik egy kontrázott
+// Partit; csak a két ellenjátékosnak fizet (2 × alaptét fejenként), a
+// kiálló osztónak (4 fős módban) nem.
+document.getElementById('btn-bedobas').addEventListener('click', () => {
+  if (!isBalanced()) return;
+  const declarer = parseInt(declarerSelect.value, 10);
+  const defenders = currentDefenderIndices();
+  const amount = bemondasErtek(bemondasById('parti'), false) * multiplier(1, false, 'bukas');
+  const perPlayerDelta = new Array(state.playerCount).fill(0);
+  defenders.forEach(i => { perPlayerDelta[i] += amount; });
+  perPlayerDelta[declarer] -= amount * defenders.length;
+  commitHand({
+    round: state.round,
+    dealerIndex: state.dealerIndex,
+    declarerIndex: declarer,
+    defenderIndices: defenders,
+    lineSummaries: [{ nev: 'Parti (kontra)', result: 'bukas', amountA: amount, amountB: amount, teritett: false }],
+    perPlayerDelta,
+    bedobas: true,
+  });
+});
+
+// Egy kész leosztás rögzítése (közös a mentésnek és a bedobásnak).
+function commitHand(entry) {
+  const declarer = entry.declarerIndex;
+  state.history.push(entry);
+  entry.perPlayerDelta.forEach((d, i) => { state.totals[i] += d; });
 
   // Alapesetben a felvevő lesz a következő osztó; "Piros ász oszt, nem oszt"
   // módban (napi játék végén szokásos) az osztás egyszerűen körbemegy.
@@ -1483,7 +1633,7 @@ handForm.addEventListener('submit', (e) => {
   resetHandForm();
   handPreviewEl.hidden = true;
   renderAll();
-});
+}
 
 btnUndo.addEventListener('click', () => {
   if (state.history.length === 0) return;
@@ -1504,16 +1654,16 @@ function renderHistory() {
   }
   let html = '';
   state.history.slice().reverse().forEach(h => {
-    const declarerName = state.players[h.declarerIndex];
+    const declarerName = state.players[h.declarerIndex] || '';
     const defenderNames = h.defenderIndices.map(i => state.players[i]).join(' és ');
-    const linesText = h.lineSummaries.map(l =>
+    const linesText = h.manual ? 'Kézi módosítás a pontállásban' : h.bedobas ? 'Bedobás: a felvevő elbukott egy kontrázott Partit' : h.lineSummaries.map(l =>
       `${l.nev}: ${l.result === 'siker' ? 'sikerült' : 'bukott'} (${l.amountA}/${l.amountB})`
     ).join(', ');
     const deltaText = h.perPlayerDelta.map((d, i) => `${state.players[i]}: ${d > 0 ? '+' : ''}${d}`).join(', ');
     html += `<div class="history-entry">
-      <div class="history-round-title">${h.round}. leosztás — felvevő: ${escapeHtml(declarerName)}, ellenjátékosok: ${escapeHtml(defenderNames)}</div>
+      <div class="history-round-title">${h.manual ? 'Kézi módosítás' : `${h.round}. leosztás — ${h.bedobas ? `Bedobás: ${escapeHtml(declarerName)}` : `felvevő: ${escapeHtml(declarerName)}, ellenjátékosok: ${escapeHtml(defenderNames)}`}`}</div>
       <div class="muted">${escapeHtml(linesText)}</div>
-      <div>${escapeHtml(deltaText)}</div>
+      <div>${h.bedobas ? 'Bedobás — ' : ''}${escapeHtml(deltaText)}</div>
     </div>`;
   });
   historyListEl.innerHTML = html;
@@ -1545,7 +1695,7 @@ function buildExportHtml() {
       const icon = isTeritett && i === h.declarerIndex && state.playerIcons && state.playerIcons[i];
       return `<td class="${cls}">${icon ? playerIconHtml(icon, 'icon', false) : ''}${v}</td>`;
     }).join('');
-    rows += `<tr${rowClass}><td class="round">${h.round}.</td>${cells}</tr>`;
+    rows += `<tr${rowClass}><td class="round">${h.manual ? '✎' : h.round + '.'}</td>${cells}</tr>`;
   });
   const finalCells = running.map(v => {
     const cls = v > 0 ? 'pos' : (v < 0 ? 'neg' : '');

@@ -45,12 +45,22 @@ UltiCalculator/
   teljesül csendes 100 mellett, bukik ellen csendes 100 mellett.
   A csendes 100-as esetben a magyarázó üzenet (`.line-lock-note`) csak kattintásra
   jelenik meg (`clickOnly`).
+- Parti + csendes 100 / ellen csendes 100: ha a Partin kívül van más sor is, a Parti
+  sor rejtett (`isPartiSuppressed`, `updatePartiSuppression`) és `computeHandDeltas`
+  kihagyja; a sor a DOM-ban marad (hogy `ensureBaseGameLine` ne pótolja újra).
+- Bedobás (`#btn-bedobas`): a kiválasztott felvevő bukott kontrázott Partit az ellenjátékosoknak; a history
+  bejegyzés `bedobas: true` jelzőt kap (`renderHistory` ez alapján írja ki). Rögzítés:
+  `commitHand` (a "Leosztás mentése" is ezt használja).
+- Kézi szerkesztés (`editingLedger`, `startManualEdit`): a pontállás végére szerkeszthető
+  `.manual-input` sor kerül; közben `setEditLock` `inert`-re állítja az oldal többi részét.
+  Jóváhagyáskor `manual: true` history-bejegyzés (declarerIndex -1, üres lineSummaries)
+  keletkezik, a `round`/`dealerIndex` nem lép tovább.
 - `renderPreview` minden módosítás után lefut (elérhetőségek és zárolások frissítése,
   élő előnézet); az egyenleg-ellenőrzés (összeg = 0) zárolja a rögzítést eltérés esetén.
 
 ## Verziószám
 
-A fejlécben halványan látszik (`#app-version`, jelenleg `v1.0.1`). A verzióemelés szabálya még nincs eldöntve — ld. TODO a felhasználónál.
+A fejlécben halványan látszik (`#app-version`, jelenleg `v1.1`). A verziót csak akkor emeljük (és akkor pusholunk), ha a felhasználó külön szól.
 
 ## Tesztelés
 
