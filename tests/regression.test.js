@@ -15,6 +15,8 @@ const { JSDOM, VirtualConsole } = require('jsdom');
 
 const HTML_PATH = path.join(__dirname, '..', 'index.html');
 const HTML = fs.readFileSync(HTML_PATH, 'utf8');
+const SESSION_KEY = 'ultiCalculator_session_v1';
+const SETUP_DEFAULTS_KEY = 'ultiCalculator_setup_defaults_v1';
 
 // ---------- Minimál teszt-keretrendszer ----------
 
@@ -52,6 +54,42 @@ async function newApp(beforeParse) {
   }
   await wait(20);
   return dom.window.document;
+}
+
+// Az app betöltése előtt a localStorage-ba írja a megadott kulcs → érték párokat
+// (a nem szöveges értékeket JSON-ként).
+function newAppWithStorage(items) {
+  return newApp((window) => {
+    Object.entries(items).forEach(([key, value]) =>
+      window.localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value)));
+  });
+}
+
+// Egy mentett parti-est (4 fő, Anna oszt, 1. kör); `overrides` felülírja a
+// mezőket (undefined értékű mező a mentésből kimarad, mint egy régi verziónál).
+function savedSession(overrides = {}) {
+  return {
+    playerCount: 4,
+    players: ['Anna', 'Bela', 'Cili', 'Deszo'],
+    playerIcons: ['●', '▲', '■', '◆'],
+    dealerIndex: 0,
+    round: 1,
+    totals: [0, 0, 0, 0],
+    history: [],
+    pirosAszOsztNemOszt: false,
+    negyaszEnabled: false,
+    alapTet: 1,
+    ...overrides,
+  };
+}
+
+// Mentett parti-est, amelyben a pontok összege nem nulla (egyenleghiba).
+function unbalancedSession() {
+  return savedSession({
+    round: 2,
+    totals: [0, 5, -3, 0],
+    history: [{ round: 1, dealerIndex: 0, declarerIndex: 1, defenderIndices: [2, 3], lineSummaries: [], perPlayerDelta: [0, 5, -3, 0] }],
+  });
 }
 
 function fire(el, type) {
@@ -145,6 +183,12 @@ function ledgerLastRow(doc) {
 
 function bemondasOptionValues(select) {
   return [...select.options].map(o => o.value);
+}
+
+// Kattintható-e az elem a felhasználónak: nincs letiltva, és egyik szülője sem inert.
+function isUsable(el) {
+  for (let node = el; node; node = node.parentElement) if (node.inert) return false;
+  return !el.disabled;
 }
 
 // ---------- Tesztek ----------
@@ -295,6 +339,30 @@ test('Kézi szerkesztés: új sor az utolsó sor értékeivel, jóváhagyáskor 
   assertEqual(JSON.stringify(ledgerLastRow(doc)), before);
 });
 
+test('Kézi szerkesztés: gépelés közben élő összeg, hibás (üres / tört) érték hibaüzenetet ad, változatlan sor nem rögzül', async () => {
+  const doc = await newGame();
+  submitHand(doc); // Bela +2, Cili/Deszo -1
+  const msg = doc.getElementById('manual-edit-msg');
+  fire(doc.getElementById('btn-edit-ledger'), 'click');
+  const input = doc.querySelector('.manual-input');
+  input.value = '4';
+  fire(input, 'input');
+  assert(msg.textContent.includes('összege 4') && !msg.classList.contains('is-error'), 'Gépelés közben az összeg látszik, még nem hibaként: ' + msg.textContent);
+  for (const bad of ['', '1.5']) {
+    input.value = bad;
+    fire(doc.getElementById('btn-manual-ok'), 'click');
+    assert(msg.textContent.includes('egész számot') && msg.classList.contains('is-error'), `"${bad}": hibaüzenet kell`);
+    assertEqual(doc.querySelectorAll('.manual-input').length, 4, 'Szerkesztésben marad');
+  }
+  fire(doc.getElementById('btn-manual-cancel'), 'click');
+
+  fire(doc.getElementById('btn-edit-ledger'), 'click');
+  fire(doc.getElementById('btn-manual-ok'), 'click'); // változatlan értékekkel
+  assertEqual(doc.querySelectorAll('.manual-input').length, 0, 'A szerkesztés véget ér');
+  assertEqual(doc.querySelectorAll('#score-ledger tr').length, 2, 'Nem kerül új sor a pontállásba');
+  assert(!doc.getElementById('history-list').textContent.includes('Kézi módosítás'), 'és az előzményekbe sem');
+});
+
 test('Csendes ulti: feleannyi mint az ulti, bukáskor duplán fizet, nincs kontra, kizárja az ultit', async () => {
   const doc = await newGame();
   const line = addLine(doc, 'csendes_ulti');
@@ -351,21 +419,7 @@ test('Ellen csendes 100: csendes 100 tükörképe, ellenjátékosok kapják, kiz
 });
 
 test('Ha a pontok összege nem nulla: piros pontállás, hibaüzenet, zárolt leosztás-rögzítés; visszavonás után újra működik', async () => {
-  const bad = {
-    playerCount: 4,
-    players: ['Anna', 'Bela', 'Cili', 'Deszo'],
-    playerIcons: ['●', '▲', '■', '◆'],
-    dealerIndex: 0,
-    round: 2,
-    totals: [0, 5, -3, 0],
-    history: [{ round: 1, dealerIndex: 0, declarerIndex: 1, defenderIndices: [2, 3], lineSummaries: [], perPlayerDelta: [0, 5, -3, 0] }],
-    pirosAszOsztNemOszt: false,
-    negyaszEnabled: false,
-    alapTet: 1,
-  };
-  const doc = await newApp((window) => {
-    window.localStorage.setItem('ultiCalculator_session_v1', JSON.stringify(bad));
-  });
+  const doc = await newAppWithStorage({ [SESSION_KEY]: unbalancedSession() });
   doc.getElementById('btn-resume').click();
   assert(doc.getElementById('ledger-card').classList.contains('balance-error'), 'Piros háttér kell');
   assert(!doc.getElementById('balance-error').hidden, 'Hibaüzenet kell');
@@ -381,6 +435,21 @@ test('Ha a pontok összege nem nulla: piros pontállás, hibaüzenet, zárolt le
   assert(doc.getElementById('balance-error').hidden);
   assert(!doc.getElementById('hand-form').inert);
   assertEqual(doc.getElementById('dealer-select').disabled, false);
+  assertEqual(doc.getElementById('btn-bedobas').disabled, false);
+});
+
+test('Egyenleghiba a pontállás kézi szerkesztésével is javítható', async () => {
+  const doc = await newAppWithStorage({ [SESSION_KEY]: unbalancedSession() });
+  doc.getElementById('btn-resume').click();
+  assert(doc.getElementById('ledger-card').classList.contains('balance-error'));
+  const editBtn = doc.getElementById('btn-edit-ledger');
+  assert(isUsable(editBtn), 'A kézi szerkesztés egyenleghibánál is elérhető');
+  editBtn.click();
+  setValue(doc.querySelectorAll('.manual-input')[1], 3); // [0, 5, -3, 0] -> [0, 3, -3, 0]
+  fire(doc.getElementById('btn-manual-ok'), 'click');
+  assertEqual(JSON.stringify(ledgerLastRow(doc)), JSON.stringify([0, 3, -3, 0]));
+  assert(!doc.getElementById('ledger-card').classList.contains('balance-error'), 'Az egyenleghiba megszűnik');
+  assert(!doc.getElementById('hand-form').inert, 'A leosztás újra rögzíthető');
   assertEqual(doc.getElementById('btn-bedobas').disabled, false);
 });
 
@@ -573,6 +642,10 @@ test('Színes Redurchmars automatikusan bukik, ha a mellé bemondott Ulti bukik'
   assert(redurchmarsLine.classList.contains('is-auto-bukott'), 'Bukott Ulti mellett a színes Redurchmarsnak zárolódnia kell');
   assert(redurchmarsLine.querySelector('.line-bukott-checkbox').checked);
   assert(redurchmarsLine.querySelector('.line-lock-note').textContent.includes('Ulti'), 'Az üzenetnek utalnia kell az okra (Ulti bukott)');
+
+  setValue(ultiLine.querySelector('.line-bemondas'), 'csendes_ulti'); // a Bukott jelölés megmarad
+  assert(redurchmarsLine.classList.contains('is-auto-bukott'), 'Bukott csendes ulti mellett is zárolt');
+  assert(redurchmarsLine.querySelector('.line-lock-note').textContent.includes('csendes ulti'), 'Az ok: a csendes ulti bukott');
 });
 
 test('Színes Durchmars/Redurchmars automatikusan bukik, ha mellette az Ellenulti sikerül', async () => {
@@ -610,8 +683,13 @@ test('Ulti bemondás alapjáték nélkül automatikusan felveszi a "Parti" alapj
   const doc = await newGame();
   removeLine(lines(doc)[0]); // az induló "Parti" sor eltávolítása
   assertEqual(lines(doc).length, 0);
+  let alerted = false;
+  doc.defaultView.alert = () => { alerted = true; };
+  submitHand(doc);
+  assert(alerted, 'Bemondás nélkül a mentés figyelmeztet');
+  assertEqual(doc.querySelectorAll('#score-ledger tr').length, 1, 'és nem rögzít leosztást');
 
-  const line = addLine(doc, 'ulti');
+  addLine(doc, 'ulti');
   const after = lines(doc);
   assertEqual(after.length, 2, 'Az Ulti mellé automatikusan pótolnia kell egy alapjáték-sort');
   const values = after.map(l => l.querySelector('.line-bemondas').value);
@@ -707,6 +785,33 @@ test('Színes (joint) kontránál egyetlen szint egyszerre vonatkozik mindkét e
   assertEqual(r.amountB, 4);
 });
 
+test('Alaptét: minden érték az alaptéttel szorzódik (legördülő, sorok, háromlapos felár, csendes 100, bedobás)', async () => {
+  const doc = await newGame({ alapTet: 3 });
+  assert(doc.getElementById('round-meta').textContent.includes('Alaptét: 3/pont'));
+  const optionText = (id) => [...lines(doc)[0].querySelector('.line-bemondas').options].find(o => o.value === id).textContent;
+  assertEqual(optionText('parti'), 'Parti (3)', 'A legördülő az alaptéttel szorzott értéket mutatja');
+  assertEqual(optionText('betli'), 'Betli (15)');
+  assertEqual(lineResult(lines(doc)[0]).amountA, 3, 'Parti: 1 × 3');
+
+  // 1. leosztás (Bela a felvevő): Parti 1 × 3 + csendes 100 2 × 3 ellenjátékosonként
+  setChecked(doc.getElementById('csendes-100-toggle'), true);
+  submitHand(doc);
+  assertEqual(JSON.stringify(ledgerLastRow(doc)), JSON.stringify([0, 18, -9, -9]));
+
+  // 2. leosztás (Bela oszt, Anna a felvevő): bedobás = bukott kontrázott Parti, 2 × 3 fejenként
+  fire(doc.getElementById('btn-bedobas'), 'click');
+  assertEqual(JSON.stringify(ledgerLastRow(doc)), JSON.stringify([-12, 18, -3, -3]));
+
+  // Háromlapos felár: a kontra és a piros adu nem szorozza, az alaptét igen
+  const ulti = addLine(doc, 'ulti');
+  setChecked(ulti.querySelector('.line-haromlapos-checkbox'), true);
+  setJointKontra(ulti, 1);
+  setChecked(doc.getElementById('piros-adu-toggle'), true);
+  assertEqual(lineResult(ulti).amountA, 4 * 2 * 3 * 2 + 20 * 3, 'siker: 4 × piros 2 × alaptét 3 × kontra 2 + 20 × 3');
+  setBukott(ulti, true);
+  assertEqual(lineResult(ulti).amountA, 4 * 2 * 3 * 3 + 10 * 3, 'bukás: 4 × 2 × 3 × (2+1) + 10 × 3');
+});
+
 test('Négyász bemondás csak bekapcsolt kapcsolóval jelenik meg a katalógusban', async () => {
   let doc = await newGame();
   let opts = bemondasOptionValues(lines(doc)[0].querySelector('.line-bemondas'));
@@ -770,6 +875,10 @@ test('"Utolsó leosztás visszavonása" visszaállítja a pontállást, a kört 
   assertEqual(rowAfterSubmit[1], 2, 'Bela (felvevő) +2 pontot kapjon');
   assertEqual(doc.getElementById('round-title').textContent, '2. leosztás');
 
+  doc.defaultView.confirm = () => false;
+  doc.getElementById('btn-undo').click();
+  assertEqual(doc.getElementById('round-title').textContent, '2. leosztás', 'Mégse esetén nem von vissza semmit');
+  doc.defaultView.confirm = () => true;
   doc.getElementById('btn-undo').click();
 
   assertEqual(ledgerLastRow(doc), null, 'A visszavonás után a pontállás-táblázatnak üresnek kell lennie');
@@ -778,12 +887,27 @@ test('"Utolsó leosztás visszavonása" visszaállítja a pontállást, a kört 
   assert(declarerOpts.includes('Anna'), 'A visszavonás után az eredeti osztónak (Anna) kell visszakerülnie kiállóként/osztóként');
 });
 
+test('Előzmények: felvevő, ellenjátékosok, bemondások (piros / háromlapos jelzéssel, összegekkel), pontmozgás; a legújabb elöl', async () => {
+  const doc = await newGame();
+  setChecked(doc.getElementById('piros-adu-toggle'), true);
+  const ulti = addLine(doc, 'ulti');
+  setChecked(ulti.querySelector('.line-haromlapos-checkbox'), true);
+  setBukott(lines(doc)[0], true);
+  submitHand(doc); // Parti (piros) bukott: 2/2; Ulti (piros, háromlapos) sikerült: 8 + 20 = 28/28
+  const entry = () => doc.querySelector('#history-list .history-entry');
+  assertEqual(entry().querySelector('.history-round-title').textContent, '1. leosztás — felvevő: Bela, ellenjátékosok: Cili és Deszo');
+  assertEqual(entry().querySelector('.muted').textContent, 'Parti (piros): bukott (2/2), Ulti (piros) (háromlapos): sikerült (28/28)');
+  assert(entry().textContent.includes('Anna: 0, Bela: +52, Cili: -26, Deszo: -26'), 'Pontmozgás: ' + entry().textContent);
+  submitHand(doc);
+  assert(entry().querySelector('.history-round-title').textContent.startsWith('2. leosztás'), 'A legújabb leosztás áll elöl');
+});
+
 test('A leosztás mentése után az állás a localStorage-ba is elmentődik', async () => {
   const doc = await newGame({ alapTet: 2 });
   setDeclarer(doc, 1);
   submitHand(doc);
 
-  const raw = doc.defaultView.localStorage.getItem('ultiCalculator_session_v1');
+  const raw = doc.defaultView.localStorage.getItem(SESSION_KEY);
   assert(raw, 'A session kulcsnak léteznie kell a localStorage-ban');
   const saved = JSON.parse(raw);
   assertEqual(saved.round, 2);
@@ -807,7 +931,7 @@ test('Terített bemondás (Rebetli/Redurchmars) kiemeli a leosztás sorát, és 
   addLine(doc, 'redurchmars_szines');
   submitHand(doc);
 
-  const saved = JSON.parse(doc.defaultView.localStorage.getItem('ultiCalculator_session_v1'));
+  const saved = JSON.parse(doc.defaultView.localStorage.getItem(SESSION_KEY));
   const rows = doc.querySelectorAll('#score-ledger tr');
   assertEqual(rows.length, 4, '1 fejléc + 3 leosztás sor');
 
@@ -834,7 +958,7 @@ test('A játékos ikonja csak az első terített bemondása után jelenik meg a 
     return th.querySelector('.player-icon');
   };
 
-  const saved0 = JSON.parse(doc.defaultView.localStorage.getItem('ultiCalculator_session_v1'));
+  const saved0 = JSON.parse(doc.defaultView.localStorage.getItem(SESSION_KEY));
   assert(Array.isArray(saved0.playerIcons) && saved0.playerIcons.length === 4, 'Az ikonokat már induláskor ki kell osztani');
   assertEqual(new Set(saved0.playerIcons).size, 4, 'Az ikonoknak egyedieknek kell lenniük a parti-esten belül');
   for (let i = 0; i < 4; i++) assert(!headerIconOf(i), 'Induláskor még senkinek nem látszódhat az ikonja');
@@ -847,7 +971,7 @@ test('A játékos ikonja csak az első terített bemondása után jelenik meg a 
   setValue(lines(doc)[0].querySelector('.line-bemondas'), 'rebetli');
   submitHand(doc);
 
-  const saved = JSON.parse(doc.defaultView.localStorage.getItem('ultiCalculator_session_v1'));
+  const saved = JSON.parse(doc.defaultView.localStorage.getItem(SESSION_KEY));
   const declarerIndex = saved.history[1].declarerIndex;
   for (let i = 0; i < 4; i++) {
     if (i === declarerIndex) {
@@ -861,24 +985,29 @@ test('A játékos ikonja csak az első terített bemondása után jelenik meg a 
 });
 
 test('Régi (ikon nélküli) mentett parti-est visszatöltésekor pótlólag egyedi ikonokat kap minden játékos', async () => {
-  const legacyState = {
-    playerCount: 3,
-    players: ['Anna', 'Bela', 'Cili'],
-    dealerIndex: 0,
-    round: 1,
-    totals: [0, 0, 0],
-    history: [],
-    pirosAszOsztNemOszt: false,
-    negyaszEnabled: false,
-    alapTet: 1,
-  };
-  const doc = await newApp((window) => {
-    window.localStorage.setItem('ultiCalculator_session_v1', JSON.stringify(legacyState));
+  const doc = await newAppWithStorage({
+    [SESSION_KEY]: savedSession({ playerCount: 3, players: ['Anna', 'Bela', 'Cili'], totals: [0, 0, 0], playerIcons: undefined }),
   });
-  const saved = JSON.parse(doc.defaultView.localStorage.getItem('ultiCalculator_session_v1'));
+  const saved = JSON.parse(doc.defaultView.localStorage.getItem(SESSION_KEY));
   assert(Array.isArray(saved.playerIcons));
   assertEqual(saved.playerIcons.length, 3);
   assertEqual(new Set(saved.playerIcons).size, 3);
+});
+
+test('Sérült vagy hiányos mentésnél az app az indítási képernyővel indul; régi, alaptét nélküli mentésnél 1-es alaptéttel számol', async () => {
+  let doc = await newAppWithStorage({ [SESSION_KEY]: '{nem json', [SETUP_DEFAULTS_KEY]: 'sérült' });
+  assert(doc.getElementById('resume-banner').hidden, 'Nincs folytatható parti-est');
+  assert(!doc.getElementById('setup-form-wrapper').hidden, 'Az indítási űrlap látszik');
+  startGame(doc);
+  assert(!doc.getElementById('game-screen').hidden, 'Új parti-est indítható');
+
+  doc = await newAppWithStorage({ [SETUP_DEFAULTS_KEY]: { playerCount: 3 } }); // nevek nélküli beállítás
+  assertEqual(doc.querySelectorAll('#player-names input').length, 3, 'A hiányos beállításból is betölt, amennyi van');
+
+  doc = await newAppWithStorage({ [SESSION_KEY]: savedSession({ alapTet: undefined }) });
+  doc.getElementById('btn-resume').click();
+  assert(doc.getElementById('round-meta').textContent.includes('Alaptét: 1/pont'));
+  assertEqual(lineResult(lines(doc)[0]).amountA, 1);
 });
 
 test('Exportálás: a .html ugyanazt a "Pontállás körről-körre" táblázatot tartalmazza, végeredmény-sorral', async () => {
@@ -928,7 +1057,7 @@ test('Exportálás: a fájlnév a helyi dátumot tartalmazza (éjfél után is, 
 
 test('Parti-est indítása elmenti az indítási képernyő beállításait default-ként', async () => {
   const doc = await newGame({ playerCount: 3, startingDealer: 2, alapTet: 5, negyasz: true });
-  const saved = JSON.parse(doc.defaultView.localStorage.getItem('ultiCalculator_setup_defaults_v1'));
+  const saved = JSON.parse(doc.defaultView.localStorage.getItem(SETUP_DEFAULTS_KEY));
   assertEqual(saved.playerCount, 3);
   assertEqual(saved.players.join(','), 'Anna,Bela,Cili');
   assertEqual(saved.dealerIndex, 2);
@@ -941,22 +1070,15 @@ test('Az alaptét csak nullánál nagyobb egész szám lehet: tört, nulla, nega
     const doc = await newGame({ alapTet: bad });
     assert(doc.getElementById('game-screen').hidden, `"${bad}" alaptéttel nem indulhat el a parti-est`);
     assert(!doc.getElementById('alap-tet-error').hidden, `"${bad}" esetén hibaüzenet kell`);
-    assertEqual(doc.defaultView.localStorage.getItem('ultiCalculator_session_v1'), null);
+    assertEqual(doc.defaultView.localStorage.getItem(SESSION_KEY), null);
   }
   const doc = await newGame({ alapTet: 3 });
   assert(!doc.getElementById('game-screen').hidden, 'Egész alaptéttel elindul');
 });
 
 test('Új parti-est indításakor az előző indítási beállítások vannak default-ként betöltve', async () => {
-  const defaults = {
-    playerCount: 3,
-    players: ['Elek', 'Feri', 'Gizi'],
-    dealerIndex: 1,
-    alapTet: 3,
-    negyaszEnabled: true,
-  };
-  const doc = await newApp((window) => {
-    window.localStorage.setItem('ultiCalculator_setup_defaults_v1', JSON.stringify(defaults));
+  const doc = await newAppWithStorage({
+    [SETUP_DEFAULTS_KEY]: { playerCount: 3, players: ['Elek', 'Feri', 'Gizi'], dealerIndex: 1, alapTet: 3, negyaszEnabled: true },
   });
   assertEqual(doc.getElementById('player-count').value, '3');
   const nameInputs = [...doc.querySelectorAll('#player-names input')];
@@ -964,6 +1086,40 @@ test('Új parti-est indításakor az előző indítási beállítások vannak de
   assertEqual(doc.getElementById('starting-dealer').value, '1');
   assertEqual(doc.getElementById('alap-tet').value, '3');
   assertEqual(doc.getElementById('negyasz-toggle').checked, true);
+});
+
+test('Üresen hagyott játékosnév helyett "Játékos N" lesz a név', async () => {
+  const doc = await newGame({ names: ['Anna', '', '   ', 'Deszo'] });
+  const headers = [...doc.querySelectorAll('#score-ledger th')].map(th => th.textContent);
+  assertEqual(headers.join(','), 'Kör,Anna,Játékos 2,Játékos 3,Deszo');
+});
+
+test('"Új parti-est": megerősítés után törli a folyamatban lévő parti-estet, az indítási beállításokat megtartja; Mégse esetén nem', async () => {
+  const doc = await newGame();
+  submitHand(doc);
+  const win = doc.defaultView;
+  win.confirm = () => false;
+  doc.getElementById('btn-reset').click();
+  assert(win.localStorage.getItem(SESSION_KEY), 'Mégse: a parti-est megmarad');
+  win.confirm = () => true;
+  doc.getElementById('btn-reset').click();
+  assertEqual(win.localStorage.getItem(SESSION_KEY), null, 'A folyamatban lévő parti-est törlődik');
+  assert(win.localStorage.getItem(SETUP_DEFAULTS_KEY), 'Az indítási képernyő beállításai megmaradnak');
+});
+
+test('"Elvetés, új indítása": megerősítés után törli a mentett parti-estet és az indítási űrlapot mutatja; Mégse esetén nem', async () => {
+  const doc = await newAppWithStorage({ [SESSION_KEY]: savedSession() });
+  const win = doc.defaultView;
+  const banner = doc.getElementById('resume-banner');
+  const form = doc.getElementById('setup-form-wrapper');
+  assert(!banner.hidden && form.hidden, 'Mentett parti-estnél a folytatás-sáv látszik');
+  win.confirm = () => false;
+  doc.getElementById('btn-discard').click();
+  assert(!banner.hidden && win.localStorage.getItem(SESSION_KEY), 'Mégse: semmi sem változik');
+  win.confirm = () => true;
+  doc.getElementById('btn-discard').click();
+  assert(banner.hidden && !form.hidden, 'Az indítási űrlap jelenik meg');
+  assertEqual(win.localStorage.getItem(SESSION_KEY), null, 'A mentett parti-est törlődik');
 });
 
 // ---------- Futtatás ----------

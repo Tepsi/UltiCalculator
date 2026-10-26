@@ -4,7 +4,8 @@
   "private": true,
   "description": "Regressziós tesztek az Ulti Pontozó (index.html) funkcióihoz. Az app magát nem kell build-elni, ez csak a fejlesztői tesztfutáshoz kell.",
   "scripts": {
-    "test": "node tests/regression.test.js"
+    "test": "node tests/regression.test.js",
+    "coverage": "node tests/coverage.js"
   },
   "repository": {
     "type": "git",

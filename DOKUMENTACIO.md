@@ -1,54 +1,15 @@
 # Ulti Pontozó — felhasználói kézikönyv
 
-Egyszerű, kizárólag a böngészőben futó (nincs szerver, nincs telepítés) alkalmazás egy
-Ulti parti-est pontjainak vezetésére. Egyetlen önálló `index.html` fájlból áll (a CSS és
-a JS is bele van ágyazva, nincs külön `style.css`/`app.js`). Nincs külső függősége
-(nincs internetkapcsolat-igény, nincs build-lépés).
+Egyszerű, böngészőben futó alkalmazás egy Ulti parti-est pontjainak vezetésére.
 
-## 1. Letöltés és futtatás
+## 1. Megnyitás
 
-### 1.1 Letöltés GitHub-ról
+Telepíteni nem kell: az app a **https://tepsi.github.io/UltiCalculator/** címen
+érhető el, telefonon és gépen is, bármilyen modern böngészőben. Telefonon a
+böngésző menüjéből a kezdőképernyőre is kitehető, így egy koppintással megnyitható.
 
-Nincs szükség programozói ismeretre, telepítőre vagy fejlesztői eszközre — a
-GitHub-os projekt oldaláról 3 kattintással letölthető:
-
-1. Nyisd meg a projekt GitHub oldalát: https://github.com/Tepsi/UltiCalculator
-2. Kattints a zöld **"Code"** gombra a fájllista fölött, majd a megnyíló
-   menüben **"Download ZIP"**.
-3. Csomagold ki a letöltött `UltiCalculator-master.zip` fájlt egy tetszőleges
-   mappába:
-   - **Windows:** jobb klikk a ZIP-re → **"Kibontás mind…"** (Extract All).
-   - **Mac:** dupla kattintás a ZIP-re, automatikusan kicsomagolja.
-4. Nyisd meg a kicsomagolt mappát — ebben lesz az `index.html` fájl, amire az
-   1.2 pontban van szükség.
-
-(Ha valaki inkább git-tel dolgozik: `git clone https://github.com/Tepsi/UltiCalculator.git`.
-Ha csak az `index.html`-t akarod egyben letölteni ZIP nélkül: nyisd meg a fájlt a GitHub
-oldalán, kattints a **"Raw"** gombra, majd `Ctrl+S`/`Cmd+S`-sel mentsd el.)
-
-### 1.2 Futtatás
-
-- **PC-n:** dupla kattintás a kicsomagolt mappában lévő `index.html`-re,
-  megnyílik az alapértelmezett böngészőben.
-- **Androidon / iPhone-on:**
-  - Töltsd fel az `index.html` fájlt a telefonra (pl. felhő-tárhelyre, e-mailben,
-    vagy egy pendrive-ról), és a fájlkezelőből nyisd meg — ez böngészőben megnyílik.
-    Mivel az app egyetlen önálló fájl (nincs benne külső `style.css`/`app.js`
-    hivatkozás), nem kell mellé más fájlt is feltölteni, és elkerülhető az a
-    gyakori Android-hiba, hogy a fájlkezelőből "Megnyitás ezzel" úton indított
-    HTML mellől a böngésző (pl. Edge, néha Chrome is) nem engedi betölteni a
-    mellette lévő különálló fájlokat — ez korábban üres beviteli mezőkként vagy
-    egyenesen "file not found" hibaüzenetként jelentkezett.
-  - Ha a telefon böngészője így sem engedi megnyitni a helyi fájlt közvetlenül (ez
-    főleg iOS Safari-n előfordulhat), indíts egy pillanatnyi helyi webszervert a
-    gépeden ugyanazon a Wi-Fi-n, és a telefonról a gép IP-címén érd el, pl.:
-    ```
-    cd <a kicsomagolt mappa útvonala>
-    python -m http.server 8080
-    ```
-    majd a telefonon nyisd meg: `http://<a-géped-IP-címe>:8080/`.
-- Az alkalmazás teljesen kliensoldali; egyszer betöltve internet nélkül is működik
-  (nincs beépített "telepítés a kezdőképernyőre" funkció, csak egy sima weboldal).
+Internet csak az oldal betöltéséhez kell: a már megnyitott oldal internet nélkül is
+működik, a pontállás pedig az eszközön, a böngészőben tárolódik (ld. 6. pont).
 
 ## 2. Alapfogalmak az alkalmazásban
 

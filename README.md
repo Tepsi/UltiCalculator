@@ -1,25 +1,9 @@
 # Ulti Pontozó
 
-Egyszerű, kizárólag a böngészőben futó alkalmazás egy Ulti parti-est
-pontjainak vezetésére. Nincs szerver, nincs telepítés, nincs build-lépés,
-nem kell hozzá semmilyen programozói ismeret.
+Egyszerű, böngészőben futó alkalmazás egy Ulti parti-est pontjainak vezetésére.
 
-## Letöltés és futtatás
-
-Az app egyetlen önálló `index.html` fájl (a CSS és a JS is bele van ágyazva) —
-nincs szükség ZIP-re vagy több fájl együtt tartására.
-
-1. Nyisd meg az `index.html` fájlt a GitHub oldalán, kattints a **"Raw"**
-   gombra, majd mentsd el ("Kép/oldal mentése", `Ctrl+S`/`Cmd+S`).
-2. **PC-n:** dupla kattintással indítsd el a mentett `index.html` fájlt —
-   megnyílik az alapértelmezett böngészőben.
-   **Telefonon:** töltsd fel az `index.html` fájlt (pl. felhő-tárhelyre,
-   e-mailben), és a fájlkezelőből nyisd meg — nem kell mellé más fájl.
-
-Ennyi — nincs szükség se szerverre, se internetkapcsolatra, az app onnantól
-a böngésződben fut.
-
-Részletek (git klónozás, mobilos webszerver-trükk, ha a böngésző nem engedi a helyi fájlt): [DOKUMENTACIO.md](DOKUMENTACIO.md).
+**Megnyitás: https://tepsi.github.io/UltiCalculator/** — telepíteni nem kell,
+telefonon és gépen is működik, bármilyen modern böngészőben.
 
 ## Fő funkciók
 
@@ -54,7 +38,7 @@ UltiCalculator/
 ├── index.html      -- a teljes app: HTML szerkezet, beágyazott CSS és JS egyetlen fájlban
 ├── DOKUMENTACIO.md -- felhasználói kézikönyv
 ├── CLAUDE.md       -- fejlesztői leírás (architektúra, tesztelés, konvenciók)
-└── tests/          -- fejlesztői regressziós tesztek (jsdom, `npm test`) — nem kell az app futtatásához
+└── tests/          -- fejlesztői regressziós tesztek (jsdom, `npm test`) és lefedettségmérés (`npm run coverage`) — nem kell az app futtatásához
 ```
 
 Az `index.html` szándékosan egyetlen, önálló fájl (nincs benne külső

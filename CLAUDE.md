@@ -12,8 +12,10 @@ UltiCalculator/
 ├── DOKUMENTACIO.md          -- felhasználói kézikönyv (szabályok, funkciók)
 ├── CLAUDE.md                -- ez a fájl
 ├── README.md                -- rövid ismertető
-├── package.json             -- csak dev: a regressziós teszt futtatásához
-└── tests/regression.test.js -- jsdom-alapú regressziós tesztek
+├── package.json             -- csak dev: a tesztek futtatásához
+└── tests/
+    ├── regression.test.js   -- jsdom-alapú regressziós tesztek (npm test)
+    └── coverage.js          -- lefedettségmérés a teszteken (npm run coverage)
 ```
 
 ## Architektúra
@@ -24,6 +26,8 @@ UltiCalculator/
   tölti be a relatív hivatkozású CSS/JS-t, ami üres mezőket vagy "file not found"
   hibát okozott. Nincs szerver, nincs build-lépés, nincs külső függőség.
 - A kódot közvetlenül az `index.html`-ben kell szerkeszteni.
+- Élesítés: az app a GitHub Pages-en fut (https://tepsi.github.io/UltiCalculator/),
+  közvetlenül a `master` ág gyökeréből — **minden push a `master`-re azonnal élesít**.
 - Állapot: `localStorage` — `ultiCalculator_session_v1` (folyamatban lévő parti-est),
   `ultiCalculator_setup_defaults_v1` (indítási képernyő utolsó beállításai). A mentett
   formátumot (pl. a history-bejegyzések mezőit) csak visszafelé kompatibilisen szabad
@@ -87,7 +91,17 @@ A fejlécben halványan látszik (`#app-version`, jelenleg `v1.2`). A verziót c
   hajtja (mezők kitöltése, change/click/submit események, DOM és localStorage
   olvasása). A belső JS-függvények nincsenek globálisan kitéve, ezért nem hívhatók
   közvetlenül.
+- Segédfüggvények: `newGame(opciók)` elindított parti-estet ad (alapból 4 fő: Anna,
+  Bela, Cili, Deszo; Anna oszt); `newAppWithStorage({ [SESSION_KEY]: savedSession(...) })`
+  mentett állapotból tölt be. Gombnál a `.click()` a valószerűbb (letiltott gombon nem
+  fut le), a `fire(el, 'click')` letiltott gombon is lefut.
 - Új funkcióhoz vagy hibajavításhoz mindig adj hozzá/egészíts ki egy tesztet.
+- `npm run coverage`: a teszteket a V8 beépített lefedettségmérőjével futtatja, és kiírja
+  az `index.html` scriptjének sorlefedettségét, valamint a le nem futott (vagy csak
+  részben, pl. egy feltétel egyik ágán lefutott) sorokat. Új funkció után nézd meg, hogy
+  a kódja lefut-e a tesztekben. Szándékosan lefedetlen: a `bemondasOptionsHtml`
+  védőága (a kölcsönös kombinálhatósági szabályok mellett nem érhető el). A CSS-t nem
+  méri.
 
 ## Dokumentáció karbantartása
 
