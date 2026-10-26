@@ -2,8 +2,10 @@
 
 Egyszerű, böngészőben futó alkalmazás egy Ulti parti-est pontjainak vezetésére.
 
-**Megnyitás: https://tepsi.github.io/UltiCalculator/** — telepíteni nem kell,
-telefonon és gépen is működik, bármilyen modern böngészőben.
+## 👉 [Az app megnyitása: tepsi.github.io/UltiCalculator](https://tepsi.github.io/UltiCalculator/) 👈
+
+Telepíteni nem kell, telefonon és gépen is működik, bármilyen modern
+böngészőben.
 
 ## Fő funkciók
 
