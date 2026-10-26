@@ -30,8 +30,8 @@ Részletek (git klónozás, mobilos webszerver-trükk, ha a böngésző nem enge
   (kapcsolóval) négyász, betli, durchmars/redurchmars), soronként hozzáadva —
   ha egy alapjátékot igénylő extrát (pl. ulti) választasz alapjáték nélkül, az
   app automatikusan pótolja a "Parti" sort.
-- Egy közös "Piros adu" kapcsoló duplázza a leosztás színes sorait; a betli
-  saját, önálló piros jelölőnégyzettel rendelkezik.
+- Egy közös "Piros adu" kapcsoló duplázza a leosztás színes sorait; a piros
+  betli külön bemondás a katalógusban.
 - Durchmars/redurchmars színes (adus, kombinálható) és színtelen (adu nélküli,
   helyettesíti az alapjátékot) formában is választható.
 - Színes bemondásoknál közös, színtelen bemondásoknál ellenjátékosonkénti

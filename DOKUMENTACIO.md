@@ -113,7 +113,8 @@ lentebb), majd minden mentett leosztás után egy új sorral — kör számmal �
 akkori (kumulált) állással minden játékosra. Ez a hagyományos, papíron
 vezetett ulti-jegyzőkönyv szerinti forma: soronként visszakövethető, hogy egy
 adott körben ki hogyan állt; a legutolsó sor mindig a jelenlegi végállást
-mutatja. Azt, hogy éppen ki oszt és (4 fős módban) ki áll ki, a "Leosztás"
+mutatja. A pozitív állás zöld, a negatív piros, félkövér számmal látszik (ahogy
+az exportált `.html`-ben is). Azt, hogy éppen ki oszt és (4 fős módban) ki áll ki, a "Leosztás"
 kártya fejléce ("Osztó és kiálló: ...") mutatja.
 
 **Kézi szerkesztés** (ceruza ikonú gomb a másik két gomb mellett): a táblázat
@@ -201,7 +202,7 @@ oldal tetejére (a pontállás táblázathoz) görget vissza.
    jelölés megszüntetésekor vagy a többi bemondás törlésekor újra megjelenik.
    **Az alapjáték eredménye kényszerített**: bejelölt Csendes 100 mellett az
    alapjáték (Parti) automatikusan Teljesült, bejelölt Ellen csendes 100 mellett
-   automatikusan Bukott, és a Teljesült/Bukott kapcsoló zárolt — az
+   automatikusan Bukott, és a Teljesült/Bukott kapcsoló zárolt — a
    magyarázó üzenet csak kattintásra jelenik meg. A jelölés megszüntetésekor a zárolás feloldódik.
 3. **Bemondás sorok**: nincs külön "kötelező játék" mező — egyetlen közös
    katalógusból választasz, soronként, a "+ Bemondás hozzáadása" gombbal
@@ -230,12 +231,13 @@ oldal tetejére (a pontállás táblázathoz) görget vissza.
      duplán fizet, a "Piros adu" duplázza, alapjátékot pótol), de az
      **ellenjátékosok** játsszák: ha sikerül, ők kapnak a felvevőtől (2-2
      pontot), ha bukik, ők fizetnek neki (4-4-et). Az Ulti, a Csendes ulti és az
-     Ellenulti egymást kizárja egy leosztásban.
+     Ellenulti egymást kizárja egy leosztásban. Sikerült Ellenulti mellett a
+     színes durchmars/redurchmars automatikusan bukik (ld. lentebb).
    - **Háromlapos** (csak az Ulti soron; a Csendes ultin és az Ellenultin nincs): a sorban egy külön jelölőnégyzet.
      Bejelölve a sor értékéhez fix felár jön: sikerült ultinál a felvevő +20-at
      kap minden ellenjátékostól, bukottnál +10-et fizet nekik. A felár nem
      függ a kontrától és a Piros adutól, az alaptéttel viszont skálázódik
-     (alaptét 1 esetén 20 / 10 Ft). Az előzményekben "(háromlapos)" jelöli.
+     (alaptét 1 esetén 20 / 10 pont). Az előzményekben "(háromlapos)" jelöli.
    - **Betli, rebetli / terített betli**: mindig "színtelen" (nincs adu)
      játékok, tehát helyettesítik az alapjátékot, és nem is kombinálhatók
      semmi mással. A "piros betli" külön bemondás a katalógusban (nem aduszínt
@@ -253,13 +255,15 @@ oldal tetejére (a pontállás táblázathoz) görget vissza.
      mellé nem választható) és/vagy az Ulti, ha az adott leosztásban valóban
      ez történt — ez utóbbiak sosem kötelezőek/automatikusak, csak választható
      lehetőségek. Ha a színes
-     durchmars/redurchmars mellé **van** bemondva alapjáték vagy Ulti, és az
-     bukik, a durchmars/redurchmars sor is **automatikusan Bukottra áll, és a
-     jelölőnégyzete letiltásra kerül** (a sor alatt megjelenik az ok is) —
-     mivel a durchmars valójában az összes ütés megnyerését jelenti, ez nem a
-     jegyző döntése, a szabály szerint szükségszerű, ezért az app nem engedi
-     kézzel felülírni. Amint az alapjáték/Ulti újra sikerül (vagy törlődik),
-     a zárolás feloldódik, és a sor visszaáll Teljesültre.
+     durchmars/redurchmars mellé **van** bemondva alapjáték vagy Ulti (Csendes
+     ulti), és az bukik — vagy Ellenulti, és az **sikerül** (az ellenjátékosok
+     vitték az utolsó ütést) —, a durchmars/redurchmars sor is **automatikusan
+     Bukottra áll, és a jelölőnégyzete letiltásra kerül** (a sor alatt
+     megjelenik az ok is) — mivel a durchmars valójában az összes ütés
+     megnyerését jelenti, ez nem a jegyző döntése, a szabály szerint
+     szükségszerű, ezért az app nem engedi kézzel felülírni. Amint az
+     alapjáték/Ulti újra sikerül, illetve az Ellenulti bukik (vagy a sor
+     törlődik), a zárolás feloldódik, és a sor visszaáll Teljesültre.
    A legördülő mindig csak azokat az opciókat kínálja fel, amelyek a
    leosztásban már megadott többi sor mellett még valóban választhatók (pl. ha
    már van egy Ulti sor, onnantól az Ulti eltűnik a további sorok listájából;
@@ -289,7 +293,7 @@ oldal tetejére (a pontállás táblázathoz) görget vissza.
    jelenleg beállított sorok alapján ki hány pontot nyerne/veszítene, ha most
    mentenéd a leosztást.
 6. **"Leosztás mentése"**: elmenti a leosztást, hozzáadja a pontokat az összesített
-   állláshoz és a "Pontállás körről-körre" táblázathoz, a 0. pont szerint
+   álláshoz és a "Pontállás körről-körre" táblázathoz, a 0. pont szerint
    beállítja a következő osztót, a kör száma nő, és az űrlap újra egy alapból
    Parti-ra állított sorral kezdődik a következő leosztáshoz.
 
@@ -298,10 +302,10 @@ oldal tetejére (a pontállás táblázathoz) görget vissza.
 összes játékos pontját — ennek mindig nullának kell lennie (amit az egyik
 nyer, azt a másik veszíti). Ha nem nulla, a "Pontállás körről-körre" kártya
 piros hátteret kap, hibaüzenet jelenik meg az aktuális összeggel, és a
-leosztás rögzítése zárolt (az űrlap, az osztó és a "Piros ász oszt, nem
-oszt" kapcsoló nem használható). Egyedül az **"Utolsó leosztás
-visszavonása"** gomb használható; a visszavonás után, ha az összeg újra
-nulla, a játék folytatható.
+leosztás rögzítése zárolt (az űrlap, a Bedobás gomb, az osztó és a "Piros ász
+oszt, nem oszt" kapcsoló nem használható). Az **"Utolsó leosztás
+visszavonása"** gombbal (vagy a pontállás kézi szerkesztésével, ld. 3.2 pont)
+javítható; ha az összeg újra nulla, a játék folytatható.
 
 ### 3.4 Előzmények
 
@@ -356,6 +360,7 @@ külön katalógus-elem (ld. 3.3/3. pont):
 |---|---|---|---|
 | Négy ász *(kapcsolóval engedélyezhető, ld. 3.1 pont)* | 4 | 8 | Színes |
 | Ulti | 4 | 8 | Színes (speciális bukás-szabály, ld. 5. pont) |
+| Csendes ulti *(nem bemondott ulti, ld. 3.3 pont)* | 2 | 4 | Színes (ulti bukás-szabály, nincs kontra) |
 | Ellenulti *(az ellenjátékosok játsszák, ld. 3.3 pont)* | 2 | 4 | Színes (ulti bukás-szabály, nincs kontra) |
 | Durchmars (színtelen) | 6 | — | Színtelen |
 | Durchmars (színes)*(önállóan is bemondható; 40-100/20-100 opcionálisan társítható, Parti nem)* | 6 | 12 | Színes |
@@ -406,9 +411,10 @@ szorzót kér.
 
 ### Az Ulti bukásának speciális szabálya
 
-Az "Ulti" és a "Piros ulti" bemondásra **bukás esetén**
-nem az egyébként szokásos 2ⁿ szorzó él (ahol *n* a kontraszint sorszáma: 0=nincs,
-1=kontra, 2=rekontra, 3=szubkontra...), hanem **2ⁿ + 1**:
+Az Ulti (a "Piros adu" által duplázva is), a Csendes ulti és az Ellenulti
+bemondásra **bukás esetén** nem az egyébként szokásos 2ⁿ szorzó él (ahol *n* a
+kontraszint sorszáma: 0=nincs, 1=kontra, 2=rekontra, 3=szubkontra...), hanem
+**2ⁿ + 1**:
 
 | Kontraszint | Szokásos szorzó (siker, és minden más bemondás bukása) | Ulti **bukása** esetén |
 |---|---|---|
@@ -421,6 +427,9 @@ Ez azt jelenti, hogy a bukott ulti kontra nélkül is duplán fizet, kontrázva 
 nem a "várt" négyszeresét, hanem háromszorosát — ezt az app automatikusan
 kezeli, nincs vele teendő a felhasználó részéről, csak jelöld be a "Bukott"
 opciót.
+
+A Csendes ulti és az Ellenulti nem kontrázható, ezért náluk mindig a "Nincs
+kontra" sor érvényes (bukáskor 2×).
 
 ## 6. Adatmentés, adatvesztés
 

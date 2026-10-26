@@ -25,28 +25,45 @@ UltiCalculator/
   hibát okozott. Nincs szerver, nincs build-lépés, nincs külső függőség.
 - A kódot közvetlenül az `index.html`-ben kell szerkeszteni.
 - Állapot: `localStorage` — `ultiCalculator_session_v1` (folyamatban lévő parti-est),
-  `ultiCalculator_setup_defaults_v1` (indítási képernyő utolsó beállításai).
+  `ultiCalculator_setup_defaults_v1` (indítási képernyő utolsó beállításai). A mentett
+  formátumot (pl. a history-bejegyzések mezőit) csak visszafelé kompatibilisen szabad
+  módosítani: a régebben mentett parti-estek is betöltődnek (ld. az ikonok pótlását).
+- Eseménykezelés: a `#hand-form` egyetlen delegált `change` figyelője minden módosítás
+  után `renderPreview`-t hív, ami minden származtatott állapotot újraszámol (hiányzó
+  alapjáték pótlása, választható opciók, kapcsolók elérhetősége, kényszerített
+  eredmények, a sorok megjelenése `renderLine`-nal, élő előnézet). A sor törlése és a
+  zárolt eredményre kattintás a `#bemondas-lines` delegált `click` figyelőjében van;
+  a soroknak nincs saját eseménykezelője. Ami a DOM-ot közvetlenül módosítja
+  (`resetHandForm`, `addBemondasLine`), az nem renderel — utána `renderPreview` vagy
+  `renderAll` kell.
+- A pontállás-táblázatot (`scoreTableHtml`) az app és az Exportálás ugyanúgy állítja elő.
 
 ## Katalógus és szabályok a kódban
 
 - Az összes alapjáték és bemondás a `BEMONDASOK` konstansban van az `index.html`
   `<script>` blokkjának elején. Alapjáték-elemek: `jatekAlap: true` (egyszerre egy
   lehet). Mezők: `ertek`, `kategoria` (`'szin'` / `'adu_nelkuli'`), `nincsKontra`,
-  `ellen`, `haromlapos`, `optional` stb. Alapérték vagy új bemondás: itt kell módosítani.
+  `ellen`, `haromlapos`, `teritett` (kiemelt pontállás-sor + felvevő-ikon), `optional`
+  stb. Alapérték vagy új bemondás: itt kell módosítani. A kombinálhatósági szabályok
+  (`availableBemondasok`) kölcsönösek legyenek (ha A kizárja B-t, B is A-t), különben
+  egy már kiválasztott sor elveszítheti a saját opcióját.
 - Kontraszintek: `KONTRA_SZINTEK`.
 - Az extra bemondások (négy ász, ulti, színes durchmars/redurchmars) alapértéke
-  **nem** tartalmazza az alapjáték értékét; azt az `ensureBaseGameLine` által
-  automatikusan hozzáadott "Parti" sor adja.
+  **nem** tartalmazza az alapjáték értékét; azt külön alapjáték-sor adja. Ha egy
+  alapjátékot igénylő extra (négy ász, ulti-félék) mellől hiányzik, az
+  `ensureBaseGameLine` automatikusan "Parti" sort ad hozzá; a színes
+  durchmars/redurchmars önállóan is megáll.
 - Piros duplázás: nem katalógus-elem a színes (`kategoria: 'szin'`) soroknál, hanem a
   leosztás egészére vonatkozó "Piros adu" kapcsolóból jön; a piros betli külön
   katalógus-elem (`piros_betli`).
-- Kényszerített sor-eredmények (`updateDurchmarsAutoBukas`, `is-auto-bukott` osztály):
-  színes durchmars/redurchmars bukik, ha az alapjáték/ulti bukik; az alapjáték
+- Kényszerített sor-eredmények (`forcedResult`, `updateForcedResults`, `is-auto-bukott` osztály):
+  színes durchmars/redurchmars bukik, ha az alapjáték/ulti/csendes ulti bukik vagy az
+  ellenulti sikerül; az alapjáték
   teljesül csendes 100 mellett, bukik ellen csendes 100 mellett.
   A csendes 100-as esetben a magyarázó üzenet (`.line-lock-note`) csak kattintásra
   jelenik meg (`clickOnly`).
 - Parti + csendes 100 / ellen csendes 100: ha a Partin kívül van más sor is, a Parti
-  sor rejtett (`isPartiSuppressed`, `updatePartiSuppression`) és `computeHandDeltas`
+  sor rejtett (`isPartiSuppressed`, `renderLine`) és `computeHandDeltas`
   kihagyja; a sor a DOM-ban marad (hogy `ensureBaseGameLine` ne pótolja újra).
 - Bedobás (`#btn-bedobas`): a kiválasztott felvevő bukott kontrázott Partit az ellenjátékosoknak; a history
   bejegyzés `bedobas: true` jelzőt kap (`renderHistory` ez alapján írja ki). Rögzítés:
@@ -55,12 +72,12 @@ UltiCalculator/
   `.manual-input` sor kerül; közben `setEditLock` `inert`-re állítja az oldal többi részét.
   Jóváhagyáskor `manual: true` history-bejegyzés (declarerIndex -1, üres lineSummaries)
   keletkezik, a `round`/`dealerIndex` nem lép tovább.
-- `renderPreview` minden módosítás után lefut (elérhetőségek és zárolások frissítése,
-  élő előnézet); az egyenleg-ellenőrzés (összeg = 0) zárolja a rögzítést eltérés esetén.
+- Az egyenleg-ellenőrzés (`updateBalanceCheck`, összeg = 0) eltérés esetén zárolja a
+  rögzítést (űrlap, Bedobás, osztó, "Piros ász oszt, nem oszt").
 
 ## Verziószám
 
-A fejlécben halványan látszik (`#app-version`, jelenleg `v1.1`). A verziót csak akkor emeljük (és akkor pusholunk), ha a felhasználó külön szól.
+A fejlécben halványan látszik (`#app-version`, jelenleg `v1.2`). A verziót csak akkor emeljük (és akkor pusholunk), ha a felhasználó külön szól.
 
 ## Tesztelés
 
