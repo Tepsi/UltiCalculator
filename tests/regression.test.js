@@ -107,13 +107,15 @@ function setChecked(el, checked) {
   fire(el, 'change');
 }
 
-function startGame(doc, { playerCount = 4, names = ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer = 0, alapTet = 1, negyasz = false } = {}) {
+function startGame(doc, { playerCount = 4, names = ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer = 0, alapTet = 1, negyasz = false, haromlapos = true, pirosAsz = true } = {}) {
   setValue(doc.getElementById('player-count'), playerCount);
   const inputs = doc.querySelectorAll('#player-names input');
   inputs.forEach((inp, i) => { if (names[i] !== undefined) inp.value = names[i]; });
   setValue(doc.getElementById('starting-dealer'), startingDealer);
   doc.getElementById('alap-tet').value = String(alapTet);
-  setChecked(doc.getElementById('negyasz-toggle'), negyasz);
+  setChecked(doc.getElementById('negyasz-tiltas-toggle'), !negyasz);
+  setChecked(doc.getElementById('haromlapos-toggle'), haromlapos);
+  setChecked(doc.getElementById('piros-asz-rule-toggle'), pirosAsz);
   doc.getElementById('btn-start').click();
 }
 
@@ -418,6 +420,55 @@ test('Ellen csendes 100: csendes 100 tükörképe, ellenjátékosok kapják, kiz
   assertEqual(ellen.checked, false);
 });
 
+test('Ellen csendes négy ász mellett a bemondott 40-100 / 20-100 automatikusan bukik, nem módosítható', async () => {
+  const doc = await newGame({ negyasz: true });
+  const alap = lines(doc)[0];
+  setValue(alap.querySelector('.line-bemondas'), '40_100');
+  const ellenToggle = doc.getElementById('ellen-negy-asz-toggle');
+  setChecked(ellenToggle, true);
+  assert(alap.classList.contains('is-auto-bukott'));
+  assertEqual(alap.querySelector('.line-bukott-checkbox').checked, true);
+  setValue(alap.querySelector('.line-bemondas'), '20_100');
+  assertEqual(alap.querySelector('.line-bukott-checkbox').checked, true);
+  setChecked(ellenToggle, false);
+  assert(!alap.classList.contains('is-auto-bukott'), 'Feloldódik');
+});
+
+test('A négy ász (bemondott, csendes, ellen csendes) nem kombinálható durchmarssal, kölcsönösen', async () => {
+  const doc = await newGame({ negyasz: true });
+  const cs = doc.getElementById('csendes-negy-asz-toggle');
+  const ellen = doc.getElementById('ellen-negy-asz-toggle');
+  const csField = doc.getElementById('csendes-negy-asz-field');
+  const extra = addLine(doc);
+  const optsOf = () => bemondasOptionValues(extra.querySelector('.line-bemondas'));
+  // Bemondott négy ász mellett nincs durchmars
+  setValue(extra.querySelector('.line-bemondas'), 'negy_asz');
+  const second = addLine(doc);
+  const secondOpts = () => bemondasOptionValues(second.querySelector('.line-bemondas'));
+  assert(!secondOpts().includes('durchmars_szines') && !secondOpts().includes('redurchmars_szines'), 'Négy ász mellett nincs durchmars');
+  removeLine(second);
+  removeLine(extra);
+  // Csendes / ellen csendes négy ász mellett sincs
+  for (const t of [cs, ellen]) {
+    setChecked(t, true);
+    const l = addLine(doc);
+    assert(!bemondasOptionValues(l.querySelector('.line-bemondas')).includes('durchmars_szines'), 'Csendes négy ász mellett nincs durchmars');
+    removeLine(l);
+    setChecked(t, false);
+  }
+  // Durchmars mellett eltűnnek a jelölők és a négy ász opció
+  const alap = lines(doc)[0];
+  setValue(alap.querySelector('.line-bemondas'), '40_100');
+  const d = addLine(doc, 'durchmars_szines');
+  assertEqual(d.querySelector('.line-bemondas').value, 'durchmars_szines');
+  assert(csField.hidden && doc.getElementById('ellen-negy-asz-field').hidden, 'Durchmars mellett nincs csendes négy ász');
+  const other = addLine(doc);
+  assert(!bemondasOptionValues(other.querySelector('.line-bemondas')).includes('negy_asz'), 'Durchmars mellett nincs négy ász');
+  removeLine(other);
+  removeLine(d);
+  assert(!csField.hidden, 'Durchmars nélkül visszajön');
+});
+
 test('Ha a pontok összege nem nulla: piros pontállás, hibaüzenet, zárolt leosztás-rögzítés; visszavonás után újra működik', async () => {
   const doc = await newAppWithStorage({ [SESSION_KEY]: unbalancedSession() });
   doc.getElementById('btn-resume').click();
@@ -588,6 +639,42 @@ test('Háromlapos ulti: siker +20, bukás +10 ellenjátékosonként, kontra és 
   setValue(ulti.querySelector('.line-bemondas'), 'negy_asz');
   assert(ulti.querySelector('.line-haromlapos-toggle').hidden);
   assertEqual(box.checked, false, 'Elveszti a jelölést');
+});
+
+test('Csendes és ellen csendes négy ász: jelölőnégyzetek, 2 pont ellenjátékosonként, kölcsönösen kizárják egymást', async () => {
+  let doc = await newGame();
+  assert(doc.getElementById('csendes-negy-asz-field').hidden, 'Kikapcsolt négy ásznál nem jelenik meg');
+  assert(doc.getElementById('ellen-negy-asz-field').hidden);
+
+  doc = await newGame({ negyasz: true });
+  const cs = doc.getElementById('csendes-negy-asz-toggle');
+  const ellen = doc.getElementById('ellen-negy-asz-toggle');
+  assert(!doc.getElementById('csendes-negy-asz-field').hidden);
+  setChecked(cs, true);
+  setChecked(ellen, true);
+  assertEqual(cs.checked, false, 'A kettő kizárja egymást');
+  setChecked(cs, true);
+  assertEqual(ellen.checked, false);
+  // Bemondott négy ász nem választható csendes mellett (és fordítva a jelölők eltűnnek).
+  const extra = addLine(doc);
+  assert(!bemondasOptionValues(extra.querySelector('.line-bemondas')).includes('negy_asz'));
+  setChecked(cs, false);
+  setValue(extra.querySelector('.line-bemondas'), 'negy_asz');
+  assert(doc.getElementById('csendes-negy-asz-field').hidden, 'Bemondott négy ász mellett eltűnik');
+  removeLine(extra);
+
+  setChecked(cs, true);
+  setDeclarer(doc, 1);
+  submitHand(doc);
+  // Parti 1+1, csendes négy ász 2+2 -> felvevő +6, ellenjátékosok -3
+  assertEqual(JSON.stringify(ledgerLastRow(doc)), JSON.stringify([0, 6, -3, -3]));
+  assertEqual(cs.checked, false, 'Mentés után törlődnie kell');
+
+  setChecked(ellen, true);
+  setDeclarer(doc, 2); // Bela oszt, Cili a felvevő
+  submitHand(doc);
+  // Cili: Parti +2, ellen csendes négy ász −4 (Anna/Deszo +1 fejenként), az előző állás tetejére
+  assertEqual(JSON.stringify(ledgerLastRow(doc)), JSON.stringify([1, 6, -5, -2]));
 });
 
 test('Ulti bukása: a szorzó 2^szint+1, nem a szokásos 2^szint', async () => {
@@ -1085,7 +1172,8 @@ test('Új parti-est indításakor az előző indítási beállítások vannak de
   assertEqual(nameInputs.map(i => i.value).join(','), 'Elek,Feri,Gizi');
   assertEqual(doc.getElementById('starting-dealer').value, '1');
   assertEqual(doc.getElementById('alap-tet').value, '3');
-  assertEqual(doc.getElementById('negyasz-toggle').checked, true);
+  assertEqual(doc.getElementById('negyasz-tiltas-toggle').checked, false);
+  assertEqual(doc.getElementById('haromlapos-toggle').checked, false);
 });
 
 test('Üresen hagyott játékosnév helyett "Játékos N" lesz a név', async () => {
@@ -1127,6 +1215,43 @@ test('"Elvetés, új indítása": megerősítés után törli a mentett parti-es
 const useColor = process.stdout.isTTY && !process.env.NO_COLOR;
 function green(s) { return useColor ? `\x1b[32m${s}\x1b[0m` : s; }
 function red(s) { return useColor ? `\x1b[31m${s}\x1b[0m` : s; }
+
+test('Házi szabályok: alapból van négy ász, a háromlapos ulti és a "Piros ász oszt, nem oszt" ki van kapcsolva', async () => {
+  const doc = await newApp();
+  assertEqual(doc.getElementById('negyasz-tiltas-toggle').checked, false, 'A négy ász alapból engedélyezett');
+  assertEqual(doc.getElementById('haromlapos-toggle').checked, false);
+  assertEqual(doc.getElementById('piros-asz-rule-toggle').checked, false);
+  doc.getElementById('btn-start').click(); // mindhárom alapértékkel indul
+  const saved = JSON.parse(doc.defaultView.localStorage.getItem(SESSION_KEY));
+  assertEqual(saved.negyaszEnabled, true);
+  assertEqual(saved.haromlaposEnabled, false);
+  assertEqual(saved.pirosAszEnabled, false);
+  // Négy ász elérhető, háromlapos jelölő és piros ász kapcsoló nincs
+  assert(!doc.getElementById('csendes-negy-asz-field').hidden, 'Csendes négy ász megjelenik');
+  const ulti = addLine(doc, 'ulti');
+  assert(ulti.querySelector('.line-haromlapos-toggle').hidden, 'Háromlapos ulti kikapcsolva');
+  assert(doc.getElementById('piros-asz-toggle').closest('label').hidden, 'Piros ász kapcsoló rejtett');
+  const extra = addLine(doc);
+  assert(bemondasOptionValues(extra.querySelector('.line-bemondas')).includes('negy_asz'), 'Négy ász választható');
+});
+
+test('Házi szabályok bekapcsolva: háromlapos ulti és piros ász kapcsoló működik; a négy ász tiltható', async () => {
+  const doc = await newGame({ negyasz: false, haromlapos: true, pirosAsz: true });
+  assert(!doc.getElementById('piros-asz-toggle').closest('label').hidden);
+  const ulti = addLine(doc, 'ulti');
+  assert(!ulti.querySelector('.line-haromlapos-toggle').hidden);
+  assert(doc.getElementById('csendes-negy-asz-field').hidden, 'Tiltott négy ásznál nincs csendes négy ász sem');
+  const extra = addLine(doc);
+  assert(!bemondasOptionValues(extra.querySelector('.line-bemondas')).includes('negy_asz'));
+});
+
+test('Régi, házi szabály-jelzők nélkül mentett parti-est: háromlapos és piros ász továbbra is elérhető', async () => {
+  const doc = await newAppWithStorage({ [SESSION_KEY]: savedSession() });
+  doc.getElementById('btn-resume').click();
+  const ulti = addLine(doc, 'ulti');
+  assert(!ulti.querySelector('.line-haromlapos-toggle').hidden);
+  assert(!doc.getElementById('piros-asz-toggle').closest('label').hidden);
+});
 
 async function main() {
   let passed = 0;

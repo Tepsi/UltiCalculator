@@ -28,6 +28,7 @@ UltiCalculator/
 - A kódot közvetlenül az `index.html`-ben kell szerkeszteni.
 - Élesítés: az app a GitHub Pages-en fut (https://tepsi.github.io/UltiCalculator/),
   közvetlenül a `master` ág gyökeréből — **minden push a `master`-re azonnal élesít**.
+- Házi szabályok (indítási képernyő, `state.negyaszEnabled` / `haromlaposEnabled` / `pirosAszEnabled`; a hiányzó érték a régi mentéseknél = engedélyezett, kivéve négy ász): négy ász tiltása, háromlapos ulti, "Piros ász oszt, nem oszt". Alapból csak a négy ász van.
 - Állapot: `localStorage` — `ultiCalculator_session_v1` (folyamatban lévő parti-est),
   `ultiCalculator_setup_defaults_v1` (indítási képernyő utolsó beállításai). A mentett
   formátumot (pl. a history-bejegyzések mezőit) csak visszafelé kompatibilisen szabad
@@ -81,7 +82,7 @@ UltiCalculator/
 
 ## Verziószám
 
-A fejlécben halványan látszik (`#app-version`, jelenleg `v1.2`). A verziót csak akkor emeljük (és akkor pusholunk), ha a felhasználó külön szól.
+A fejlécben halványan látszik (`#app-version`, jelenleg `v1.3`). A verziót csak akkor emeljük (és akkor pusholunk), ha a felhasználó külön szól.
 
 ## Tesztelés
 

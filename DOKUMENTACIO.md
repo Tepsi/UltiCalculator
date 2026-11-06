@@ -49,11 +49,18 @@ működik, a pontállás pedig az eszközön, a böngészőben tárolódik (ld. 
   4. **Alaptét**: add meg, mennyit ér egy pont (alapértéke 1; csak nullánál nagyobb egész szám lehet, törtet vagy nullát az app nem fogad el, így tört eredmény sosem keletkezik). Ha nem
      egyforintos alapon játszotok, itt állítsd be a tényleges tétet — minden
      bemondás automatikusan ehhez arányosan skálázva fizet.
-  5. **Négyász bemondás engedélyezése**: ha bekapcsolod, a katalógusban megjelenik
-     a "Négy ász" / "Piros négy ász" opció is.
+  5. **Házi szabályok** (a hivatalos MAUSZ szabályzatban nem szerepelnek; alapból
+     mind kikapcsolt, kivéve hogy a négy ász alapból van):
+     - **Négy ász tiltása**: bekapcsolva nincs "Négy ász", csendes és ellen csendes
+       négy ász sem.
+     - **Háromlapos ulti**: az Ulti soron megjelenik a "Háromlapos" jelölő (ld. 3.3).
+     - **Piros ász oszt, nem oszt**: a leosztás képernyőn megjelenik a hasonló
+       nevű kapcsoló (ld. 3.3); kikapcsolva a felvevő oszt tovább.
+     A régebben mentett parti-estekben a háromlapos ulti és a piros ász kapcsoló
+     továbbra is elérhető.
   6. "Parti-est indítása" — ettől kezdve minden változás automatikusan mentődik.
 - Az indítási képernyő összes beállítása (létszám, játékosnevek, kezdő osztó,
-  alaptét, négyász kapcsoló) a "Parti-est indítása" gombra kattintva
+  alaptét, házi szabályok) a "Parti-est indítása" gombra kattintva
   elmentődik ugyanabban a böngészőben (ld. 6. pont), és a következő
   parti-est indításakor (pl. "Új parti-est" után) ezekkel az értékekkel van
   előre kitöltve az űrlap — nem kell minden alkalommal újra beírni ugyanazokat
@@ -156,6 +163,18 @@ oldal tetejére (a pontállás táblázathoz) görget vissza.
    20-100 és színtelen sor nélkül jelenik meg, és a Csendes 100-zal kizárja
    egymást (a 100 pont vagy a felvevőé, vagy az ellenjátékosoké). Az
    előzményekben "Ellen csendes 100" tételként szerepel.
+2/d. **"Csendes négy ász"** és **"Ellen csendes négy ász"**: két jelölőnégyzet
+   (csak ha a négy ász engedélyezett, színes leosztásban és bemondott Négy ász
+   nélkül jelenik meg), a csendes 100-hoz hasonlóan. Feleannyit érnek, mint a
+   bemondott négy ász: 2 pont ellenjátékosonként (piros adunál 4, alaptéttel
+   skálázva). Nincs rajtuk kontra, és nem bukhatnak. A kettő kizárja egymást: a
+   csendes négy ászt a felvevő kapja az ellenjátékosoktól, az ellen változatot az
+   ellenjátékosok a felvevőtől. Bejelölt jelölőnégyzet mellett a Négy ász nem
+   mondható be. **Ellen csendes négy ász** mellett a bemondott 40-100 / 20-100
+   biztosan bukik (zárolt kapcsolóval). A négy ász (bemondott, csendes és ellen
+   csendes is) durchmarssal nem kombinálható, a csendes változatok pedig csak
+   Parti, 40-100 / 20-100 vagy ulti-féle mellett jelölhetők. Az
+   előzményekben külön tételként szerepelnek.
    **Speciális szabály**: a Parti és a Csendes 100 (vagy Ellen csendes 100) csak
    akkor fizet külön-külön, ha a Partin kívül nincs más bemondás. Ha van más
    bemondás is (pl. ulti, négy ász, színes durchmars) és be van jelölve a
@@ -194,7 +213,7 @@ oldal tetejére (a pontállás táblázathoz) görget vissza.
      pontot), ha bukik, ők fizetnek neki (4-4-et). Az Ulti, a Csendes ulti és az
      Ellenulti egymást kizárja egy leosztásban. Sikerült Ellenulti mellett a
      színes durchmars/redurchmars automatikusan bukik (ld. lentebb).
-   - **Háromlapos** (csak az Ulti soron; a Csendes ultin és az Ellenultin nincs): a sorban egy külön jelölőnégyzet.
+   - **Háromlapos** (házi szabály, az indításnál kapcsolható; csak az Ulti soron; a Csendes ultin és az Ellenultin nincs): a sorban egy külön jelölőnégyzet.
      Bejelölve a sor értékéhez fix felár jön: sikerült ultinál a felvevő +20-at
      kap minden ellenjátékostól, bukottnál +10-et fizet nekik. A felár nem
      függ a kontrától és a Piros adutól, az alaptéttel viszont skálázódik

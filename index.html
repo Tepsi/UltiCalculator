@@ -135,6 +135,14 @@ h2 { margin-top: 0; }
   color: var(--color-muted);
 }
 
+.house-rules {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  margin: 0.8rem 0;
+  padding: 0.4rem 0.8rem 0.6rem;
+}
+.house-rules legend { font-weight: 700; padding: 0 0.3rem; }
+
 .field-checkbox {
   display: flex;
   align-items: center;
@@ -390,7 +398,7 @@ td.amount-neg { color: var(--color-danger); font-weight: 600; }
 <body>
 
 <header class="app-header">
-  <h1>Ulti Pontozó <small class="app-version" id="app-version">v1.2</small></h1>
+  <h1>Ulti Pontozó <small class="app-version" id="app-version">v1.3</small></h1>
   <div class="header-actions">
     <button id="btn-export" class="btn btn-secondary" hidden>Exportálás</button>
     <button id="btn-reset" class="btn btn-danger" hidden>Új parti-est</button>
@@ -430,10 +438,22 @@ td.amount-neg { color: var(--color-danger); font-weight: 600; }
       </label>
       <p class="line-lock-note" id="alap-tet-error" hidden>Az alaptét csak nullánál nagyobb egész szám lehet.</p>
 
-      <label class="field field-checkbox">
-        Négyász bemondás engedélyezése
-        <input type="checkbox" id="negyasz-toggle">
-      </label>
+      <fieldset class="house-rules">
+        <legend>Házi szabályok</legend>
+        <p class="muted">A hivatalos MAUSZ szabályzatban nem szerepelnek (a négy ász tiltása kivételével: ott a hivatalos az alap).</p>
+        <label class="field field-checkbox">
+          Négy ász tiltása
+          <input type="checkbox" id="negyasz-tiltas-toggle">
+        </label>
+        <label class="field field-checkbox" title="Az Ulti soron jelölhető háromlapos ulti: fix felár, amit a kontra és a piros adu nem szoroz.">
+          Háromlapos ulti
+          <input type="checkbox" id="haromlapos-toggle">
+        </label>
+        <label class="field field-checkbox" title="A leosztás képernyőn megjelenik a „Piros ász oszt, nem oszt” kapcsoló.">
+          Piros ász oszt, nem oszt
+          <input type="checkbox" id="piros-asz-rule-toggle">
+        </label>
+      </fieldset>
 
       <button id="btn-start" class="btn btn-primary btn-large">Parti-est indítása</button>
     </div>
@@ -501,6 +521,16 @@ td.amount-neg { color: var(--color-danger); font-weight: 600; }
           <label class="field field-checkbox" id="ellen-100-field" title="Csendes 40-100 az ellenjátékosoknál: a nem bemondott 100 pont az ellenjátékosoké. Ugyanannyit ér, mint a csendes 100, de ők kapják a felvevőtől. Csak akkor választható, ha nincs 40-100 / 20-100 a leosztásban.">
             Ellen csendes 100
             <input type="checkbox" id="ellen-100-toggle">
+          </label>
+
+          <label class="field field-checkbox" id="csendes-negy-asz-field" title="Nem bemondott négy ász: feleannyit fizet, mint egy bemondott négy ász. Csak engedélyezett négy ásznál, bemondott négy ász, durchmars és színtelen sor nélkül választható.">
+            Csendes négy ász
+            <input type="checkbox" id="csendes-negy-asz-toggle">
+          </label>
+
+          <label class="field field-checkbox" id="ellen-negy-asz-field" title="Az ellenjátékosok nem bemondott négy ásza: ugyanannyit ér, mint a csendes négy ász, de ők kapják a felvevőtől. A bemondott 40-100 / 20-100 ilyenkor biztosan bukik.">
+            Ellen csendes négy ász
+            <input type="checkbox" id="ellen-negy-asz-toggle">
           </label>
         </div>
 
@@ -617,11 +647,24 @@ const BEMONDASOK = [
 // 20-100 és nincs színtelen sor; a "Piros adu" kapcsoló ezeket is duplázza.
 const CSENDES_100_ERTEK = 2;
 
+// A csendes négy ász hasonlóan feleannyit fizet, mint a bemondott négy ász (4 → 2),
+// és szintén nem külön bemondás-sor: nincs rajta kontra, és nem bukhat. Az "ellen"
+// változat az ellenjátékosoké; ilyenkor a bemondott 40-100 / 20-100
+// biztosan bukik (forcedResult). Durchmarssal nem kombinálható.
+const CSENDES_NEGY_ASZ_ERTEK = 2;
+
 // Háromlapos ulti (csak az Ulti soron jelölhető): fix felár, amit sem a kontra,
 // sem a piros adu nem szoroz — siker esetén ennyit kap a felvevő minden
 // ellenjátékostól, bukásnál ennyit fizet nekik (az alaptéttel skálázva).
 const HAROMLAPOS_SIKER = 20;
 const HAROMLAPOS_BUKAS = 10;
+
+// Házi szabályok (nem szerepelnek a hivatalos MAUSZ szabályzatban): az indítási
+// képernyőn kapcsolhatók, és a parti-esttel együtt mentődnek. A korábbi, még
+// ilyen kapcsolók nélkül mentett parti-estek változatlanul működnek tovább
+// (a hiányzó érték = engedélyezett).
+const haromlaposEnabled = () => state.haromlaposEnabled !== false;
+const pirosAszEnabled = () => state.pirosAszEnabled !== false;
 
 const KONTRA_SZINTEK = ['Nincs kontra', 'Kontra', 'Rekontra', 'Szubkontra', 'Mordkontra', 'Hirschkontra', 'Fedák Sári'];
 const KONTRA_OPTIONS_HTML = KONTRA_SZINTEK.map((label, i) => `<option value="${i}">${label}</option>`).join('');
@@ -740,7 +783,9 @@ const setupFormWrapper = document.getElementById('setup-form-wrapper');
 const playerCountSelect = document.getElementById('player-count');
 const playerNamesDiv = document.getElementById('player-names');
 const startingDealerSelect = document.getElementById('starting-dealer');
-const negyaszToggle = document.getElementById('negyasz-toggle');
+const negyaszTiltasToggle = document.getElementById('negyasz-tiltas-toggle');
+const haromlaposRuleToggle = document.getElementById('haromlapos-toggle');
+const pirosAszRuleToggle = document.getElementById('piros-asz-rule-toggle');
 const alapTetInput = document.getElementById('alap-tet');
 const alapTetErrorEl = document.getElementById('alap-tet-error');
 const btnExport = document.getElementById('btn-export');
@@ -769,7 +814,9 @@ function applySetupDefaults() {
   });
   if (defaults.dealerIndex != null) startingDealerSelect.value = String(defaults.dealerIndex);
   if (Number.isInteger(defaults.alapTet) && defaults.alapTet >= 1) alapTetInput.value = defaults.alapTet;
-  negyaszToggle.checked = !!defaults.negyaszEnabled;
+  negyaszTiltasToggle.checked = defaults.negyaszEnabled === false;
+  haromlaposRuleToggle.checked = !!defaults.haromlaposEnabled;
+  pirosAszRuleToggle.checked = !!defaults.pirosAszEnabled;
 }
 
 playerCountSelect.addEventListener('change', renderPlayerNameInputs);
@@ -787,9 +834,12 @@ document.getElementById('btn-start').addEventListener('click', () => {
   const players = range(playerCount).map(i =>
     document.getElementById(`player-name-${i}`).value.trim() || `Játékos ${i + 1}`);
   const dealerIndex = parseInt(startingDealerSelect.value, 10);
-  const negyaszEnabled = negyaszToggle.checked;
+  // Alapból van négy ász; a házi szabályok (háromlapos ulti, piros ász) alapból kikapcsoltak.
+  const negyaszEnabled = !negyaszTiltasToggle.checked;
+  const haromlaposEnabled = haromlaposRuleToggle.checked;
+  const pirosAszEnabled = pirosAszRuleToggle.checked;
 
-  localStorage.setItem(SETUP_DEFAULTS_KEY, JSON.stringify({ playerCount, players, dealerIndex, alapTet, negyaszEnabled }));
+  localStorage.setItem(SETUP_DEFAULTS_KEY, JSON.stringify({ playerCount, players, dealerIndex, alapTet, negyaszEnabled, haromlaposEnabled, pirosAszEnabled }));
 
   state = {
     playerCount,
@@ -801,6 +851,8 @@ document.getElementById('btn-start').addEventListener('click', () => {
     history: [],
     pirosAszOsztNemOszt: false,
     negyaszEnabled,
+    haromlaposEnabled,
+    pirosAszEnabled,
     alapTet,
   };
   saveState();
@@ -841,6 +893,10 @@ const csendes100Field = document.getElementById('csendes-100-field');
 const csendes100Toggle = document.getElementById('csendes-100-toggle');
 const ellen100Field = document.getElementById('ellen-100-field');
 const ellen100Toggle = document.getElementById('ellen-100-toggle');
+const csendesNegyAszField = document.getElementById('csendes-negy-asz-field');
+const csendesNegyAszToggle = document.getElementById('csendes-negy-asz-toggle');
+const ellenNegyAszField = document.getElementById('ellen-negy-asz-field');
+const ellenNegyAszToggle = document.getElementById('ellen-negy-asz-toggle');
 const bemondasLinesDiv = document.getElementById('bemondas-lines');
 const btnAddLine = document.getElementById('btn-add-line');
 const handPreviewEl = document.getElementById('hand-preview');
@@ -889,6 +945,9 @@ function renderAll() {
   renderDeclarerOptions();
   renderHistory();
   renderPreview();
+  // A "Piros ász oszt, nem oszt" házi szabály: kikapcsolva se kapcsoló, se hatás.
+  if (!pirosAszEnabled()) state.pirosAszOsztNemOszt = false;
+  pirosAszToggle.closest('label').hidden = !pirosAszEnabled();
   pirosAszToggle.checked = !!state.pirosAszOsztNemOszt;
   updateBalanceCheck();
 }
@@ -1104,6 +1163,12 @@ function availableBemondasok(excludeLineEl) {
     if (b.kategoria === 'adu_nelkuli' && used.length > 0) return false;
     if (b.jatekAlap && usedJatekAlap) return false;
     if (ULTI_FAMILY.includes(b.id) && ULTI_FAMILY.some(id => usedIds.has(id))) return false;
+    // Bejelölt (ellen) csendes négy ász mellett nem mondható be négy ász.
+    if (b.id === 'negy_asz' && (csendesNegyAszToggle.checked || ellenNegyAszToggle.checked)) return false;
+    // A négy ász semmilyen durchmarssal nem kombinálható (kölcsönösen): sem a
+    // bemondott, sem a (ellen) csendes négy ász mellé nem adható durchmars.
+    if (b.id === 'negy_asz' && usedColoredDurchmars) return false;
+    if (isColoredDurchmars(b) && (usedIds.has('negy_asz') || csendesNegyAszToggle.checked || ellenNegyAszToggle.checked)) return false;
     if (isColoredDurchmars(b) && usedColoredDurchmars) return false;
     // Színes durchmars/redurchmars mellé csak 40-100 vagy 20-100 alapjáték
     // adható hozzá (opcionálisan) — sima Parti mellé nem választható.
@@ -1170,6 +1235,18 @@ function updateCsendes100Availability() {
     csendes100Toggle.checked = false;
     ellen100Toggle.checked = false;
   }
+  // A csendes négy ász csak engedélyezett négy ásznál, színes leosztásban,
+  // bemondott négy ász és durchmars nélkül, és csak alapjáték (Parti / 40-100 /
+  // 20-100) vagy ulti-féle mellett jelölhető.
+  const negyAszAvailable = state.negyaszEnabled && !hasColorless &&
+    !boms.some(b => b.id === 'negy_asz' || isColoredDurchmars(b)) &&
+    boms.some(b => b.jatekAlap || ULTI_FAMILY.includes(b.id));
+  csendesNegyAszField.hidden = !negyAszAvailable;
+  ellenNegyAszField.hidden = !negyAszAvailable;
+  if (!negyAszAvailable) {
+    csendesNegyAszToggle.checked = false;
+    ellenNegyAszToggle.checked = false;
+  }
 }
 
 // Ha csendes 100 / ellen csendes 100 van bejelölve, és a Partin kívül van más
@@ -1210,6 +1287,9 @@ function forcedResult(lineEl) {
       }
     }
     return reason && { bukott: true, text: `Automatikusan bukott, mert ${reason} — ezen nem lehet módosítani.` };
+  }
+  if ((bem.id === '40_100' || bem.id === '20_100') && ellenNegyAszToggle.checked) {
+    return { bukott: true, text: 'Automatikusan bukott, mert az ellenjátékosoknak sikerült az Ellen csendes négy ász — ezen nem lehet módosítani.' };
   }
   if (bem.jatekAlap && csendes100Toggle.checked) {
     return { bukott: false, clickOnly: true, text: 'Automatikusan teljesült, mert a Csendes 100 megvan — ezen nem lehet módosítani.' };
@@ -1260,6 +1340,8 @@ function resetHandForm() {
   pirosAduToggle.checked = false;
   csendes100Toggle.checked = false;
   ellen100Toggle.checked = false;
+  csendesNegyAszToggle.checked = false;
+  ellenNegyAszToggle.checked = false;
   addBemondasLine('parti');
 }
 
@@ -1291,6 +1373,13 @@ csendes100Toggle.addEventListener('change', () => {
 ellen100Toggle.addEventListener('change', () => {
   if (ellen100Toggle.checked) csendes100Toggle.checked = false;
 });
+// Ugyanígy a négy ász: vagy a felvevőé, vagy az ellenjátékosoké.
+csendesNegyAszToggle.addEventListener('change', () => {
+  if (csendesNegyAszToggle.checked) ellenNegyAszToggle.checked = false;
+});
+ellenNegyAszToggle.addEventListener('change', () => {
+  if (ellenNegyAszToggle.checked) csendesNegyAszToggle.checked = false;
+});
 
 // A leosztás bármely mezőjének (felvevő, kapcsolók, bemondás-sorok) változása
 // után minden származtatott állapot újraszámolódik.
@@ -1313,7 +1402,7 @@ function readLine(lineEl) {
   // egészére vonatkozó, közös kapcsolóból jön (nem választható el egymástól);
   // színtelennél nincs piros adu (a piros betli külön katalógus-elem).
   const piros = isSzin && pirosAduToggle.checked;
-  const haromlapos = !!bem.haromlapos && lineEl.querySelector('.line-haromlapos-checkbox').checked;
+  const haromlapos = !!bem.haromlapos && haromlaposEnabled() && lineEl.querySelector('.line-haromlapos-checkbox').checked;
   return { bem, result, levelA, levelB, piros, haromlapos };
 }
 
@@ -1345,8 +1434,9 @@ function renderLine(lineEl, defenders) {
   lineEl.hidden = isPartiSuppressed(lineEl);
   lineEl.querySelector('.kontra-joint').hidden = !isSzin || !!bem.nincsKontra;
   lineEl.querySelector('.kontra-split').hidden = isSzin;
-  lineEl.querySelector('.line-haromlapos-toggle').hidden = !bem.haromlapos;
-  if (!bem.haromlapos) lineEl.querySelector('.line-haromlapos-checkbox').checked = false;
+  const haromlaposAllowed = !!bem.haromlapos && haromlaposEnabled();
+  lineEl.querySelector('.line-haromlapos-toggle').hidden = !haromlaposAllowed;
+  if (!haromlaposAllowed) lineEl.querySelector('.line-haromlapos-checkbox').checked = false;
   lineEl.classList.toggle('is-bukott', !siker);
   lineEl.querySelector('.result-toggle-label').textContent = siker ? 'Teljesült' : 'Bukott';
 
@@ -1392,6 +1482,16 @@ function computeHandDeltas() {
     const amount = pontErtek(CSENDES_100_ERTEK, piros);
     pay(csendes100Toggle.checked ? 1 : -1, {
       nev: (csendes100Toggle.checked ? 'Csendes 100' : 'Ellen csendes 100') + (piros ? ' (piros)' : ''),
+      result: 'siker', amountA: amount, amountB: amount, teritett: false,
+    });
+  }
+
+  // Csendes négy ász: a felvevőé (+); ellen csendes négy ász: az ellenjátékosoké (−).
+  if (csendesNegyAszToggle.checked || ellenNegyAszToggle.checked) {
+    const piros = pirosAduToggle.checked;
+    const amount = pontErtek(CSENDES_NEGY_ASZ_ERTEK, piros);
+    pay(csendesNegyAszToggle.checked ? 1 : -1, {
+      nev: (csendesNegyAszToggle.checked ? 'Csendes négy ász' : 'Ellen csendes négy ász') + (piros ? ' (piros)' : ''),
       result: 'siker', amountA: amount, amountB: amount, teritett: false,
     });
   }

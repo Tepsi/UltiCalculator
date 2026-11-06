@@ -13,7 +13,7 @@ böngészőben.
 - Parti-est indításánál beállítható az alaptét (mennyit ér egy parti-pont) —
   minden bemondás ehhez arányosan skálázva fizet, nem csak egyforintos alapon.
 - Egyetlen közös bemondás-katalógus (parti / 40-100 / 20-100, ulti,
-  (kapcsolóval) négyász, betli, durchmars/redurchmars), soronként hozzáadva —
+  négyász (házi szabállyal tiltható), betli, durchmars/redurchmars), soronként hozzáadva —
   ha egy alapjátékot igénylő extrát (pl. ulti) választasz alapjáték nélkül, az
   app automatikusan pótolja a "Parti" sort.
 - Egy közös "Piros adu" kapcsoló duplázza a leosztás színes sorait; a piros
