@@ -35,6 +35,8 @@ nem vizsgáljuk — csak a pontértékeket, kombinálhatóságot, drágítást �
 | 11 | **Csendes 100 értéke** | A játék értéke megduplázódik; kontránál a megdrágított értékhez hozzáadódik a csendes 100 értéke (2 / piros 4) | Fix 2 (piros 4) pontos külön tétel. Parti mellett a Parti külön fizet; más sor mellett a Parti eltűnik, és a játékra tett kontra külön nem adható |
 | 12 | **Szigorúbb renonsz szabályok** | Szabályzatba részletesen leírt | Csak rossz lap hozzárakásánál |
 | 13 | **Parti kulcslap hiányában** | el lehet kezdeni pl.: ultit hetes nélkül, 40-100 40 nélkül | nem lehet elkezdeni |
+| 14 | **Szín nélküli bemondások kontrája** | Betlik és színtelen durchmarsok kontrája is egyéni | Csak a betlik kontrája egyéni |
+| 15 | **Elvitt ütések megnézése** | A saját (és a partner) ütéseit korlátlanul meg lehet nézni a játék során | Csak az utolsó ütést lehet visszakérni |
 
 A v1.2-ben az **ellenulti sikere esetén a színes durchmars automatikusan bukik**; ezt a
 szabályzat szó szerint nem mondja ki, a logikából következik — nem tekintjük eltérésnek.
