@@ -398,7 +398,7 @@ td.amount-neg { color: var(--color-danger); font-weight: 600; }
 <body>
 
 <header class="app-header">
-  <h1>Ulti Pontozó <small class="app-version" id="app-version">v1.3</small></h1>
+  <h1>Ulti Pontozó <small class="app-version" id="app-version">v1.4</small></h1>
   <div class="header-actions">
     <button id="btn-export" class="btn btn-secondary" hidden>Exportálás</button>
     <button id="btn-reset" class="btn btn-danger" hidden>Új parti-est</button>
@@ -935,14 +935,14 @@ function showGameScreen() {
   btnExport.hidden = false;
   btnReset.hidden = false;
   resetHandForm();
-  renderAll();
+  renderAll(false);
 }
 
-function renderAll() {
+function renderAll(preserveDeclarer = true) {
   renderScoreLedger();
   renderDealerOptions();
   renderRoundHeader();
-  renderDeclarerOptions();
+  renderDeclarerOptions(preserveDeclarer);
   renderHistory();
   renderPreview();
   // A "Piros ász oszt, nem oszt" házi szabály: kikapcsolva se kapcsoló, se hatás.
@@ -1122,7 +1122,10 @@ function renderDeclarerOptions(preserveSelection = true) {
   const prev = parseInt(declarerSelect.value, 10);
   const active = activePlayerIndices();
   fillSelect(declarerSelect, active, i => state.players[i]);
+  // Alapból az osztótól jobbra ülő (eggyel nagyobb sorszámú) játékos a felvevő.
+  const next = (state.dealerIndex + 1) % state.playerCount;
   if (preserveSelection && active.includes(prev)) declarerSelect.value = prev;
+  else if (active.includes(next)) declarerSelect.value = next;
 }
 
 function currentDefenderIndices() {
@@ -1578,7 +1581,7 @@ function commitHand(entry) {
 
   saveState();
   resetHandForm();
-  renderAll();
+  renderAll(false);
 }
 
 btnUndo.addEventListener('click', () => {
@@ -1588,7 +1591,7 @@ btnUndo.addEventListener('click', () => {
   state.dealerIndex = last.dealerIndex;
   state.round = last.round;
   saveState();
-  renderAll();
+  renderAll(false);
 });
 
 function historyEntryHtml(h) {

@@ -142,7 +142,8 @@ oldal tetejére (a pontállás táblázathoz) görget vissza.
      (a következő játékos oszt), ahogy azt a parti-est végén szokás alkalmazni.
    Ez a kapcsoló bármikor átállítható, és azonnal el is mentődik.
 1. **Felvevő kiválasztása**: legördülő menü, csak az aktív (nem kiálló) játékosokat
-   listázza. A választás után az app automatikusan kiírja, kik az ellenjátékosok.
+   listázza. Alapértelmezetten az osztótól jobbra ülő játékos (az eggyel nagyobb
+   sorszámú; ha az utolsó játékos osztott, akkor az első) van kiválasztva. A választás után az app automatikusan kiírja, kik az ellenjátékosok.
 2. **"Piros adu"**: jelölőnégyzet a Felvevő mező alatt — bejelölve duplázza a
    leosztás összes "színes" sorának (alapjáték, ulti, négy ász, színes
    durchmars/redurchmars) értékét egységesen (ld. 4. pont), mert egy

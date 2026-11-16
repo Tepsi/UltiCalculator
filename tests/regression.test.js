@@ -885,7 +885,8 @@ test('Alaptét: minden érték az alaptéttel szorzódik (legördülő, sorok, h
   submitHand(doc);
   assertEqual(JSON.stringify(ledgerLastRow(doc)), JSON.stringify([0, 18, -9, -9]));
 
-  // 2. leosztás (Bela oszt, Anna a felvevő): bedobás = bukott kontrázott Parti, 2 × 3 fejenként
+  // 2. leosztás (Bela oszt, Anna a felvevő — kézzel kiválasztva): bedobás = bukott kontrázott Parti, 2 × 3 fejenként
+  setDeclarer(doc, 0);
   fire(doc.getElementById('btn-bedobas'), 'click');
   assertEqual(JSON.stringify(ledgerLastRow(doc)), JSON.stringify([-12, 18, -3, -3]));
 
@@ -930,7 +931,19 @@ test('Osztó módosítása mentés közben visszaállítja a leosztás összes b
   assertEqual(doc.getElementById('piros-adu-toggle').checked, false, 'A Piros adu kapcsolónak ki kell kapcsolnia');
   const declarerOpts = [...doc.getElementById('declarer-select').options].map(o => o.textContent);
   assert(!declarerOpts.includes('Bela'), 'Az új osztó (Bela) nem lehet Felvevő');
-  assertEqual(doc.getElementById('defenders-info').textContent, 'Ellenjátékosok: Cili és Deszo', 'Az új felálláshoz tartozó ellenjátékosokat kell mutatnia');
+  assertEqual(doc.getElementById('defenders-info').textContent, 'Ellenjátékosok: Anna és Deszo', 'Az új felálláshoz (alapértelmezett felvevő: Cili, az osztótól jobbra) tartozó ellenjátékosokat kell mutatnia');
+});
+
+test('Az alapértelmezett felvevő az osztótól jobbra ülő (eggyel nagyobb sorszámú) játékos', async () => {
+  const doc = await newGame(); // Anna (0) oszt
+  const declarer = () => doc.getElementById('declarer-select').selectedOptions[0].textContent;
+  assertEqual(declarer(), 'Bela');
+  setDealer(doc, 3); // Deszo (utolsó) oszt -> az első játékos
+  assertEqual(declarer(), 'Anna');
+  setDealer(doc, 1);
+  assertEqual(declarer(), 'Cili');
+  submitHand(doc); // Cili a felvevő és a következő osztó -> Deszo
+  assertEqual(declarer(), 'Deszo');
 });
 
 test('Alapesetben a felvevő lesz a következő osztó', async () => {
