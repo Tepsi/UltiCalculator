@@ -107,13 +107,20 @@ function setChecked(el, checked) {
   fire(el, 'change');
 }
 
-function startGame(doc, { playerCount = 4, names = ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer = 0, alapTet = 1, negyasz = false, haromlapos = true, pirosAsz = true } = {}) {
+function startGame(doc, { playerCount = 4, names = ['Anna', 'Bela', 'Cili', 'Deszo'], startingDealer = 0, alapTet = 1, negyasz = false, haromlapos = true, pirosAsz = true, hivatalos = false, maxKontra = 6, ertekek = {} } = {}) {
   setValue(doc.getElementById('player-count'), playerCount);
   const inputs = doc.querySelectorAll('#player-names input');
   inputs.forEach((inp, i) => { if (names[i] !== undefined) inp.value = names[i]; });
   setValue(doc.getElementById('starting-dealer'), startingDealer);
   doc.getElementById('alap-tet').value = String(alapTet);
-  setChecked(doc.getElementById('negyasz-tiltas-toggle'), !negyasz);
+  // Alapból a korábbi (régi) értékekkel és korlátlan kontraszinttel indulunk, hogy a
+  // régebbi tesztek változatlanok maradjanak; hivatalos: true = az indítási képernyő alapértékei.
+  setChecked(doc.getElementById('bem-on-negy_asz'), negyasz);
+  if (!hivatalos) {
+    setValue(doc.getElementById('max-kontra'), maxKontra);
+    setValue(doc.getElementById('bem-ertek-teritett_durchmars_szines'), 24);
+  }
+  Object.entries(ertekek).forEach(([id, v]) => setValue(doc.getElementById('bem-ertek-' + id), v));
   setChecked(doc.getElementById('haromlapos-toggle'), haromlapos);
   setChecked(doc.getElementById('piros-asz-rule-toggle'), pirosAsz);
   doc.getElementById('btn-start').click();
@@ -474,7 +481,7 @@ test('A négy ász (bemondott, csendes, ellen csendes) nem kombinálható durchm
   setValue(extra.querySelector('.line-bemondas'), 'negy_asz');
   const second = addLine(doc);
   const secondOpts = () => bemondasOptionValues(second.querySelector('.line-bemondas'));
-  assert(!secondOpts().includes('durchmars_szines') && !secondOpts().includes('redurchmars_szines'), 'Négy ász mellett nincs durchmars');
+  assert(!secondOpts().includes('durchmars_szines') && !secondOpts().includes('teritett_durchmars_szines'), 'Négy ász mellett nincs durchmars');
   removeLine(second);
   removeLine(extra);
   // Csendes / ellen csendes négy ász mellett sincs
@@ -750,7 +757,7 @@ test('Színes Redurchmars automatikusan bukik, ha a mellé bemondott Ulti bukik'
   const doc = await newGame();
   setValue(lines(doc)[0].querySelector('.line-bemondas'), '40_100');
   const ultiLine = addLine(doc, 'ulti');
-  const redurchmarsLine = addLine(doc, 'redurchmars_szines');
+  const redurchmarsLine = addLine(doc, 'teritett_durchmars_szines');
 
   assert(!redurchmarsLine.classList.contains('is-auto-bukott'));
 
@@ -778,7 +785,7 @@ test('Színes Durchmars/Redurchmars automatikusan bukik, ha mellette az Ellenult
   assert(!locked(), 'Bukott Ellenulti mellett feloldódik');
   assert(!durchmars.querySelector('.line-bukott-checkbox').checked, 'és visszaáll Teljesültre');
 
-  setValue(durchmars.querySelector('.line-bemondas'), 'redurchmars_szines');
+  setValue(durchmars.querySelector('.line-bemondas'), 'teritett_durchmars_szines');
   setBukott(ellenulti, false);
   assert(locked(), 'A színes Redurchmarsra is vonatkozik');
   removeLine(ellenulti);
@@ -834,13 +841,13 @@ test('Ulti mellé utólag bemondott színes Durchmars/Redurchmars megszünteti a
   assert(lines(doc).some(l => l.querySelector('.line-bemondas').value === 'parti'));
 
   const partiLine = lineById(doc, 'parti');
-  setValue(partiLine.querySelector('.line-bemondas'), 'redurchmars_szines');
+  setValue(partiLine.querySelector('.line-bemondas'), 'teritett_durchmars_szines');
 
   const after = lines(doc);
   assertEqual(after.length, 2, 'A színes Redurchmars önmagában elég az Ultinak, nem pótlódhat mellé újra a "Parti"');
   const values = after.map(l => l.querySelector('.line-bemondas').value);
   assert(values.includes('ulti'));
-  assert(values.includes('redurchmars_szines'));
+  assert(values.includes('teritett_durchmars_szines'));
   assert(!values.includes('parti'), 'A "Parti" nem térhet vissza, amíg a színes Durchmars/Redurchmars jelen van');
 });
 
@@ -1049,7 +1056,7 @@ test('Terített bemondás (Rebetli/Redurchmars) kiemeli a leosztás sorát, és 
   const cellsOf = (row) => [...row.querySelectorAll('td')];
 
   // 1. kör: Rebetli, felvevő alapból Bela (első aktív játékos, dealer=Anna).
-  setValue(lines(doc)[0].querySelector('.line-bemondas'), 'rebetli');
+  setValue(lines(doc)[0].querySelector('.line-bemondas'), 'teritett_betli');
   submitHand(doc);
 
   // 2. kör: sima Parti — ne emelkedjen ki semmi.
@@ -1057,7 +1064,7 @@ test('Terített bemondás (Rebetli/Redurchmars) kiemeli a leosztás sorát, és 
 
   // 3. kör: színes Redurchmars (40-100 alapjáték mellett) — újra ki kell emelkednie.
   setValue(lines(doc)[0].querySelector('.line-bemondas'), '40_100');
-  addLine(doc, 'redurchmars_szines');
+  addLine(doc, 'teritett_durchmars_szines');
   submitHand(doc);
 
   const saved = JSON.parse(doc.defaultView.localStorage.getItem(SESSION_KEY));
@@ -1079,6 +1086,23 @@ test('Terített bemondás (Rebetli/Redurchmars) kiemeli a leosztás sorát, és 
   assert(cellsOf(rows[3])[1 + declarer3].querySelector('.player-icon'), 'A 3. kör felvevőjének cellájában is ikon legyen');
 });
 
+test('Bukott terített bemondás sora halvány piros (row-teritett-bukott), a sikeresé marad sárga', async () => {
+  const doc = await newGame();
+  setDeclarer(doc, 1);
+  setValue(lines(doc)[0].querySelector('.line-bemondas'), 'teritett_betli');
+  submitHand(doc);
+  let rows = doc.querySelectorAll('#score-ledger tr.row-teritett');
+  assertEqual(rows.length, 1);
+  assert(!rows[0].classList.contains('row-teritett-bukott'), 'Sikeres terített: sárga');
+  setDeclarer(doc, 2);
+  const line = lines(doc)[0];
+  setValue(line.querySelector('.line-bemondas'), 'teritett_betli');
+  setBukott(line, true);
+  submitHand(doc);
+  rows = doc.querySelectorAll('#score-ledger tr.row-teritett');
+  assert(rows[1].classList.contains('row-teritett-bukott'), 'Bukott terített: piros');
+});
+
 test('A játékos ikonja csak az első terített bemondása után jelenik meg a Pontállás fejlécében', async () => {
   const doc = await newGame();
 
@@ -1097,7 +1121,7 @@ test('A játékos ikonja csak az első terített bemondása után jelenik meg a 
   for (let i = 0; i < 4; i++) assert(!headerIconOf(i), 'Sima kör (nincs terítve bemondás) után se jelenjen meg ikon');
 
   // 2. kör: Rebetli — csak a felvevő ikonjának kell megjelennie.
-  setValue(lines(doc)[0].querySelector('.line-bemondas'), 'rebetli');
+  setValue(lines(doc)[0].querySelector('.line-bemondas'), 'teritett_betli');
   submitHand(doc);
 
   const saved = JSON.parse(doc.defaultView.localStorage.getItem(SESSION_KEY));
@@ -1143,7 +1167,7 @@ test('Exportálás: a .html ugyanazt a "Pontállás körről-körre" táblázato
   const doc = await newGame();
   let blob = null;
   doc.defaultView.URL.createObjectURL = (b) => { blob = b; return 'blob:stub'; };
-  setValue(lines(doc)[0].querySelector('.line-bemondas'), 'rebetli');
+  setValue(lines(doc)[0].querySelector('.line-bemondas'), 'teritett_betli');
   submitHand(doc);
   submitHand(doc);
   doc.getElementById('btn-export').click();
@@ -1159,6 +1183,24 @@ test('Exportálás: a .html ugyanazt a "Pontállás körről-körre" táblázato
   const finalCells = [...exportRows[exportRows.length - 1].querySelectorAll('td')].map(td => td.textContent);
   assertEqual(finalCells[0], 'Végeredmény');
   assertEqual(JSON.stringify(finalCells.slice(1).map(Number)), JSON.stringify(ledgerLastRow(doc)), 'A végeredmény a végállás');
+});
+
+test('Exportálás: a pontállás sorai az exportált fájlban összecsukhatók, csak a végeredmény marad', async () => {
+  const doc = await newGame();
+  let blob = null;
+  doc.defaultView.URL.createObjectURL = (b) => { blob = b; return 'blob:stub'; };
+  submitHand(doc);
+  doc.getElementById('btn-export').click();
+  const win = new JSDOM(await blob.text(), { runScripts: 'dangerously' }).window;
+  const btn = win.document.getElementById('toggle-rows');
+  const table = win.document.getElementById('score-table');
+  assert(!table.classList.contains('is-collapsed'), 'Alapból a teljes eredménysor látszik');
+  assertEqual(btn.textContent, 'Csak a végeredmény');
+  btn.click();
+  assert(table.classList.contains('is-collapsed'), 'Összecsukva csak a végeredmény');
+  assertEqual(btn.textContent, 'Teljes eredménysor');
+  btn.click();
+  assert(!table.classList.contains('is-collapsed'), 'Újra kinyílik');
 });
 
 test('Exportálás: a fájlnév a helyi dátumot tartalmazza (éjfél után is, nem az UTC szerintit)', async () => {
@@ -1191,7 +1233,9 @@ test('Parti-est indítása elmenti az indítási képernyő beállításait defa
   assertEqual(saved.players.join(','), 'Anna,Bela,Cili');
   assertEqual(saved.dealerIndex, 2);
   assertEqual(saved.alapTet, 5);
-  assertEqual(saved.negyaszEnabled, true);
+  assertEqual(saved.kikapcsolt.includes('negy_asz'), false);
+  assertEqual(saved.maxKontra, 6);
+  assertEqual(saved.ertekek.betli, 5);
 });
 
 test('Az alaptét csak nullánál nagyobb egész szám lehet: tört, nulla, negatív és üres érték nem indít partit', async () => {
@@ -1207,14 +1251,18 @@ test('Az alaptét csak nullánál nagyobb egész szám lehet: tört, nulla, nega
 
 test('Új parti-est indításakor az előző indítási beállítások vannak default-ként betöltve', async () => {
   const doc = await newAppWithStorage({
-    [SETUP_DEFAULTS_KEY]: { playerCount: 3, players: ['Elek', 'Feri', 'Gizi'], dealerIndex: 1, alapTet: 3, negyaszEnabled: true },
+    [SETUP_DEFAULTS_KEY]: { playerCount: 3, players: ['Elek', 'Feri', 'Gizi'], dealerIndex: 1, alapTet: 3, ertekek: { betli: 7 }, kikapcsolt: ['ulti'], maxKontra: 4 },
   });
   assertEqual(doc.getElementById('player-count').value, '3');
   const nameInputs = [...doc.querySelectorAll('#player-names input')];
   assertEqual(nameInputs.map(i => i.value).join(','), 'Elek,Feri,Gizi');
   assertEqual(doc.getElementById('starting-dealer').value, '1');
   assertEqual(doc.getElementById('alap-tet').value, '3');
-  assertEqual(doc.getElementById('negyasz-tiltas-toggle').checked, false);
+  assertEqual(doc.getElementById('bem-ertek-betli').value, '7', 'A legutóbbi érték töltődik elő');
+  assertEqual(doc.getElementById('bem-ertek-ulti').value, '4', 'Ahol nincs mentett érték, a hivatalos érték');
+  assertEqual(doc.getElementById('bem-on-ulti').checked, false);
+  assertEqual(doc.getElementById('bem-on-negy_asz').checked, true);
+  assertEqual(doc.getElementById('max-kontra').value, '4');
   assertEqual(doc.getElementById('haromlapos-toggle').checked, false);
 });
 
@@ -1260,12 +1308,12 @@ function red(s) { return useColor ? `\x1b[31m${s}\x1b[0m` : s; }
 
 test('Házi szabályok: alapból van négy ász, a háromlapos ulti és a "Piros ász oszt, nem oszt" ki van kapcsolva', async () => {
   const doc = await newApp();
-  assertEqual(doc.getElementById('negyasz-tiltas-toggle').checked, false, 'A négy ász alapból engedélyezett');
+  assertEqual(doc.getElementById('bem-on-negy_asz').checked, true, 'A négy ász alapból engedélyezett');
   assertEqual(doc.getElementById('haromlapos-toggle').checked, false);
   assertEqual(doc.getElementById('piros-asz-rule-toggle').checked, false);
   doc.getElementById('btn-start').click(); // mindhárom alapértékkel indul
   const saved = JSON.parse(doc.defaultView.localStorage.getItem(SESSION_KEY));
-  assertEqual(saved.negyaszEnabled, true);
+  assertEqual(saved.kikapcsolt.length, 0);
   assertEqual(saved.haromlaposEnabled, false);
   assertEqual(saved.pirosAszEnabled, false);
   // Négy ász elérhető, háromlapos jelölő és piros ász kapcsoló nincs
@@ -1293,6 +1341,111 @@ test('Régi, házi szabály-jelzők nélkül mentett parti-est: háromlapos és 
   const ulti = addLine(doc, 'ulti');
   assert(!ulti.querySelector('.line-haromlapos-toggle').hidden);
   assert(!doc.getElementById('piros-asz-toggle').closest('label').hidden);
+});
+
+test('Bemondás-beállítások: hivatalos alapértékek, nem kapcsolható tételek, legnagyobb kontra alapból rekontra', async () => {
+  const doc = await newApp();
+  const val = id => doc.getElementById('bem-ertek-' + id).value;
+  assertEqual(['parti', 'ulti', 'durchmars_szines', 'teritett_durchmars_szines', 'redurchmars_szintelen', 'teritett_durchmars_szintelen', 'betli', 'rebetli', 'piros_betli', 'teritett_betli'].map(val).join(','),
+    '1,4,6,12,12,24,5,10,10,20');
+  assertEqual(doc.getElementById('bem-on-parti'), null, 'A Parti nem kapcsolható ki');
+  ['csendes_ulti', 'ellenulti', 'csendes_100', 'csendes_negy_asz'].forEach(id => {
+    assertEqual(doc.getElementById('bem-ertek-' + id), null, id + ' nem állítható');
+    assertEqual(doc.getElementById('bem-on-' + id), null, id + ' nem kapcsolható');
+  });
+  assertEqual(doc.getElementById('max-kontra').value, '2');
+  doc.getElementById('btn-start').click();
+  const ulti = addLine(doc, 'ulti');
+  assertEqual([...ulti.querySelector('.kontra-joint-select').options].map(o => o.textContent).join(','), 'Nincs kontra,Kontra,Rekontra');
+  const opts = bemondasOptionValues(addLine(doc).querySelector('.line-bemondas'));
+  assert(opts.includes('negy_asz'), 'Négy ász alapból van');
+});
+
+test('Bemondás-beállítások: átírt érték, kikapcsolt bemondás és legnagyobb kontra érvényesül, és megjegyződik', async () => {
+  const doc = await newApp();
+  setValue(doc.getElementById('bem-ertek-betli'), 9);
+  setValue(doc.getElementById('max-kontra'), 3);
+  doc.getElementById('btn-start').click();
+  const saved = JSON.parse(doc.defaultView.localStorage.getItem(SESSION_KEY));
+  assertEqual(saved.ertekek.betli, 9);
+  assertEqual(saved.maxKontra, 3);
+  setValue(lines(doc)[0].querySelector('.line-bemondas'), 'betli');
+  assertEqual(lineResult(lines(doc)[0]).amountA, 9);
+  assertEqual([...lines(doc)[0].querySelector('.kontra-a-select').options].length, 4, 'Nincs kontra + 3 szint');
+});
+
+test('Bemondás-beállítások: a piros érték külön megadható a színes bemondásoknál (alapból a kétszerese)', async () => {
+  const doc = await newApp();
+  assertEqual(doc.getElementById('bem-piros-ulti').value, '8');
+  assertEqual(doc.getElementById('bem-piros-teritett_durchmars_szines').value, '24');
+  assertEqual(doc.getElementById('bem-piros-betli'), null, 'Adu nélküli bemondásnak nincs piros értéke');
+  setValue(doc.getElementById('bem-piros-ulti'), 10);
+  setValue(doc.getElementById('bem-piros-parti'), 3);
+  doc.getElementById('btn-start').click();
+  const saved = JSON.parse(doc.defaultView.localStorage.getItem(SETUP_DEFAULTS_KEY));
+  assertEqual(saved.pirosErtekek.ulti, 10);
+  const ulti = addLine(doc, 'ulti');
+  assertEqual(lineResult(ulti).amountA, 4);
+  setChecked(doc.getElementById('piros-adu-toggle'), true);
+  assertEqual(lineResult(ulti).amountA, 10, 'Piros adunál a megadott piros érték számít');
+  assertEqual(lineResult(lines(doc)[0]).amountA, 3, 'Parti piros értéke');
+  // a következő indításnál ez töltődik elő
+  const doc2 = await newAppWithStorage({ [SETUP_DEFAULTS_KEY]: saved });
+  assertEqual(doc2.getElementById('bem-piros-ulti').value, '10');
+});
+
+test('Bemondás-beállítások: a színes bemondások MAUSZ értéksorrendben, a Piros oszlop felirattal', async () => {
+  const doc = await newApp();
+  const ids = [...doc.querySelectorAll('#bemondas-settings .bem-grid')[0].querySelectorAll('input[type=number]:not(.bem-piros)')].map(i => i.id.replace('bem-ertek-', ''));
+  assertEqual(ids.join(','), 'parti,40_100,negy_asz,ulti,durchmars_szines,20_100,teritett_durchmars_szines');
+  const szintelen = [...doc.querySelectorAll('#bemondas-settings .bem-grid')[1].querySelectorAll('input[type=number]')].map(i => i.id.replace('bem-ertek-', ''));
+  assertEqual(szintelen.join(','), 'betli,rebetli,piros_betli,teritett_betli,durchmars_szintelen,redurchmars_szintelen,teritett_durchmars_szintelen');
+  assert(doc.querySelector('.bem-head-piros').textContent === 'Piros', 'Az oszlop fölött "Piros" áll');
+});
+
+test('Bemondás-beállítások: kikapcsolt bemondás nem választható; kikapcsolt négy ásznál nincs csendes négy ász sem', async () => {
+  const doc = await newApp();
+  setChecked(doc.getElementById('bem-on-negy_asz'), false);
+  setChecked(doc.getElementById('bem-on-ulti'), false);
+  doc.getElementById('btn-start').click();
+  const opts = bemondasOptionValues(lines(doc)[0].querySelector('.line-bemondas'));
+  assert(!opts.includes('negy_asz') && !opts.includes('ulti'), 'Kikapcsolt tételek nincsenek a listán');
+  assert(opts.includes('csendes_ulti') && opts.includes('ellenulti'), 'A csendes ulti / ellenulti mindig elérhető');
+  assert(doc.getElementById('csendes-negy-asz-field').hidden);
+  assert(!doc.getElementById('csendes-100-field').hidden, 'A csendes 100 mindig elérhető');
+});
+
+test('Indítási képernyő: asztal, bemondások és házi szabályok három külön, alapból összecsukott blokk; hibánál kinyílik', async () => {
+  const doc = await newApp();
+  const blocks = [...doc.querySelectorAll('#setup-form-wrapper details.setup-block')];
+  assertEqual(blocks.map(b => b.querySelector('summary').textContent).join('|'), 'Asztal és játékosok|Bemondások|Házi szabályok');
+  assert(blocks.every(b => !b.open), 'Alapból mind összecsukott');
+  doc.getElementById('alap-tet').value = '0';
+  doc.getElementById('bem-ertek-betli').value = '0';
+  doc.getElementById('btn-start').click();
+  assert(blocks[0].open, 'Hibás alaptétnél az Asztal blokk kinyílik');
+  doc.getElementById('alap-tet').value = '1';
+  doc.getElementById('btn-start').click();
+  assert(blocks[1].open, 'Hibás bemondás-értéknél a Bemondások blokk kinyílik');
+});
+
+test('Bemondás-beállítások: érvénytelen érték nem indít partit', async () => {
+  for (const bad of ['0', '2.5', '', '-1']) {
+    const doc = await newApp();
+    doc.getElementById('bem-ertek-betli').value = bad;
+    doc.getElementById('btn-start').click();
+    assert(doc.getElementById('game-screen').hidden, bad + ' értékkel nem indulhat');
+    assert(!doc.getElementById('bemondas-settings-error').hidden);
+  }
+});
+
+test('Régi mentés: a régi értékek és a korlátlan kontra maradnak (terített durchmars színes 24, Fedák Sári)', async () => {
+  const doc = await newAppWithStorage({ [SESSION_KEY]: savedSession({ negyaszEnabled: true }) });
+  doc.getElementById('btn-resume').click();
+  const line = lines(doc)[0];
+  setValue(line.querySelector('.line-bemondas'), 'teritett_durchmars_szines');
+  assertEqual(lineResult(line).amountA, 24);
+  assertEqual(line.querySelector('.kontra-joint-select').options.length, 7);
 });
 
 async function main() {

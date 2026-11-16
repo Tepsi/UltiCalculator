@@ -135,6 +135,20 @@ h2 { margin-top: 0; }
   color: var(--color-muted);
 }
 
+.setup-block {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  margin: 0.8rem 0;
+  padding: 0 0.9rem;
+}
+.setup-block[open] { padding-bottom: 0.4rem; }
+.setup-block > summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0.7rem 0;
+  list-style-position: inside;
+}
 .house-rules {
   border: 1px solid #ccc;
   border-radius: 6px;
@@ -201,6 +215,35 @@ select.control-lg {
   background: #c62828 center / 80% no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E");
 }
 
+#bemondas-settings h4 { margin: 0.8rem 0 0.3rem; font-size: 1rem; }
+.bem-grid {
+  display: grid;
+  grid-template-columns: 1fr 4.5rem 4.5rem 4.5rem;
+  gap: 0.4rem 0.6rem;
+  align-items: center;
+}
+.bem-head {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  text-align: center;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.2rem;
+}
+.bem-head-name { text-align: left; }
+.bem-head-piros { color: #b3262b; }
+.bem-name { font-weight: 600; }
+.bem-grid input[type="number"] {
+  width: 100%;
+  padding: 0.4rem;
+  font-size: 1rem;
+  text-align: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: #fff;
+}
+.bem-grid input.bem-piros { color: #b3262b; font-weight: 600; border-color: #e3b5b7; }
+.bem-grid input[type="checkbox"] { justify-self: center; width: 1.2rem; height: 1.2rem; accent-color: var(--color-primary); }
 .bemondas-line.is-suppressed { opacity: 0.6; }
 .bemondas-line.is-bukott {
   border-color: var(--color-danger);
@@ -364,6 +407,7 @@ select.control-lg {
 .scoreboard td.round { text-align: left; font-weight: 600; }
 
 .scoreboard tr.row-teritett { background: #fff7e0; }
+.scoreboard tr.row-teritett-bukott { background: #fbe3e3; }
 
 .player-icon { font-size: 0.85em; }
 
@@ -399,7 +443,7 @@ td.amount-neg { color: var(--color-danger); font-weight: 600; }
 <body>
 
 <header class="app-header">
-  <h1>Ulti Pontozó <small class="app-version" id="app-version">v1.4</small></h1>
+  <h1>Ulti Pontozó <small class="app-version" id="app-version">v1.5</small></h1>
   <div class="header-actions">
     <button id="btn-export" class="btn btn-secondary" hidden>Exportálás</button>
     <button id="btn-reset" class="btn btn-danger" hidden>Új parti-est</button>
@@ -418,6 +462,8 @@ td.amount-neg { color: var(--color-danger); font-weight: 600; }
 
     <div id="setup-form-wrapper">
       <h2>Új parti-est indítása</h2>
+      <details class="setup-block">
+      <summary>Asztal és játékosok</summary>
       <label class="field">
         Hány játékos ül az asztalnál?
         <select id="player-count">
@@ -438,14 +484,22 @@ td.amount-neg { color: var(--color-danger); font-weight: 600; }
         <input type="number" id="alap-tet" value="1" min="1" step="1" inputmode="numeric">
       </label>
       <p class="line-lock-note" id="alap-tet-error" hidden>Az alaptét csak nullánál nagyobb egész szám lehet.</p>
+      </details>
 
-      <fieldset class="house-rules">
-        <legend>Házi szabályok</legend>
-        <p class="muted">A hivatalos MAUSZ szabályzatban nem szerepelnek (a négy ász tiltása kivételével: ott a hivatalos az alap).</p>
-        <label class="field field-checkbox">
-          Négy ász tiltása
-          <input type="checkbox" id="negyasz-tiltas-toggle">
+      <details class="setup-block" id="bemondas-settings-box">
+        <summary>Bemondások</summary>
+        <p class="muted">Bemondásonként állítható az érték és a piros érték (alaptét előtt), és hogy mondható-e. Alapból a legutóbbi beállítás, első indításkor a hivatalos MAUSZ érték. A csendes 100, az ellen csendes 100, a csendes ulti és az ellenulti mindig elérhető; a csendes és ellen csendes négy ász a négy ásszal együtt.</p>
+        <div id="bemondas-settings"></div>
+        <label class="field">
+          Legnagyobb mondható kontra
+          <select id="max-kontra"></select>
         </label>
+        <p class="line-lock-note" id="bemondas-settings-error" hidden>Minden bemondás értéke csak nullánál nagyobb egész szám lehet.</p>
+      </details>
+
+      <details class="setup-block">
+        <summary>Házi szabályok</summary>
+        <p class="muted">A hivatalos MAUSZ szabályzatban nem szerepelnek.</p>
         <label class="field field-checkbox" title="Az Ulti soron jelölhető háromlapos ulti: fix felár, amit a kontra és a piros adu nem szoroz.">
           Háromlapos ulti
           <input type="checkbox" id="haromlapos-toggle">
@@ -454,7 +508,7 @@ td.amount-neg { color: var(--color-danger); font-weight: 600; }
           Piros ász oszt, nem oszt
           <input type="checkbox" id="piros-asz-rule-toggle">
         </label>
-      </fieldset>
+      </details>
 
       <button id="btn-start" class="btn btn-primary btn-large">Parti-est indítása</button>
     </div>
@@ -626,7 +680,7 @@ const BEMONDASOK = [
   { id: 'parti', nev: 'Parti', ertek: 1, kategoria: 'szin', jatekAlap: true },
   { id: '40_100', nev: '40-100', ertek: 4, kategoria: 'szin', jatekAlap: true },
   { id: '20_100', nev: '20-100', ertek: 8, kategoria: 'szin', jatekAlap: true },
-  { id: 'negy_asz', nev: 'Négy ász', ertek: 4, kategoria: 'szin', optional: 'negyasz' },
+  { id: 'negy_asz', nev: 'Négy ász', ertek: 4, kategoria: 'szin' },
   { id: 'ulti', nev: 'Ulti', ertek: 4, kategoria: 'szin', ultiSpecial: true, haromlapos: true },
   { id: 'csendes_ulti', nev: 'Csendes ulti', ertek: 2, kategoria: 'szin', ultiSpecial: true, nincsKontra: true },
   // Ellenulti: mint a csendes ulti, de az ellenjátékosok játsszák — ha sikerül,
@@ -634,12 +688,44 @@ const BEMONDASOK = [
   { id: 'ellenulti', nev: 'Ellenulti', ertek: 2, kategoria: 'szin', ultiSpecial: true, nincsKontra: true, ellen: true },
   { id: 'durchmars_szintelen', nev: 'Durchmars (színtelen)', ertek: 6, kategoria: 'adu_nelkuli' },
   { id: 'durchmars_szines', nev: 'Durchmars (színes)', ertek: 6, kategoria: 'szin' },
-  { id: 'redurchmars_szintelen', nev: 'Redurchmars / Terített durchmars (színtelen)', ertek: 24, kategoria: 'adu_nelkuli', teritett: true },
-  { id: 'redurchmars_szines', nev: 'Redurchmars / Terített durchmars (színes)', ertek: 24, kategoria: 'szin', teritett: true },
+  { id: 'redurchmars_szintelen', nev: 'Redurchmars (színtelen)', ertek: 12, kategoria: 'adu_nelkuli' },
+  { id: 'teritett_durchmars_szintelen', nev: 'Terített durchmars (színtelen)', ertek: 24, kategoria: 'adu_nelkuli', teritett: true },
+  { id: 'teritett_durchmars_szines', nev: 'Terített durchmars (színes)', ertek: 12, kategoria: 'szin', teritett: true },
   { id: 'betli', nev: 'Betli', ertek: 5, kategoria: 'adu_nelkuli' },
+  { id: 'rebetli', nev: 'Rebetli', ertek: 10, kategoria: 'adu_nelkuli' },
   { id: 'piros_betli', nev: 'Piros betli', ertek: 10, kategoria: 'adu_nelkuli' },
-  { id: 'rebetli', nev: 'Rebetli / Terített betli', ertek: 20, kategoria: 'adu_nelkuli', teritett: true },
+  { id: 'teritett_betli', nev: 'Terített betli', ertek: 20, kategoria: 'adu_nelkuli', teritett: true },
 ];
+
+// Az `ertek` a hivatalos MAUSZ szabályzat szerinti alapérték; az indítási
+// képernyőn bemondásonként átírható (state.ertekek) és ki/be kapcsolható
+// (state.kikapcsolt). A Parti (alapjáték) nem kapcsolható ki; a csendes ulti és
+// az ellenulti nem szerepel a beállításokban: mindig elérhető, fix értékű.
+const NEM_KAPCSOLHATO = ['parti'];
+const NEM_BEALLITHATO = ['csendes_ulti', 'ellenulti'];
+
+// A korábbi (a beállítások bevezetése előtt mentett) parti-estek ezekkel az
+// értékekkel és korlátlan kontraszinttel számoltak — ezeket kapják meg.
+const REGI_ERTEKEK = { teritett_durchmars_szines: 24 };
+const HIVATALOS_MAX_KONTRA = 2;
+const REGI_MAX_KONTRA = 6;
+
+function bemErtek(b) {
+  const v = state.ertekek?.[b.id];
+  return Number.isInteger(v) && v >= 1 ? v : b.ertek;
+}
+// A színes bemondások pirosban érvényes értéke külön állítható; ha nincs megadva,
+// az érték kétszerese.
+function bemPirosErtek(b) {
+  const v = state.pirosErtekek?.[b.id];
+  return Number.isInteger(v) && v >= 1 ? v : 2 * bemErtek(b);
+}
+function bemEnabled(id) {
+  return NEM_KAPCSOLHATO.includes(id) || !(state.kikapcsolt || []).includes(id);
+}
+function maxKontra() {
+  return state.maxKontra ?? REGI_MAX_KONTRA;
+}
 
 // A csendes 100 (nem bemondott 100 pont színjátékban) feleannyit fizet, mint
 // egy bemondott 40-100 (4 pont → 2); az ellen csendes 100 ugyanennyit ér, de az
@@ -668,7 +754,10 @@ const haromlaposEnabled = () => state.haromlaposEnabled !== false;
 const pirosAszEnabled = () => state.pirosAszEnabled !== false;
 
 const KONTRA_SZINTEK = ['Nincs kontra', 'Kontra', 'Rekontra', 'Szubkontra', 'Mordkontra', 'Hirschkontra', 'Fedák Sári'];
-const KONTRA_OPTIONS_HTML = KONTRA_SZINTEK.map((label, i) => `<option value="${i}">${label}</option>`).join('');
+// A kontra-választók a parti-est indításakor beállított legnagyobb szintig kínálnak fel szinteket.
+function kontraOptionsHtml() {
+  return KONTRA_SZINTEK.slice(0, maxKontra() + 1).map((label, i) => `<option value="${i}">${label}</option>`).join('');
+}
 
 // Az Ulti, a csendes ulti és az ellenulti kizárják egymást egy leosztásban.
 const ULTI_FAMILY = ['ulti', 'csendes_ulti', 'ellenulti'];
@@ -679,7 +768,7 @@ function bemondasById(id) {
 
 // Színes durchmars / redurchmars: önálló játékként is bemondható, alapjáték nélkül.
 function isColoredDurchmars(bem) {
-  return bem.id === 'durchmars_szines' || bem.id === 'redurchmars_szines';
+  return bem.id === 'durchmars_szines' || bem.id === 'teritett_durchmars_szines';
 }
 
 // Ulti bukása esetén a sima duplázás helyett 2^szint + 1 az érvényes szorzó
@@ -771,6 +860,15 @@ if (state && !state.playerIcons) {
   saveState();
 }
 
+// A bemondás-beállítások bevezetése előtt mentett parti-estek a régi értékekkel,
+// korlátlan kontraszinttel és a régi négy ász kapcsolóval mennek tovább.
+if (state && !state.ertekek) {
+  state.ertekek = { ...REGI_ERTEKEK };
+  state.kikapcsolt = state.negyaszEnabled === false ? ['negy_asz'] : [];
+  state.maxKontra = REGI_MAX_KONTRA;
+  saveState();
+}
+
 function alapTet() {
   return state.alapTet || 1;
 }
@@ -784,7 +882,9 @@ const setupFormWrapper = document.getElementById('setup-form-wrapper');
 const playerCountSelect = document.getElementById('player-count');
 const playerNamesDiv = document.getElementById('player-names');
 const startingDealerSelect = document.getElementById('starting-dealer');
-const negyaszTiltasToggle = document.getElementById('negyasz-tiltas-toggle');
+const bemondasSettingsDiv = document.getElementById('bemondas-settings');
+const bemondasSettingsErrorEl = document.getElementById('bemondas-settings-error');
+const maxKontraSelect = document.getElementById('max-kontra');
 const haromlaposRuleToggle = document.getElementById('haromlapos-toggle');
 const pirosAszRuleToggle = document.getElementById('piros-asz-rule-toggle');
 const alapTetInput = document.getElementById('alap-tet');
@@ -804,8 +904,91 @@ function renderPlayerNameInputs() {
 // kapcsoló) a legutóbbi parti-est indításakor elmentjük, és a következő
 // indításnál ezekkel előtöltjük az űrlapot — nem kell minden parti-estnél
 // újra beírni ugyanazokat az adatokat.
+// A beállítható bemondások: minden katalógus-elem a csendes ulti / ellenulti nélkül.
+const BEALLITHATO_BEMONDASOK = BEMONDASOK.filter(b => !NEM_BEALLITHATO.includes(b.id));
+
+// A bemondás-blokk: soronként érték és ki/be jelölő (a Partinál nincs jelölő),
+// valamint a legnagyobb mondható kontra. A legutóbbi indítás beállításaival
+// (vagy a hivatalos értékekkel) töltődik elő.
+// Hibánál az érintett (összecsukott) blokkot kinyitjuk, hogy a mező látszódjon.
+function openAndFocus(el) {
+  const block = el.closest('details');
+  if (block) block.open = true;
+  el.focus();
+}
+
+function renderBemondasSettings(defaults) {
+  const ertekek = defaults?.ertekek || {};
+  const pirosErtekek = defaults?.pirosErtekek || {};
+  const kikapcsolt = defaults?.kikapcsolt || (defaults?.negyaszEnabled === false ? ['negy_asz'] : []);
+  // Adu nélkül előbb a betlik, utána a durchmarsok; a színeseknél egy csoport van.
+  const családSorrend = b => (b.kategoria === 'adu_nelkuli' && !b.id.includes('betli') ? 1 : 0);
+  // Értéksorrend (hivatalos érték szerint növekvő; egyenlő értéknél a katalógus sorrendje).
+  const rendezve = kategoria => BEALLITHATO_BEMONDASOK
+    .map((b, i) => ({ b, i }))
+    .filter(({ b }) => b.kategoria === kategoria)
+    .sort((x, y) => családSorrend(x.b) - családSorrend(y.b) || x.b.ertek - y.b.ertek || x.i - y.i)
+    .map(({ b }) => b);
+  // Rácsos táblázat: oszlopok a Bemondás / Érték / Piros / Mondható; a hiányzó
+  // cellák (pl. a Parti jelölője, adu nélküli bemondás piros értéke) üresek,
+  // hogy az oszlopok mindig egy vonalba essenek.
+  const group = (label, kategoria) => {
+    const szin = kategoria === 'szin';
+    const rows = rendezve(kategoria).map(b => {
+      const ertek = Number.isInteger(ertekek[b.id]) && ertekek[b.id] >= 1 ? ertekek[b.id] : b.ertek;
+      const pirosVal = Number.isInteger(pirosErtekek[b.id]) && pirosErtekek[b.id] >= 1 ? pirosErtekek[b.id] : 2 * ertek;
+      const piros = szin
+        ? `<input type="number" class="bem-piros" id="bem-piros-${b.id}" value="${pirosVal}" min="1" step="1" inputmode="numeric" title="Érték pirosban (hivatalos: ${2 * b.ertek})">`
+        : '<span></span>';
+      const toggle = NEM_KAPCSOLHATO.includes(b.id) ? '<span></span>' :
+        `<input type="checkbox" id="bem-on-${b.id}" ${kikapcsolt.includes(b.id) ? '' : 'checked'} title="Mondható">`;
+      return `<label class="bem-name" for="bem-ertek-${b.id}">${b.nev}</label>` +
+        `<input type="number" id="bem-ertek-${b.id}" value="${ertek}" min="1" step="1" inputmode="numeric" title="Érték (hivatalos: ${b.ertek})">` +
+        piros + toggle;
+    }).join('');
+    return `<h4>${label}</h4><div class="bem-grid">` +
+      '<span class="bem-head bem-head-name">Bemondás</span><span class="bem-head">Érték</span>' +
+      `<span class="bem-head bem-head-piros">${szin ? 'Piros' : ''}</span><span class="bem-head">Mondható</span>` +
+      rows + '</div>';
+  };
+  bemondasSettingsDiv.innerHTML = group('Színes (adu van)', 'szin') + group('Adu nélküli', 'adu_nelkuli');
+  const max = Number.isInteger(defaults?.maxKontra) && defaults.maxKontra >= 1 && defaults.maxKontra < KONTRA_SZINTEK.length
+    ? defaults.maxKontra : HIVATALOS_MAX_KONTRA;
+  maxKontraSelect.innerHTML = KONTRA_SZINTEK.slice(1).map((label, i) => `<option value="${i + 1}">${label}</option>`).join('');
+  maxKontraSelect.value = String(max);
+}
+
+// Beolvassa a bemondás-blokkot; érvénytelen érték esetén null.
+function readBemondasSettings() {
+  const ertekek = {};
+  const pirosErtekek = {};
+  const kikapcsolt = [];
+  for (const b of BEALLITHATO_BEMONDASOK) {
+    if (b.kategoria === 'szin') {
+      const pInput = document.getElementById('bem-piros-' + b.id);
+      const pRaw = pInput.value.trim();
+      if (!/^\d+$/.test(pRaw) || parseInt(pRaw, 10) < 1) {
+        openAndFocus(pInput);
+        return null;
+      }
+      pirosErtekek[b.id] = parseInt(pRaw, 10);
+    }
+    const input = document.getElementById('bem-ertek-' + b.id);
+    const raw = input.value.trim();
+    if (!/^\d+$/.test(raw) || parseInt(raw, 10) < 1) {
+      openAndFocus(input);
+      return null;
+    }
+    ertekek[b.id] = parseInt(raw, 10);
+    const on = document.getElementById('bem-on-' + b.id);
+    if (on && !on.checked) kikapcsolt.push(b.id);
+  }
+  return { ertekek, pirosErtekek, kikapcsolt, maxKontra: parseInt(maxKontraSelect.value, 10) };
+}
+
 function applySetupDefaults() {
   const defaults = loadJson(SETUP_DEFAULTS_KEY);
+  renderBemondasSettings(defaults);
   if (defaults?.playerCount) playerCountSelect.value = String(defaults.playerCount);
   renderPlayerNameInputs();
   if (!defaults) return;
@@ -815,7 +998,6 @@ function applySetupDefaults() {
   });
   if (defaults.dealerIndex != null) startingDealerSelect.value = String(defaults.dealerIndex);
   if (Number.isInteger(defaults.alapTet) && defaults.alapTet >= 1) alapTetInput.value = defaults.alapTet;
-  negyaszTiltasToggle.checked = defaults.negyaszEnabled === false;
   haromlaposRuleToggle.checked = !!defaults.haromlaposEnabled;
   pirosAszRuleToggle.checked = !!defaults.pirosAszEnabled;
 }
@@ -828,7 +1010,7 @@ document.getElementById('btn-start').addEventListener('click', () => {
   const alapTet = /^\d+$/.test(alapTetRaw) ? parseInt(alapTetRaw, 10) : 0;
   alapTetErrorEl.hidden = alapTet >= 1;
   if (alapTet < 1) {
-    alapTetInput.focus();
+    openAndFocus(alapTetInput);
     return;
   }
   const playerCount = parseInt(playerCountSelect.value, 10);
@@ -836,11 +1018,13 @@ document.getElementById('btn-start').addEventListener('click', () => {
     document.getElementById(`player-name-${i}`).value.trim() || `Játékos ${i + 1}`);
   const dealerIndex = parseInt(startingDealerSelect.value, 10);
   // Alapból van négy ász; a házi szabályok (háromlapos ulti, piros ász) alapból kikapcsoltak.
-  const negyaszEnabled = !negyaszTiltasToggle.checked;
+  const bemondasSettings = readBemondasSettings();
+  bemondasSettingsErrorEl.hidden = !!bemondasSettings;
+  if (!bemondasSettings) return;
   const haromlaposEnabled = haromlaposRuleToggle.checked;
   const pirosAszEnabled = pirosAszRuleToggle.checked;
 
-  localStorage.setItem(SETUP_DEFAULTS_KEY, JSON.stringify({ playerCount, players, dealerIndex, alapTet, negyaszEnabled, haromlaposEnabled, pirosAszEnabled }));
+  localStorage.setItem(SETUP_DEFAULTS_KEY, JSON.stringify({ playerCount, players, dealerIndex, alapTet, ...bemondasSettings, haromlaposEnabled, pirosAszEnabled }));
 
   state = {
     playerCount,
@@ -851,7 +1035,7 @@ document.getElementById('btn-start').addEventListener('click', () => {
     totals: new Array(playerCount).fill(0),
     history: [],
     pirosAszOsztNemOszt: false,
-    negyaszEnabled,
+    ...bemondasSettings,
     haromlaposEnabled,
     pirosAszEnabled,
     alapTet,
@@ -996,6 +1180,11 @@ dealerSelect.addEventListener('change', () => {
   renderPreview();
 });
 
+// Terített bemondás, amelyik elbukott: a pontállásban halvány piros sor.
+function isTeritettBukottHand(h) {
+  return h.lineSummaries.some(l => l.teritett && l.result === 'bukas');
+}
+
 function isTeritettHand(h) {
   return h.lineSummaries.some(l => l.teritett);
 }
@@ -1017,7 +1206,7 @@ function scoreTableHtml() {
   state.history.forEach(h => {
     h.perPlayerDelta.forEach((d, i) => { running[i] += d; });
     const teritett = isTeritettHand(h);
-    html += `<tr${teritett ? ' class="row-teritett"' : ''}><td class="round">${h.manual ? '✎' : h.round + '.'}</td>` +
+    html += `<tr${teritett ? ` class="row-teritett${isTeritettBukottHand(h) ? ' row-teritett-bukott' : ''}"` : ''}><td class="round">${h.manual ? '✎' : h.round + '.'}</td>` +
       running.map((v, i) =>
         `<td class="${amountClass(v)}">${teritett && i === h.declarerIndex ? playerIconHtml(i, false) : ''}${v}</td>`
       ).join('') + '</tr>';
@@ -1162,7 +1351,7 @@ function availableBemondasok(excludeLineEl) {
   const usedJatekAlap = used.some(b => b.jatekAlap);
   const usedColoredDurchmars = used.some(isColoredDurchmars);
   return BEMONDASOK.filter(b => {
-    if (b.optional === 'negyasz' && !state.negyaszEnabled) return false;
+    if (!bemEnabled(b.id)) return false;
     if (usedIds.has(b.id)) return false;
     if (b.kategoria === 'adu_nelkuli' && used.length > 0) return false;
     if (b.jatekAlap && usedJatekAlap) return false;
@@ -1203,7 +1392,7 @@ function bemondasOptionsHtml(excludeLineEl, currentId) {
   const group = (label, kategoria) => {
     const items = list.filter(b => b.kategoria === kategoria);
     return items.length
-      ? `<optgroup label="${label}">${items.map(b => `<option value="${b.id}">${b.nev} (${pontErtek(b.ertek, false)})</option>`).join('')}</optgroup>`
+      ? `<optgroup label="${label}">${items.map(b => `<option value="${b.id}">${b.nev} (${pontErtek(bemErtek(b), false)})</option>`).join('')}</optgroup>`
       : '';
   };
   return group('Színjátékok (adu van)', 'szin') + group('Adu nélküli játékok', 'adu_nelkuli');
@@ -1242,7 +1431,7 @@ function updateCsendes100Availability() {
   // A csendes négy ász csak engedélyezett négy ásznál, színes leosztásban,
   // bemondott négy ász és durchmars nélkül, és csak alapjáték (Parti / 40-100 /
   // 20-100) vagy ulti-féle mellett jelölhető.
-  const negyAszAvailable = state.negyaszEnabled && !hasColorless &&
+  const negyAszAvailable = bemEnabled('negy_asz') && !hasColorless &&
     !boms.some(b => b.id === 'negy_asz' || isColoredDurchmars(b)) &&
     boms.some(b => b.jatekAlap || ULTI_FAMILY.includes(b.id));
   csendesNegyAszField.hidden = !negyAszAvailable;
@@ -1338,7 +1527,7 @@ function addBemondasLine(presetId) {
   bemondasSelect.innerHTML = bemondasOptionsHtml(null, presetId);
   if (presetId) bemondasSelect.value = presetId;
   lineEl.querySelectorAll('.kontra-joint-select, .kontra-a-select, .kontra-b-select').forEach(sel => {
-    sel.innerHTML = KONTRA_OPTIONS_HTML;
+    sel.innerHTML = kontraOptionsHtml();
   });
   bemondasLinesDiv.appendChild(lineEl);
 }
@@ -1423,7 +1612,7 @@ function pontErtek(ertek, piros) {
 // Egy sor ellenjátékosonkénti kifizetése: érték × kontraszorzó (+ a háromlapos
 // fix felára).
 function lineAmounts({ bem, result, levelA, levelB, piros, haromlapos }) {
-  const ertek = pontErtek(bem.ertek, piros);
+  const ertek = piros ? bemPirosErtek(bem) * alapTet() : pontErtek(bemErtek(bem), false);
   const bonus = haromlapos ? pontErtek(result === 'siker' ? HAROMLAPOS_SIKER : HAROMLAPOS_BUKAS, false) : 0;
   return {
     amountA: ertek * multiplier(levelA, bem.ultiSpecial, result) + bonus,
@@ -1669,16 +1858,28 @@ function buildExportHtml() {
   td.amount-pos { color: #2f6b2f; font-weight: 600; }
   td.amount-neg { color: #a33a2e; font-weight: 600; }
   tr.row-teritett { background: #fff7e0; }
+  tr.row-teritett-bukott { background: #fbe3e3; }
   .player-icon { font-size: 0.85em; }
+  .toggle-btn { margin: 0 0 0.8rem; padding: 0.5rem 0.9rem; font-size: 0.95rem; border: 1px solid #4a5a48;
+    border-radius: 10px; background: #fff; color: #4a5a48; font-weight: 600; cursor: pointer; }
+  table.is-collapsed tr:not(:first-child):not(.final) { display: none; }
 </style>
 </head>
 <body>
   <h1>Ulti Pontozó</h1>
   <p class="muted">Pontállás körről-körre — ${dateStr}</p>
-  <table>
+  <button type="button" class="toggle-btn" id="toggle-rows" aria-expanded="true">Csak a végeredmény</button>
+  <table id="score-table">
     ${html}
     <tr class="final"><td class="round">Végeredmény</td>${finalCells}</tr>
   </table>
+  <script>
+    document.getElementById('toggle-rows').addEventListener('click', function () {
+      var collapsed = document.getElementById('score-table').classList.toggle('is-collapsed');
+      this.textContent = collapsed ? 'Teljes eredménysor' : 'Csak a végeredmény';
+      this.setAttribute('aria-expanded', String(!collapsed));
+    });
+  <\/script>
 </body>
 </html>`;
 }

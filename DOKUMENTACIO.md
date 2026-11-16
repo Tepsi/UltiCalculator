@@ -43,22 +43,36 @@ működik, a pontállás pedig az eszközön, a böngészőben tárolódik (ld. 
 - Ha van korábban mentett, be nem zárt parti-est a böngészőben, egy sárga sáv jelzi
   ("Folytatás" / "Elvetés, új indítása" gombokkal).
 - Új parti-est indításakor:
+  Az indítási űrlap három, külön összecsukható blokkra oszlik, amelyek alapból
+  **összecsukva** vannak: *Asztal és játékosok* (az 1–4. pont), *Bemondások* (5. pont) és
+  *Házi szabályok* (6. pont). Hibás érték (alaptét, bemondás-érték) esetén az érintett blokk
+  magától kinyílik.
   1. Válaszd ki a létszámot (3 vagy 4 fő).
   2. Add meg a játékosok nevét (üresen hagyva "Játékos 1", "Játékos 2"... néven fut).
   3. Válaszd ki, ki osztja az elsőt (ő lesz 4 fős módban az első kiálló is).
   4. **Alaptét**: add meg, mennyit ér egy pont (alapértéke 1; csak nullánál nagyobb egész szám lehet, törtet vagy nullát az app nem fogad el, így tört eredmény sosem keletkezik). Ha nem
      egyforintos alapon játszotok, itt állítsd be a tényleges tétet — minden
      bemondás automatikusan ehhez arányosan skálázva fizet.
-  5. **Házi szabályok** (a hivatalos MAUSZ szabályzatban nem szerepelnek; alapból
-     mind kikapcsolt, kivéve hogy a négy ász alapból van):
-     - **Négy ász tiltása**: bekapcsolva nincs "Négy ász", csendes és ellen csendes
-       négy ász sem.
+  5. **Bemondások**: minden bemondásnak (színes és adu nélküli) külön **értéke**
+     van (pozitív egész, alaptét előtt), és kikapcsolható
+     (a Parti kivételével). Az alapérték a **legutóbbi indításkor beállított**,
+     első indításkor a **hivatalos MAUSZ érték** (ld. a 4. fejezet táblázata). A színes
+     bemondásoknál (Parti, 40-100, 20-100, négy ász, ulti, színes durchmars) a
+     **piros érték külön** megadható (alapból az érték kétszerese); a Piros adu
+     kapcsolóval ez számít. A
+     négy ász kapcsolóval a csendes és ellen csendes négy ász is ki/be kapcsol.
+     A **csendes 100, ellen csendes 100, csendes ulti és ellenulti** nem
+     kapcsolható: mindig elérhető. Itt állítható a **legnagyobb mondható
+     kontra** is (alapból Rekontra, a hivatalos szabály szerint; a kontra-
+     választók csak eddig a szintig kínálnak fel szinteket).
+  6. **Házi szabályok** (a hivatalos MAUSZ szabályzatban nem szerepelnek; alapból
+     mind kikapcsolt):
      - **Háromlapos ulti**: az Ulti soron megjelenik a "Háromlapos" jelölő (ld. 3.3).
      - **Piros ász oszt, nem oszt**: a leosztás képernyőn megjelenik a hasonló
        nevű kapcsoló (ld. 3.3); kikapcsolva a felvevő oszt tovább.
      A régebben mentett parti-estekben a háromlapos ulti és a piros ász kapcsoló
      továbbra is elérhető.
-  6. "Parti-est indítása" — ettől kezdve minden változás automatikusan mentődik.
+  7. "Parti-est indítása" — ettől kezdve minden változás automatikusan mentődik.
 - Az indítási képernyő összes beállítása (létszám, játékosnevek, kezdő osztó,
   alaptét, házi szabályok) a "Parti-est indítása" gombra kattintva
   elmentődik ugyanabban a böngészőben (ld. 6. pont), és a következő
@@ -107,7 +121,7 @@ addig, ha még senki nem terített, a fejléc csak a neveket mutatja.
 
 Ha egy leosztásban **terített** bemondás (Rebetli/Terített betli, vagy
 Redurchmars/Terített durchmars — színes vagy színtelen formában) is szerepelt,
-az adott kör sora kiemelt (sárga) háttérrel jelenik meg, és a felvevő
+az adott kör sora kiemelt (sárga, bukott terített bemondásnál halvány piros) háttérrel jelenik meg, és a felvevő
 cellájában megjelenik a saját ikonja is (ez az esemény az, ami a fenti
 fejléc-ikonját "felfedi") — így egy hosszabb parti-est jegyzőkönyvében is
 könnyen visszakereshetők a legnagyobb tételű, terített leosztások, és az is,
@@ -310,7 +324,9 @@ körről-körre" táblázat utolsó sora, és az osztó/kör-számláló is viss
   letölt, amely a "Pontállás körről-körre" táblázatot tartalmazza (fejlécben a
   játékosok nevével, soronként a köri kumulált állással, és egy kiemelt
   végeredmény-sorral) — bármelyik böngészőben megnyitható, jó megosztásra vagy
-  archiválásra.
+  archiválásra. A fájlban a táblázat felett egy gombbal az eredménysorok
+  összecsukhatók (csak a végeredmény látszik), majd újra kinyithatók; alapból a
+  teljes eredménysor látszik.
 - **"Új parti-est"** (fejléc): megerősítés után törli a mentett állást, és
   visszaugrik az indítási képernyőre.
 
@@ -344,17 +360,23 @@ külön katalógus-elem (ld. 3.3/3. pont):
 
 | Bemondás | Alapérték | Piros esetén | Kategória |
 |---|---|---|---|
-| Négy ász *(kapcsolóval engedélyezhető, ld. 3.1 pont)* | 4 | 8 | Színes |
+| Négy ász *(az indításnál kikapcsolható, ld. 3.1 pont)* | 4 | 8 | Színes |
 | Ulti | 4 | 8 | Színes (speciális bukás-szabály, ld. 5. pont) |
 | Csendes ulti *(nem bemondott ulti, ld. 3.3 pont)* | 2 | 4 | Színes (ulti bukás-szabály, nincs kontra) |
 | Ellenulti *(az ellenjátékosok játsszák, ld. 3.3 pont)* | 2 | 4 | Színes (ulti bukás-szabály, nincs kontra) |
 | Durchmars (színtelen) | 6 | — | Színtelen |
 | Durchmars (színes)*(önállóan is bemondható; 40-100/20-100 opcionálisan társítható, Parti nem)* | 6 | 12 | Színes |
-| Redurchmars / Terített durchmars (színtelen) | 24 | — | Színtelen |
-| Redurchmars / Terített durchmars (színes)*(önállóan is bemondható; 40-100/20-100 opcionálisan társítható, Parti nem)* | 24 | 48 | Színes |
+| Redurchmars (színtelen) | 12 | — | Színtelen |
+| Terített durchmars (színtelen) | 24 | — | Színtelen |
+| Terített durchmars (színes)*(önállóan is bemondható; 40-100/20-100 opcionálisan társítható, Parti nem)* | 12 | 24 | Színes |
 | Betli | 5 | — | Színtelen |
+| Rebetli | 10 | — | Színtelen |
 | Piros betli | 10 | — | Színtelen |
-| Rebetli / Terített betli | 20 | — | Színtelen |
+| Terített betli | 20 | — | Színtelen |
+
+(A táblázat a hivatalos alapértékeket mutatja; az indítási képernyőn
+bemondásonként átírhatók, a régebben mentett parti-estek a korábbi értékekkel
+— pl. színes terített durchmars 24 — és korlátlan kontraszinttel folytatódnak.)
 
 A kategória ("Színes" vagy "Színtelen") határozza meg, hogy a kontra közös
 (mindkét ellenjátékos nevében egyben) vagy egyénenkénti — ld. 5. pont. Ha a
@@ -373,6 +395,9 @@ adu-szín létezik, tehát a játék és a hozzá adott színes extrák pirossá
 választható el egymástól.
 
 ## 5. Kontra rendszer
+
+Az indításnál beállított **legnagyobb mondható kontra** (alapból Rekontra)
+fölötti szintek nem választhatók. A teljes skála:
 
 | Szint | Szorzó |
 |---|---|
