@@ -755,6 +755,8 @@ const pirosAszEnabled = () => state.pirosAszEnabled !== false;
 
 const KONTRA_SZINTEK = ['Nincs kontra', 'Kontra', 'Rekontra', 'Szubkontra', 'Mordkontra', 'Hirschkontra', 'Fedák Sári'];
 // A kontra-választók a parti-est indításakor beállított legnagyobb szintig kínálnak fel szinteket.
+const KONTRA_SELECT_SELECTOR = '.kontra-joint-select, .kontra-a-select, .kontra-b-select';
+
 function kontraOptionsHtml() {
   return KONTRA_SZINTEK.slice(0, maxKontra() + 1).map((label, i) => `<option value="${i}">${label}</option>`).join('');
 }
@@ -775,6 +777,12 @@ function isColoredDurchmars(bem) {
 // (kontra nélkül is duplán fizet, kontrával 3x, rekontrával 5x, szubkontrával 9x).
 function multiplier(level, ultiSpecial, result) {
   return 2 ** level + (ultiSpecial && result === 'bukas' ? 1 : 0);
+}
+
+// Pozitív egész szám a beviteli mezőből (tört, nulla, negatív, üres: 0).
+function parsePositiveInt(raw) {
+  const text = raw.trim();
+  return /^\d+$/.test(text) ? parseInt(text, 10) : 0;
 }
 
 function range(n) {
@@ -963,23 +971,16 @@ function readBemondasSettings() {
   const ertekek = {};
   const pirosErtekek = {};
   const kikapcsolt = [];
+  // Beolvassa a megadott mezőt a célobjektumba; érvénytelen értéknél kinyitja a blokkot.
+  const readInto = (target, key, input) => {
+    const value = parsePositiveInt(input.value);
+    if (value < 1) openAndFocus(input);
+    else target[key] = value;
+    return value >= 1;
+  };
   for (const b of BEALLITHATO_BEMONDASOK) {
-    if (b.kategoria === 'szin') {
-      const pInput = document.getElementById('bem-piros-' + b.id);
-      const pRaw = pInput.value.trim();
-      if (!/^\d+$/.test(pRaw) || parseInt(pRaw, 10) < 1) {
-        openAndFocus(pInput);
-        return null;
-      }
-      pirosErtekek[b.id] = parseInt(pRaw, 10);
-    }
-    const input = document.getElementById('bem-ertek-' + b.id);
-    const raw = input.value.trim();
-    if (!/^\d+$/.test(raw) || parseInt(raw, 10) < 1) {
-      openAndFocus(input);
-      return null;
-    }
-    ertekek[b.id] = parseInt(raw, 10);
+    if (b.kategoria === 'szin' && !readInto(pirosErtekek, b.id, document.getElementById('bem-piros-' + b.id))) return null;
+    if (!readInto(ertekek, b.id, document.getElementById('bem-ertek-' + b.id))) return null;
     const on = document.getElementById('bem-on-' + b.id);
     if (on && !on.checked) kikapcsolt.push(b.id);
   }
@@ -1006,8 +1007,7 @@ playerCountSelect.addEventListener('change', renderPlayerNameInputs);
 
 document.getElementById('btn-start').addEventListener('click', () => {
   // Az alaptét csak pozitív egész lehet, hogy sose szülessen tört eredmény.
-  const alapTetRaw = alapTetInput.value.trim();
-  const alapTet = /^\d+$/.test(alapTetRaw) ? parseInt(alapTetRaw, 10) : 0;
+  const alapTet = parsePositiveInt(alapTetInput.value);
   alapTetErrorEl.hidden = alapTet >= 1;
   if (alapTet < 1) {
     openAndFocus(alapTetInput);
@@ -1017,7 +1017,7 @@ document.getElementById('btn-start').addEventListener('click', () => {
   const players = range(playerCount).map(i =>
     document.getElementById(`player-name-${i}`).value.trim() || `Játékos ${i + 1}`);
   const dealerIndex = parseInt(startingDealerSelect.value, 10);
-  // Alapból van négy ász; a házi szabályok (háromlapos ulti, piros ász) alapból kikapcsoltak.
+  // A bemondás-beállítások (érték, ki/be, kontra) és a házi szabályok (alapból kikapcsoltak).
   const bemondasSettings = readBemondasSettings();
   bemondasSettingsErrorEl.hidden = !!bemondasSettings;
   if (!bemondasSettings) return;
@@ -1526,7 +1526,7 @@ function addBemondasLine(presetId) {
   const bemondasSelect = lineEl.querySelector('.line-bemondas');
   bemondasSelect.innerHTML = bemondasOptionsHtml(null, presetId);
   if (presetId) bemondasSelect.value = presetId;
-  lineEl.querySelectorAll('.kontra-joint-select, .kontra-a-select, .kontra-b-select').forEach(sel => {
+  lineEl.querySelectorAll(KONTRA_SELECT_SELECTOR).forEach(sel => {
     sel.innerHTML = kontraOptionsHtml();
   });
   bemondasLinesDiv.appendChild(lineEl);
@@ -1721,13 +1721,8 @@ function renderPreview() {
   handPreviewEl.innerHTML = `<strong>Leosztás eredménye (előnézet)</strong><table>${rows}</table>`;
 }
 
-handForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  if (!isBalanced()) return;
-  if (bemondasLinesDiv.children.length === 0) {
-    alert('Adj hozzá legalább egy bemondást a leosztáshoz.');
-    return;
-  }
+// A leosztás-űrlap jelenlegi állapotának rögzítése (mentés és bedobás közös útja).
+function commitCurrentHand(extra = {}) {
   const { declarer, defenders, perPlayerDelta, lineSummaries } = computeHandDeltas();
   commitHand({
     round: state.round,
@@ -1736,7 +1731,18 @@ handForm.addEventListener('submit', (e) => {
     defenderIndices: defenders,
     lineSummaries,
     perPlayerDelta,
+    ...extra,
   });
+}
+
+handForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  if (!isBalanced()) return;
+  if (bemondasLinesDiv.children.length === 0) {
+    alert('Adj hozzá legalább egy bemondást a leosztáshoz.');
+    return;
+  }
+  commitCurrentHand();
 });
 
 // Bedobás: az éppen beírt leosztás minden (nem csendes) sora kontrázva bukik.
@@ -1753,21 +1759,12 @@ btnBedobas.addEventListener('click', () => {
   lineEls().forEach(lineEl => {
     lineEl.querySelector('.line-bukott-checkbox').checked = true;
     lineEl.querySelector('.line-haromlapos-checkbox').checked = false;
-    lineEl.querySelectorAll('.kontra-joint-select, .kontra-a-select, .kontra-b-select').forEach(sel => {
+    lineEl.querySelectorAll(KONTRA_SELECT_SELECTOR).forEach(sel => {
       sel.value = '1';
     });
   });
   renderPreview();
-  const { declarer, defenders, perPlayerDelta, lineSummaries } = computeHandDeltas();
-  commitHand({
-    round: state.round,
-    dealerIndex: state.dealerIndex,
-    declarerIndex: declarer,
-    defenderIndices: defenders,
-    lineSummaries,
-    perPlayerDelta,
-    bedobas: true,
-  });
+  commitCurrentHand({ bedobas: true });
 });
 
 function pushHistory(entry) {
