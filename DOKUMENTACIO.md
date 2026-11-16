@@ -119,9 +119,13 @@ A "Leosztás" kártya címsora mellett egy felfelé mutató nyilas, kék gomb az
 oldal tetejére (a pontállás táblázathoz) görget vissza.
 
 00. **Bedobás**: a "Leosztás" kártya címsorában, a felfelé nyilas gomb mellett. Megnyomására
-   a kiválasztott **felvevő** automatikusan elbukik egy kontrázott Partit (2 × alaptét
-   pont), amit **csak a két ellenjátékos** kap meg tőle fejenként — a kiálló osztó
-   (4 fős módban) nem kap semmit. A leosztás azonnal rögzítődik a pontállás
+   az éppen beírt leosztás minden sora (pl. az Ulti is) a kiválasztott **felvevő**
+   bukásával, kontrázva rögzítődik (az Ulti így háromszoros szorzóval; a
+   beállított kontraszintek nem számítanak, mert a lejátszás el sem kezdődik: mindig egyszeres kontra van). A csendes tételek (csendes 100 /
+   négy ász, csendes ulti, ellenulti, ellen csendes 100 / négy ász, háromlapos ulti felár) nem számítanak, és ha csak az alapértelmezett
+   Parti van beírva, az egyszerű kontrázott Parti (2 × alaptét pont) bukik. A pontot
+   **csak a két ellenjátékos** kapja meg fejenként — a kiálló osztó (4 fős módban)
+   nem kap semmit. A leosztás azonnal rögzítődik a pontállás
    táblázatban, az előzményekben pedig "Bedobás" felirattal szerepel a pontmozgás
    mellett. A következő osztó a szokásos szabály szerint alakul (a felvevő oszt tovább,
    "Piros ász oszt, nem oszt" esetén körbe). Az "Utolsó leosztás visszavonása" a
@@ -179,8 +183,9 @@ oldal tetejére (a pontállás táblázathoz) görget vissza.
    **Speciális szabály**: a Parti és a Csendes 100 (vagy Ellen csendes 100) csak
    akkor fizet külön-külön, ha a Partin kívül nincs más bemondás. Ha van más
    bemondás is (pl. ulti, négy ász, színes durchmars) és be van jelölve a
-   Csendes 100 vagy az Ellen csendes 100, a Parti sor eltűnik, és nem fizet; a
-   jelölés megszüntetésekor vagy a többi bemondás törlésekor újra megjelenik.
+   Csendes 100 vagy az Ellen csendes 100, a Parti sor halványan ott marad (hogy kontrát be lehessen állítani),
+   de 0 pontot ér és nem fizet. Ha viszont megkontrázzák, a Parti is számít;
+   a jelölés megszüntetésekor vagy a többi bemondás törlésekor újra fizet.
    **Az alapjáték eredménye kényszerített**: bejelölt Csendes 100 mellett az
    alapjáték (Parti) automatikusan Teljesült, bejelölt Ellen csendes 100 mellett
    automatikusan Bukott, és a Teljesült/Bukott kapcsoló zárolt — a

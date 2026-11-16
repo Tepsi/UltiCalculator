@@ -268,25 +268,29 @@ test('Csendes 100: 2 pont ellenjátékosonként (piros adunál 4), 40-100 mellet
   assertEqual(toggle.checked, false, 'El kell veszítenie a jelölést');
 });
 
-test('Csendes 100 / ellen csendes 100 mellett, ha van más bemondás is, a Parti eltűnik és nem fizet', async () => {
+test('Csendes 100 / ellen csendes 100 mellett, ha van más bemondás is, a Parti látszik, de nem fizet — kivéve, ha megkontrázták', async () => {
   const doc = await newGame();
   const csendes = doc.getElementById('csendes-100-toggle');
   const ellen = doc.getElementById('ellen-100-toggle');
   const parti = lines(doc)[0];
   setChecked(csendes, true);
-  assert(!parti.hidden, 'Önmagában a Parti látszik');
+  assert(!parti.classList.contains('is-suppressed'), 'Önmagában a Parti fizet');
   addLine(doc, 'ulti');
-  assert(parti.hidden, 'Más bemondás mellett a Parti eltűnik');
+  assert(!parti.hidden && parti.classList.contains('is-suppressed'), 'Más bemondás mellett a Parti látszik, de nem fizet');
   setDeclarer(doc, 1);
   submitHand(doc);
   // Ulti 4+4, csendes 100 2+2 (Parti nem fizet) -> felvevő +12, ellenjátékosok -6
   assertEqual(JSON.stringify(ledgerLastRow(doc)), JSON.stringify([0, 12, -6, -6]));
 
-  setChecked(ellen, true);
+  // Megkontrázott Parti viszont számít (csendes 100 mellett a Parti teljesül: 1 × 2)
+  setChecked(csendes, true);
   addLine(doc, 'ulti');
-  assert(lines(doc)[0].hidden, 'Ellen csendes 100 mellett is eltűnik');
-  setChecked(ellen, false);
-  assert(!lines(doc)[0].hidden, 'A jelölés nélkül újra látszik');
+  const parti2 = lines(doc)[0];
+  setJointKontra(parti2, 1);
+  assert(!parti2.classList.contains('is-suppressed'), 'Kontrázott Parti számít');
+  submitHand(doc);
+  // Cili a felvevő (Bela oszt): +8 ulti, +4 csendes 100, +4 kontrázott Parti = +16; Anna és Deszo -8
+  assertEqual(JSON.stringify(ledgerLastRow(doc)), JSON.stringify([-8, 12, 10, -14]));
 });
 
 test('Bedobás: a felvevő elbukik egy kontrázott Partit, csak az ellenjátékosoknak fizet (az osztónak nem)', async () => {
@@ -298,6 +302,31 @@ test('Bedobás: a felvevő elbukik egy kontrázott Partit, csak az ellenjátéko
   const text = doc.getElementById('history-list').textContent;
   assert(text.includes('Bedobás') && text.includes('Bela: -4'), 'Előzményekben szerepel: ' + text);
   assertEqual(doc.getElementById('dealer-select').value, '1', 'A felvevő oszt tovább');
+});
+
+test('Bedobás: az éppen beírt ulti kontrázva bukik (háromszoros szorzó), a csendes tételek nem számítanak', async () => {
+  const doc = await newGame();
+  setDeclarer(doc, 1); // Bela; Anna (osztó) kiáll
+  const ulti = addLine(doc, 'ulti');
+  setJointKontra(ulti, 2); // a beállított kontraszint a bedobásnál nem számít
+  setChecked(ulti.querySelector('.line-haromlapos-checkbox'), true); // háromlapos felár sem számít
+  setChecked(doc.getElementById('csendes-100-toggle'), true);
+  fire(doc.getElementById('btn-bedobas'), 'click');
+  // Ulti 4 × 3 + Parti 1 × 2 = 14 fejenként (Cili, Deszo)
+  assertEqual(JSON.stringify(ledgerLastRow(doc)), JSON.stringify([0, -28, 14, 14]));
+  const text = doc.getElementById('history-list').textContent;
+  assert(text.includes('Bedobás') && text.includes('Ulti'), 'Előzményekben szerepel az ulti: ' + text);
+  assertEqual(doc.getElementById('csendes-100-toggle').checked, false);
+});
+
+test('Bedobás: a csendes ulti és az ellenulti sor nem számít bele', async () => {
+  for (const id of ['csendes_ulti', 'ellenulti']) {
+    const doc = await newGame();
+    setDeclarer(doc, 1);
+    addLine(doc, id);
+    fire(doc.getElementById('btn-bedobas'), 'click');
+    assertEqual(JSON.stringify(ledgerLastRow(doc)), JSON.stringify([0, -4, 2, 2]), id + ': csak a kontrázott Parti marad');
+  }
 });
 
 test('Kézi szerkesztés: új sor az utolsó sor értékeivel, jóváhagyáskor 0 összeg kell, előzményben rögzül, közben minden más zárolt', async () => {

@@ -201,6 +201,7 @@ select.control-lg {
   background: #c62828 center / 80% no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E");
 }
 
+.bemondas-line.is-suppressed { opacity: 0.6; }
 .bemondas-line.is-bukott {
   border-color: var(--color-danger);
 }
@@ -1254,11 +1255,15 @@ function updateCsendes100Availability() {
 
 // Ha csendes 100 / ellen csendes 100 van bejelölve, és a Partin kívül van más
 // bemondás is a leosztásban, a Parti nem fizet külön (a 100 pont már magában
-// foglalja): a sor eltűnik és nem számít bele. Csak önmagában (más bemondás
+// foglalja): a sor látszik (hogy kontrát be lehessen állítani), de 0 pontot ér
+// és nem számít bele — kivéve, ha megkontrázták. Csak önmagában (más bemondás
 // nélkül) fizet a Parti és a csendes 100 külön-külön.
 function isPartiSuppressed(lineEl) {
-  return lineBem(lineEl).id === 'parti' && (csendes100Toggle.checked || ellen100Toggle.checked) &&
-    bemondasLinesDiv.children.length > 1;
+  if (lineBem(lineEl).id !== 'parti' || !(csendes100Toggle.checked || ellen100Toggle.checked) ||
+      bemondasLinesDiv.children.length <= 1) return false;
+  // Megkontrázott Parti viszont fizet, ezért ott marad és számít.
+  const { levelA, levelB } = readLine(lineEl);
+  return levelA === 0 && levelB === 0;
 }
 
 // A színes durchmars/redurchmars valójában az összes ütés megnyerését jelenti,
@@ -1434,7 +1439,7 @@ function renderLine(lineEl, defenders) {
   const { bem, result, piros } = line;
   const isSzin = bem.kategoria === 'szin';
   const siker = result === 'siker';
-  lineEl.hidden = isPartiSuppressed(lineEl);
+  const suppressed = isPartiSuppressed(lineEl);
   lineEl.querySelector('.kontra-joint').hidden = !isSzin || !!bem.nincsKontra;
   lineEl.querySelector('.kontra-split').hidden = isSzin;
   const haromlaposAllowed = !!bem.haromlapos && haromlaposEnabled();
@@ -1448,7 +1453,10 @@ function renderLine(lineEl, defenders) {
   lineEl.querySelector('.defender-b-label').textContent = nameB;
   const { amountA, amountB } = lineAmounts(line);
   const pirosNote = piros ? ' (piros)' : '';
-  lineEl.querySelector('.line-result').textContent = bem.ellen
+  lineEl.classList.toggle('is-suppressed', suppressed);
+  lineEl.querySelector('.line-result').textContent = suppressed
+    ? 'A Parti nem fizet (0 pont), mert a csendes 100 mellett nagyobb játék van — kontra esetén viszont számít.'
+    : bem.ellen
     ? `Ellenjátékosok ${siker ? 'kapnak' : 'fizetnek'} ${amountA} pontot (${nameA}) és ${amountB} pontot (${nameB}) ${siker ? 'a felvevőtől' : 'a felvevőnek'}${pirosNote}.`
     : `Felvevő ${siker ? 'kap' : 'fizet'} ${amountA} pontot (${nameA}) és ${amountB} pontot (${nameB}) ellen${pirosNote}.`;
 }
@@ -1542,23 +1550,32 @@ handForm.addEventListener('submit', (e) => {
   });
 });
 
-// Bedobás: a kiválasztott felvevő automatikusan elbukik egy kontrázott
-// Partit; csak a két ellenjátékosnak fizet (2 × alaptét fejenként), a
-// kiálló osztónak (4 fős módban) nem.
+// Bedobás: az éppen beírt leosztás minden (nem csendes) sora kontrázva bukik.
+// A lejátszás el sem kezdődik, ezért a beállított kontraszintek nem számítanak:
+// mindig pontosan egyszeres kontra van. A csendes tételek (csendes
+// 100 / négy ász, csendes ulti, ellenulti) nem számítanak. Üres leosztásnál az
+// alapsor, a kontrázott Parti marad. A pontokat csak a két ellenjátékos kapja,
+// a kiálló osztó (4 fős módban) nem.
 btnBedobas.addEventListener('click', () => {
   if (!isBalanced()) return;
-  const declarer = parseInt(declarerSelect.value, 10);
-  const defenders = currentDefenderIndices();
-  const amount = pontErtek(bemondasById('parti').ertek, false) * multiplier(1, false, 'bukas');
-  const perPlayerDelta = new Array(state.playerCount).fill(0);
-  defenders.forEach(i => { perPlayerDelta[i] += amount; });
-  perPlayerDelta[declarer] -= amount * defenders.length;
+  [csendes100Toggle, ellen100Toggle, csendesNegyAszToggle, ellenNegyAszToggle].forEach(t => { t.checked = false; });
+  lineEls().forEach(lineEl => { if (lineBem(lineEl).nincsKontra) lineEl.remove(); });
+  renderPreview(); // pótolja a hiányzó alapjátékot (Parti), ha kell
+  lineEls().forEach(lineEl => {
+    lineEl.querySelector('.line-bukott-checkbox').checked = true;
+    lineEl.querySelector('.line-haromlapos-checkbox').checked = false;
+    lineEl.querySelectorAll('.kontra-joint-select, .kontra-a-select, .kontra-b-select').forEach(sel => {
+      sel.value = '1';
+    });
+  });
+  renderPreview();
+  const { declarer, defenders, perPlayerDelta, lineSummaries } = computeHandDeltas();
   commitHand({
     round: state.round,
     dealerIndex: state.dealerIndex,
     declarerIndex: declarer,
     defenderIndices: defenders,
-    lineSummaries: [{ nev: 'Parti (kontra)', result: 'bukas', amountA: amount, amountB: amount, teritett: false }],
+    lineSummaries,
     perPlayerDelta,
     bedobas: true,
   });
@@ -1602,7 +1619,9 @@ function historyEntryHtml(h) {
     details = 'Kézi módosítás a pontállásban';
   } else if (h.bedobas) {
     title = `${h.round}. leosztás — Bedobás: ${name(h.declarerIndex)}`;
-    details = 'Bedobás: a felvevő elbukott egy kontrázott Partit';
+    details = h.lineSummaries.length
+      ? 'Bedobás: a felvevő elbukott, kontrázva: ' + escapeHtml(h.lineSummaries.map(l => l.nev).join(', '))
+      : 'Bedobás: a felvevő elbukott egy kontrázott Partit';
   } else {
     title = `${h.round}. leosztás — felvevő: ${name(h.declarerIndex)}, ellenjátékosok: ${h.defenderIndices.map(name).join(' és ')}`;
     details = escapeHtml(h.lineSummaries.map(l =>

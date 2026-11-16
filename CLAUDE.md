@@ -68,9 +68,9 @@ UltiCalculator/
   A csendes 100-as esetben a magyarázó üzenet (`.line-lock-note`) csak kattintásra
   jelenik meg (`clickOnly`).
 - Parti + csendes 100 / ellen csendes 100: ha a Partin kívül van más sor is, a Parti
-  sor rejtett (`isPartiSuppressed`, `renderLine`) és `computeHandDeltas`
-  kihagyja; a sor a DOM-ban marad (hogy `ensureBaseGameLine` ne pótolja újra).
-- Bedobás (`#btn-bedobas`): a kiválasztott felvevő bukott kontrázott Partit az ellenjátékosoknak; a history
+  sor halvány, 0 pontot ér (`isPartiSuppressed`, `renderLine`: `is-suppressed`) és `computeHandDeltas`
+  kihagyja — de látszik, hogy kontrát be lehessen állítani; megkontrázva számít.
+- Bedobás (`#btn-bedobas`): az éppen beírt sorok (a csendes tételek és a háromlapos felár nélkül) kontrázva (mindig pontosan 1. szint, a beállított kontraszintet figyelmen kívül hagyja) és bukottan kerülnek rögzítésre; a history
   bejegyzés `bedobas: true` jelzőt kap (`renderHistory` ez alapján írja ki). Rögzítés:
   `commitHand` (a "Leosztás mentése" is ezt használja).
 - Kézi szerkesztés (`editingLedger`, `startManualEdit`): a pontállás végére szerkeszthető
