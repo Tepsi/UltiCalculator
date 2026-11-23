@@ -451,7 +451,7 @@ td.amount-neg { color: var(--color-danger); font-weight: 600; }
 <body>
 
 <header class="app-header">
-  <h1>Ulti Pontozó <small class="app-version" id="app-version">v1.51</small></h1>
+  <h1>Ulti Pontozó <small class="app-version" id="app-version">v1.51b</small></h1>
   <div class="header-actions">
     <button id="btn-export" class="btn btn-secondary" hidden>Exportálás</button>
     <button id="btn-reset" class="btn btn-danger" hidden>Új parti-est</button>
@@ -2010,7 +2010,7 @@ exportDialog.addEventListener('click', async (e) => {
     const file = new File([f.content], isJson ? f.name + '.txt' : f.name, { type: isJson ? 'text/plain' : f.type });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
-        await navigator.share({ files: [file], title: 'Ulti parti-est' });
+        await navigator.share({ files: [file] });
       } catch (err) {
         if (err.name === 'AbortError') return;
         alert(`A megosztás nem sikerült (${err.name}: ${err.message}).`);
