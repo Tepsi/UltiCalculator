@@ -57,6 +57,14 @@ body {
   margin-left: 0.4rem;
 }
 
+.export-dialog { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100;
+  display: flex; align-items: center; justify-content: center; padding: 1rem; }
+.export-dialog[hidden] { display: none; }
+.export-panel { background: #fff; border-radius: 12px; padding: 1.2rem; width: 100%; max-width: 360px;
+  display: flex; flex-direction: column; gap: 0.6rem; }
+.export-panel > div { display: flex; flex-direction: column; gap: 0.6rem; }
+.export-panel h2 { margin: 0 0 0.2rem; font-size: 1.1rem; }
+.export-panel [hidden] { display: none; }
 .header-actions {
   display: flex;
   gap: 0.5rem;
@@ -443,12 +451,28 @@ td.amount-neg { color: var(--color-danger); font-weight: 600; }
 <body>
 
 <header class="app-header">
-  <h1>Ulti Pontozó <small class="app-version" id="app-version">v1.5</small></h1>
+  <h1>Ulti Pontozó <small class="app-version" id="app-version">v1.51</small></h1>
   <div class="header-actions">
     <button id="btn-export" class="btn btn-secondary" hidden>Exportálás</button>
     <button id="btn-reset" class="btn btn-danger" hidden>Új parti-est</button>
   </div>
 </header>
+
+<div id="export-dialog" class="export-dialog" hidden>
+  <div class="export-panel" role="dialog" aria-modal="true" aria-label="Exportálás">
+    <div id="export-step-what">
+      <h2>Mit exportálsz?</h2>
+      <button type="button" class="btn btn-secondary" data-kind="html">Csak az eredmények (.html)</button>
+      <button type="button" class="btn btn-secondary" data-kind="json">Teljes történet (.json)</button>
+    </div>
+    <div id="export-step-where" hidden>
+      <h2>Hová?</h2>
+      <button type="button" class="btn btn-secondary" data-action="download">Helyi fájlba</button>
+      <button type="button" class="btn btn-secondary" data-action="share">Megosztás (pl. Google Drive)</button>
+    </div>
+    <button type="button" class="btn btn-danger" data-action="cancel">Mégse</button>
+  </div>
+</div>
 
 <main>
 
@@ -1655,6 +1679,11 @@ function computeHandDeltas() {
   const defenders = currentDefenderIndices();
   const perPlayerDelta = new Array(state.playerCount).fill(0);
   const lineSummaries = [];
+  // A leosztás nyers bemenete (statisztikához / helyreállításhoz a JSON-exportban).
+  const input = { pirosAdu: pirosAduToggle.checked, lines: [], csendes: {
+    csendes100: csendes100Toggle.checked, ellen100: ellen100Toggle.checked,
+    csendesNegyAsz: csendesNegyAszToggle.checked, ellenNegyAsz: ellenNegyAszToggle.checked,
+  } };
   // sign: +1, ha a felvevő kap, −1, ha ő fizet.
   const pay = (sign, summary) => {
     perPlayerDelta[declarer] += sign * (summary.amountA + summary.amountB);
@@ -1664,9 +1693,11 @@ function computeHandDeltas() {
   };
 
   lineEls().forEach(lineEl => {
-    if (isPartiSuppressed(lineEl)) return;
+    const suppressed = isPartiSuppressed(lineEl);
     const line = readLine(lineEl);
     const { bem, result, piros, haromlapos } = line;
+    input.lines.push({ id: bem.id, result, kontraA: line.levelA, kontraB: line.levelB, piros, haromlapos, suppressed });
+    if (suppressed) return;
     // Ellenulti: az ellenjátékosok játsszák, ezért az előjel fordított.
     pay((result === 'siker' ? 1 : -1) * (bem.ellen ? -1 : 1), {
       nev: bem.nev + (piros ? ' (piros)' : '') + (haromlapos ? ' (háromlapos)' : ''),
@@ -1696,7 +1727,7 @@ function computeHandDeltas() {
     });
   }
 
-  return { declarer, defenders, perPlayerDelta, lineSummaries };
+  return { declarer, defenders, perPlayerDelta, lineSummaries, input };
 }
 
 // A leosztás minden módosítása után lefut: pótolja a hiányzó alapjátékot,
@@ -1723,8 +1754,10 @@ function renderPreview() {
 
 // A leosztás-űrlap jelenlegi állapotának rögzítése (mentés és bedobás közös útja).
 function commitCurrentHand(extra = {}) {
-  const { declarer, defenders, perPlayerDelta, lineSummaries } = computeHandDeltas();
+  const { declarer, defenders, perPlayerDelta, lineSummaries, input } = computeHandDeltas();
   commitHand({
+    at: new Date().toISOString(),
+    input,
     round: state.round,
     dealerIndex: state.dealerIndex,
     declarerIndex: declarer,
@@ -1887,14 +1920,101 @@ function localIsoDate(date) {
   return [date.getFullYear(), date.getMonth() + 1, date.getDate()].map(n => String(n).padStart(2, '0')).join('-');
 }
 
-btnExport.addEventListener('click', () => {
-  const blob = new Blob([buildExportHtml()], { type: 'text/html;charset=utf-8' });
+function downloadFile(content, type, fileName) {
+  const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `ulti-pontallas-${localIsoDate(new Date())}.html`;
+  a.download = fileName;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+
+// A teljes parti-est története JSON-ban: a mentett állapot egésze (játékosok,
+// beállítások, minden leosztás nyers bemenettel és kifizetésekkel, végállás),
+// plusz a számított kumulált állás és a katalógus-értékek az egyes tételekhez.
+function buildHistoryJson() {
+  const running = new Array(state.playerCount).fill(0);
+  const history = state.history.map((h, i) => {
+    h.perPlayerDelta.forEach((d, p) => { running[p] += d; });
+    const name = p => state.players[p];
+    // Ki játszott az adott leosztásban (a nevek is, hogy a fájl önmagában olvasható legyen).
+    const who = h.manual ? {} : {
+      dealer: name(h.dealerIndex),
+      declarer: name(h.declarerIndex),
+      defenders: h.defenderIndices.map(name),
+      participants: [h.declarerIndex, ...h.defenderIndices].map(name),
+      sittingOut: state.players.filter((_, p) => p !== h.declarerIndex && !h.defenderIndices.includes(p)),
+    };
+    return { index: i + 1, ...h, ...who, runningTotals: running.slice() };
+  });
+  return JSON.stringify({
+    format: 'ulti-parti-tortenet',
+    formatVersion: 1,
+    appVersion: document.getElementById('app-version').textContent,
+    exportedAt: new Date().toISOString(),
+    state: { ...state, history: undefined },
+    history,
+    finalTotals: state.totals.slice(),
+  }, null, 2);
+}
+
+// Exportálás: két lépéses választó — mit (csak az eredmények / teljes történet),
+// majd hová (helyi fájl / megosztás a telefonon, ahol a Google Drive is
+// választható; nincs kulcs/OAuth). Ha a böngésző nem tud fájlt megosztani,
+// a megosztás helyett letöltés történik.
+const exportDialog = document.getElementById('export-dialog');
+let exportKind = null;
+
+function exportFile(kind) {
+  const day = localIsoDate(new Date());
+  return kind === 'json'
+    ? { content: buildHistoryJson(), type: 'application/json', name: `ulti-parti-tortenet-${day}.json` }
+    : { content: buildExportHtml(), type: 'text/html', name: `ulti-pontallas-${day}.html` };
+}
+
+function showExportStep(step) {
+  document.getElementById('export-step-what').hidden = step !== 'what';
+  document.getElementById('export-step-where').hidden = step !== 'where';
+}
+
+function closeExportDialog() {
+  exportDialog.hidden = true;
+  exportKind = null;
+}
+
+btnExport.addEventListener('click', () => {
+  showExportStep('what');
+  exportDialog.hidden = false;
+});
+
+exportDialog.addEventListener('click', async (e) => {
+  const btn = e.target.closest('button');
+  if (e.target === exportDialog || (btn && btn.dataset.action === 'cancel')) {
+    closeExportDialog();
+  } else if (btn && btn.dataset.kind) {
+    exportKind = btn.dataset.kind;
+    showExportStep('where');
+  } else if (btn && btn.dataset.action === 'download') {
+    const f = exportFile(exportKind);
+    closeExportDialog();
+    downloadFile(f.content, f.type + ';charset=utf-8', f.name);
+  } else if (btn && btn.dataset.action === 'share') {
+    const f = exportFile(exportKind);
+    closeExportDialog();
+    const file = new File([f.content], f.name, { type: f.type });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: 'Ulti parti-est' });
+      } catch (err) {
+        if (err.name !== 'AbortError') alert('A megosztás nem sikerült: ' + err.message);
+      }
+      return;
+    }
+    alert('Ez a böngésző nem támogatja a fájl-megosztást — a fájl letöltésre kerül, a Drive-ra onnan tölthető fel.');
+    downloadFile(f.content, f.type + ';charset=utf-8', f.name);
+  }
 });
 
 // ---------- INIT ----------

@@ -1163,6 +1163,13 @@ test('Sérült vagy hiányos mentésnél az app az indítási képernyővel indu
   assertEqual(lineResult(lines(doc)[0]).amountA, 1);
 });
 
+// Az Exportálás kétlépéses választója: mit (html/json), hová (download/share).
+function doExport(doc, kind, action) {
+  doc.getElementById("btn-export").click();
+  doc.querySelector(`#export-dialog [data-kind="${kind}"]`).click();
+  doc.querySelector(`#export-dialog [data-action="${action}"]`).click();
+}
+
 test('Exportálás: a .html ugyanazt a "Pontállás körről-körre" táblázatot tartalmazza, végeredmény-sorral', async () => {
   const doc = await newGame();
   let blob = null;
@@ -1170,7 +1177,7 @@ test('Exportálás: a .html ugyanazt a "Pontállás körről-körre" táblázato
   setValue(lines(doc)[0].querySelector('.line-bemondas'), 'teritett_betli');
   submitHand(doc);
   submitHand(doc);
-  doc.getElementById('btn-export').click();
+  doExport(doc, "html", "download");
   assert(blob, 'Letöltendő fájl készül');
 
   const exported = new JSDOM(await blob.text()).window.document;
@@ -1190,7 +1197,7 @@ test('Exportálás: a pontállás sorai az exportált fájlban összecsukhatók,
   let blob = null;
   doc.defaultView.URL.createObjectURL = (b) => { blob = b; return 'blob:stub'; };
   submitHand(doc);
-  doc.getElementById('btn-export').click();
+  doExport(doc, "html", "download");
   const win = new JSDOM(await blob.text(), { runScripts: 'dangerously' }).window;
   const btn = win.document.getElementById('toggle-rows');
   const table = win.document.getElementById('score-table');
@@ -1201,6 +1208,61 @@ test('Exportálás: a pontállás sorai az exportált fájlban összecsukhatók,
   assertEqual(btn.textContent, 'Teljes eredménysor');
   btn.click();
   assert(!table.classList.contains('is-collapsed'), 'Újra kinyílik');
+});
+
+test('Exportálás: a parti története JSON-ban teljes (állapot, nyers bemenet, kumulált állás)', async () => {
+  const doc = await newGame();
+  let blob = null, fileName = null;
+  doc.defaultView.URL.createObjectURL = (b) => { blob = b; return 'blob:stub'; };
+  doc.defaultView.HTMLAnchorElement.prototype.click = function () { fileName = this.download; };
+  submitHand(doc);
+  submitHand(doc);
+  doExport(doc, "json", "download");
+  assert(/^ulti-parti-tortenet-\d{4}-\d{2}-\d{2}\.json$/.test(fileName), 'Fájlnév: ' + fileName);
+  const data = JSON.parse(await blob.text());
+  assertEqual(data.format, 'ulti-parti-tortenet');
+  assertEqual(data.history.length, 2);
+  assertEqual(data.state.players.length, 4);
+  assert(data.state.history === undefined, 'A history külön kulcson van');
+  const h = data.history[0];
+  assert(h.at && h.input && Array.isArray(h.input.lines) && h.input.lines.length > 0, 'Nyers bemenet és időbélyeg');
+  assertEqual(h.participants.length, 3, 'Három résztvevő nevesítve');
+  assert(h.participants.every(n => data.state.players.includes(n)) && h.declarer === h.participants[0], 'Nevek a játékosokból');
+  assertEqual(h.sittingOut.length, 1, 'A kiálló játékos is megvan');
+  assertEqual(JSON.stringify(data.history[1].runningTotals), JSON.stringify(data.finalTotals));
+});
+
+test('Exportálás: a választó két lépésben kérdez (mit, hová); a megosztás a megosztási lapra megy, egyébként letöltés', async () => {
+  const doc = await newGame();
+  const win = doc.defaultView;
+  submitHand(doc);
+  const dialog = doc.getElementById('export-dialog');
+  assert(dialog.hidden, 'Alapból zárt');
+  doc.getElementById('btn-export').click();
+  assert(!dialog.hidden && !doc.getElementById('export-step-what').hidden && doc.getElementById('export-step-where').hidden, 'Először a "mit"');
+  doc.querySelector('#export-dialog [data-kind="json"]').click();
+  assert(doc.getElementById('export-step-what').hidden && !doc.getElementById('export-step-where').hidden, 'Utána a "hová"');
+  doc.querySelector('#export-dialog [data-action="cancel"]').click();
+  assert(dialog.hidden, 'Mégse bezárja');
+
+  let shared = null;
+  win.navigator.canShare = () => true;
+  win.navigator.share = async (data) => { shared = data; };
+  doExport(doc, 'json', 'share');
+  await new Promise(r => setTimeout(r, 10));
+  assertEqual(shared.files.length, 1);
+  assert(shared.files[0].name.endsWith('.json'), 'A JSON megy a megosztásra');
+  assert(dialog.hidden, 'Megosztás után zárt');
+
+  win.navigator.canShare = undefined;
+  win.alert = () => {};
+  win.URL.createObjectURL = () => 'blob:stub';
+  const names = [];
+  win.HTMLAnchorElement.prototype.click = function () { names.push(this.download); };
+  doExport(doc, 'html', 'share');
+  await new Promise(r => setTimeout(r, 10));
+  assertEqual(names.length, 1);
+  assert(names[0].endsWith('.html'));
 });
 
 test('Exportálás: a fájlnév a helyi dátumot tartalmazza (éjfél után is, nem az UTC szerintit)', async () => {
@@ -1218,7 +1280,7 @@ test('Exportálás: a fájlnév a helyi dátumot tartalmazza (éjfél után is, 
     startGame(doc);
     let fileName = null;
     doc.defaultView.HTMLAnchorElement.prototype.click = function () { fileName = this.download; };
-    doc.getElementById('btn-export').click();
+    doExport(doc, "html", "download");
     assertEqual(fileName, 'ulti-pontallas-2026-10-26.html');
   } finally {
     if (prevTz === undefined) delete process.env.TZ;

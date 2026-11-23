@@ -320,13 +320,25 @@ körről-körre" táblázat utolsó sora, és az osztó/kör-számláló is viss
 
 ### 3.5 Exportálás és új parti-est
 
-- **"Exportálás"** (fejléc): egy önálló, jól olvasható **`.html`** fájlt generál és
-  letölt, amely a "Pontállás körről-körre" táblázatot tartalmazza (fejlécben a
-  játékosok nevével, soronként a köri kumulált állással, és egy kiemelt
-  végeredmény-sorral) — bármelyik böngészőben megnyitható, jó megosztásra vagy
-  archiválásra. A fájlban a táblázat felett egy gombbal az eredménysorok
-  összecsukhatók (csak a végeredmény látszik), majd újra kinyithatók; alapból a
-  teljes eredménysor látszik.
+- **"Exportálás"** (fejléc): egy választó nyílik két lépésben.
+  1. **Mit?**
+     - **Csak az eredmények (.html):** egy önálló, jól olvasható fájl a "Pontállás
+       körről-körre" táblázattal (fejlécben a játékosok nevével, soronként a köri
+       kumulált állással, kiemelt végeredmény-sorral) — bármelyik böngészőben
+       megnyitható. A táblázat felett egy gombbal az eredménysorok összecsukhatók
+       (csak a végeredmény látszik); alapból a teljes eredménysor látszik.
+     - **Teljes történet (.json):** a teljes parti-est: játékosok, beállítások
+       (bemondás-értékek, házi szabályok, alaptét), és minden leosztás időbélyeggel,
+       az osztó/felvevő/ellenjátékosok/kimaradó nevével, a nyers bemenettel
+       (bemondás-sorok, kontraszintek, eredmény, piros adu, háromlapos, csendes
+       tételek), a kifizetésekkel és a kumulált állással, plusz a végállás.
+       Statisztikához vagy a parti menetének helyreállításához. A régebben rögzített
+       leosztásoknál a nyers bemenet és az időbélyeg hiányzik.
+  2. **Hová?**
+     - **Helyi fájlba:** a fájl letöltődik.
+     - **Megosztás:** a telefon megosztási lapjára küldi, ahol a **Google Drive**
+       (vagy bármely más app) választható; bejelentkezés nem kell. Ha a böngésző
+       nem támogatja a fájl-megosztást (pl. számítógépes Firefox), a fájl letöltődik.
 - **"Új parti-est"** (fejléc): megerősítés után törli a mentett állást, és
   visszaugrik az indítási képernyőre.
 
