@@ -2003,12 +2003,17 @@ exportDialog.addEventListener('click', async (e) => {
   } else if (btn && btn.dataset.action === 'share') {
     const f = exportFile(exportKind);
     closeExportDialog();
-    const file = new File([f.content], f.name, { type: f.type });
+    // A Chrome csak egy szűk MIME-típus-listát enged megosztani (az
+    // application/json nincs rajta), ezért a JSON szövegként megy, .json névvel.
+    // A kiterjesztést is ellenőrzi, ezért a név végére .txt kerül (.json.txt).
+    const isJson = f.type === 'application/json';
+    const file = new File([f.content], isJson ? f.name + '.txt' : f.name, { type: isJson ? 'text/plain' : f.type });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
         await navigator.share({ files: [file], title: 'Ulti parti-est' });
       } catch (err) {
-        if (err.name !== 'AbortError') alert('A megosztás nem sikerült: ' + err.message);
+        if (err.name === 'AbortError') return;
+        alert(`A megosztás nem sikerült (${err.name}: ${err.message}).`);
       }
       return;
     }

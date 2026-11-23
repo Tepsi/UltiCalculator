@@ -42,6 +42,13 @@ UltiCalculator/
   a soroknak nincs saját eseménykezelője. Ami a DOM-ot közvetlenül módosítja
   (`resetHandForm`, `addBemondasLine`), az nem renderel — utána `renderPreview` vagy
   `renderAll` kell.
+- Exportálás (`#btn-export` → `#export-dialog`, két lépés: mit — html/json; hová — letöltés/megosztás):
+  a JSON-t (`buildHistoryJson`, `format: "ulti-parti-tortenet"`, `formatVersion: 1`: `state` a history nélkül,
+  `history[]` a mentett bejegyzésekkel + `index`, `runningTotals`, nevek (`dealer`/`declarer`/`defenders`/`participants`/`sittingOut`),
+  `finalTotals`) a history-bejegyzések `at` és `input` (nyers bemenet: sorok, kontraszintek, piros adu, csendes tételek)
+  mezői egészítik ki (régi bejegyzéseknél hiányoznak). **Megosztáskor (`navigator.share`) a JSON `.json.txt` névvel és
+  `text/plain` típussal megy** — a Chrome a `.json` / `application/json` fájlt `NotAllowedError`-ral elutasítja
+  (telefonon és laptopon kipróbálva); letöltésnél marad a `.json` / `application/json`. Ne "egyszerűsítsd" vissza.
 - A pontállás-táblázatot (`scoreTableHtml`) az app és az Exportálás ugyanúgy állítja elő.
 
 ## Katalógus és szabályok a kódban

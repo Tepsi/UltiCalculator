@@ -1251,7 +1251,7 @@ test('Exportálás: a választó két lépésben kérdez (mit, hová); a megoszt
   doExport(doc, 'json', 'share');
   await new Promise(r => setTimeout(r, 10));
   assertEqual(shared.files.length, 1);
-  assert(shared.files[0].name.endsWith('.json'), 'A JSON megy a megosztásra');
+  assert(/.json.txt$/.test(shared.files[0].name), 'A JSON megy a megosztásra (.json.txt névvel)');
   assert(dialog.hidden, 'Megosztás után zárt');
 
   win.navigator.canShare = undefined;

@@ -337,7 +337,10 @@ körről-körre" táblázat utolsó sora, és az osztó/kör-számláló is viss
   2. **Hová?**
      - **Helyi fájlba:** a fájl letöltődik.
      - **Megosztás:** a telefon megosztási lapjára küldi, ahol a **Google Drive**
-       (vagy bármely más app) választható; bejelentkezés nem kell. Ha a böngésző
+       (vagy bármely más app) választható; bejelentkezés nem kell. A JSON megosztáskor
+       `.json.txt` kiterjesztéssel megy (`ulti-parti-tortenet-ÉÉÉÉ-HH-NN.json.txt`,
+       a tartalma ugyanaz a JSON) — a böngészők a `.json` kiterjesztésű fájl
+       megosztását megtagadják; a Drive-on szükség esetén átnevezhető `.json`-ra. Ha a böngésző
        nem támogatja a fájl-megosztást (pl. számítógépes Firefox), a fájl letöltődik.
 - **"Új parti-est"** (fejléc): megerősítés után törli a mentett állást, és
   visszaugrik az indítási képernyőre.
